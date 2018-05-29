@@ -1,9 +1,9 @@
 # usar_exploration
-Urban Seacrh &amp; Rescue (USAR) Robotic Exploration Package 
+Urban Search &amp; Rescue (USAR) Robotic Exploration Package 
 
 usar_exploration related tasks implementation
 
-In order run the simulation environment the following Packages are needed: 
+In order run the simulation environment the following Package is needed: 
 
 - volumetric mapping follow the instruction in the following website to install it 
 ```
@@ -14,7 +14,7 @@ https://github.com/ethz-asl/volumetric_mapping
 ## Installing 
 ```
 $ cd catkin_ws\src
-$ git clone http://kuri.kustar.ac.ae:30000/reem.ashour/usar_kuri.git
+$ git clone https://github.com/kuri-kustar/semantic_based_exploration.git
 $ cd ..
 $ catkin_make 
 ```
@@ -42,13 +42,12 @@ Publishers:
 
 ### exploration node 
 
-This node performs the exploration process and create a volumetric map utilizing the volumetric mapping package functionality. 
+This node performs the exploration process and create a volumetric map utilizing the volumetric mapping package functionalities. 
 Subscribers: 
 - pointcloud to camera frame 
-- current location 
 
 Publishers:
 - occupancy grid (octomap) 
 - helper visualization tools 
-
+- current location
 
