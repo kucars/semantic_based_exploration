@@ -1,0 +1,76 @@
+# logging param
+/exploration_node/log/on: true
+
+# initial position param
+#exploration_node/init/pose/x: -5
+#/exploration_node/init/pose/y: 39
+#/exploration_node/init/pose/z: 1.2
+#/exploration_node/init/pose/yaw: 3.14
+
+/exploration_node/init/pose/x: 1
+/exploration_node/init/pose/y: 1
+/exploration_node/init/pose/z: 1.2
+/exploration_node/init/pose/yaw: 0
+# Camera Params
+/exploration_node/camera/pitch: [15.0]
+/exploration_node/camera/horizontal: [58.0]
+/exploration_node/camera/vertical: [45.0]
+
+# Robot Params
+/exploration_node/robot/bbx/x: 0.3
+/exploration_node/robot/bbx/y: 0.3
+/exploration_node/robot/bbx/z: 0.3
+/exploration_node/robot/bbx/overshoot: 0.5
+
+# Exploration Algorithm Params 
+# - ViewpointGeneration
+## Geometric Generation
+/exploration_node/exp/gen/res_x: 0.5
+/exploration_node/exp/gen/res_y: 0.5
+/exploration_node/exp/gen/res_z: 0.5
+#/exploration_node/exp/gen/res_yaw: 0.785
+
+
+# - viewpointEvaluation
+/exploration_node/nbvp/gain/range: 1
+
+#Termination
+/exploration_node/exp/ter/num_iteration: 1000
+
+# Environment Related Paramters 
+# bounding box: necessary to limit the simulation 
+# scenario (smaller than actual gazebo scenario)
+#a1 and a6
+/exploration_node/env/bbx/minX: 1.0
+/exploration_node/env/bbx/maxX: 1.5
+/exploration_node/env/bbx/minY: -2.5
+/exploration_node/env/bbx/maxY: 40
+/exploration_node/env/bbx/minZ: 0.0
+/exploration_node/env/bbx/maxZ: 3.0
+
+#a3
+/exploration_node/env/bbx/minX: 0.0
+/exploration_node/env/bbx/maxX: 350
+/exploration_node/env/bbx/minY: -12
+/exploration_node/env/bbx/maxY: 10
+/exploration_node/env/bbx/minZ: 0.0
+/exploration_node/env/bbx/maxZ: 3.0
+
+#2
+/exploration_node/env/bbx/minX: -2.0
+/exploration_node/env/bbx/maxX: 7
+/exploration_node/env/bbx/minY: -4.5
+/exploration_node/env/bbx/maxY: 6
+/exploration_node/env/bbx/minZ: 0.0
+/exploration_node/env/bbx/maxZ: 2.0
+/exploration_node/env/bbx/softBounds: false
+
+#Mavros related settings
+/uav_1/mavros/local_position/frame_id: world           #(string, default: fcu) frame_id for message.
+/uav_1/mavros/local_position/tf/send: true             #(bool, default: true)
+/uav_1/mavros/local_position/tf/frame_id: world        #(string, default: local_origin) Origin frame_id for TF.
+/uav_1/mavros/local_position/tf/child_frame_id: fcu    #(string, default: fcu) Child frame_id for TF.
+
+
+
+
