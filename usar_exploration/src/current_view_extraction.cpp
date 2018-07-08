@@ -78,8 +78,8 @@ int main(int argc, char **argv)
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloudOutPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     std::string path = ros::package::getPath("usar_exploration");
-    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/2_high.pcd", *originalCloud); // for visualization
-    OcclusionCulling occlusionCulling(n,"2_high.pcd");
+    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/house_colored4.pcd", *originalCloud); // for visualization
+    OcclusionCulling occlusionCulling(n,"house_colored4.pcd");
 
     pcl::PointCloud<pcl::PointXYZRGB> tempCloud;
     pcl::PointCloud<pcl::PointXYZRGB> tempCloudOut;

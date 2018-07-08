@@ -79,8 +79,8 @@ struct Params
     double env_bbx_z_max  ;
 
     // Exploration Algorithm
-    int iterationTermination ;
-    double gainRange ;
+    int num_of_iteration ;
+    double gain_range ;
     // 1- Viewpoints generation params (Geometric generation)
     double res_x   ;
     double res_y   ;
@@ -94,6 +94,7 @@ struct Params
     double init_loc_yaw ;
     bool iflog ;
 };
+
 class ExplorationBase {
 
 protected:
@@ -103,8 +104,9 @@ protected:
     CamParams  cam_params_  ;
     volumetric_mapping::OctomapManager * manager_;
     double locationx_,locationy_,locationz_,yaw_; // current location information (target position)
-    geometry_msgs::PoseStamped loc; // exploration positions
-    Eigen::Vector3d boundingbox_;
+    geometry_msgs::PoseStamped loc_; // exploration positions
+    Eigen::Vector3d collision_bounding_box_;
+
     // for visualization
     geometry_msgs::PoseArray viewpoints;
     visualization_msgs::Marker area_marker_ ;
@@ -123,8 +125,8 @@ protected:
     ros::Publisher exploration_area_pub_;
     ros::Publisher sensor_pose_pub_;
     ros::Publisher marker_pub_;
-
     ros::Publisher marker_text_pub_;
+
     ros::Subscriber occlusion_cloud_sub_;
 
     // logging
@@ -143,6 +145,7 @@ public:
     void RunStateMachine() ;
     bool IterationTerminate(int iteration_flag) ;
     std::vector<geometry_msgs::Pose> GenerateViewPoints(int id);
+    std::vector<geometry_msgs::Pose> GenerateViewPointsRandom( int id);
     bool IsInsideBounds(geometry_msgs::Pose p) ;
     bool IsValidViewpoint(geometry_msgs::Pose p ) ;
     bool IsSafe(geometry_msgs::Pose p) ;
@@ -160,6 +163,7 @@ public:
     visualization_msgs::Marker MaxGainPose(geometry_msgs::Pose p, int id) ;
     visualization_msgs::Marker ExplorationAreaInit() ;
     visualization_msgs::MarkerArray  MarkerPoses(std::vector<geometry_msgs::Pose> a);
+
 };
 
 #endif //
@@ -177,15 +181,17 @@ ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandl
 {
     //init() ;
     manager_ =  new volumetric_mapping::OctomapManager(nh_, nh_private_);
-    // publishers and subscribers
+    // Subscriber
     occlusion_cloud_sub_   = nh_.subscribe("pointcloud", 40, &ExplorationBase::OcclusionCloudCallback , this);
+    // publishers
+    current_pose_pub_      = nh_.advertise<geometry_msgs::PoseStamped>("current_pose", 40);
+    exploration_area_pub_  = nh_.advertise<visualization_msgs::Marker>("explorationArea", 1);
     generated_poses_pub_   = nh_.advertise<visualization_msgs::Marker>("accepted_Poses", 10);
     regected_poses_pub_    = nh_.advertise<visualization_msgs::Marker>("regected_Poses", 10);
-    current_pose_pub_      = nh_.advertise<geometry_msgs::PoseStamped>("current_pose", 40);
+    // for debugging
     evaluated_voxels_pub_  = nh_.advertise<visualization_msgs::Marker>("evaluated_vox", 10);
     range_voxels_pub_      = nh_.advertise<visualization_msgs::Marker>("range_vox", 10);
     max_point_pub_         = nh_.advertise<visualization_msgs::Marker>("maxGainPoint", 10);
-    exploration_area_pub_  = nh_.advertise<visualization_msgs::Marker>("explorationArea", 1);
     sensor_pose_pub_       = nh_.advertise<geometry_msgs::PoseArray>("sensor_pose", 10);
     marker_text_pub_      = nh_.advertise<visualization_msgs::Marker>("textPose", 1);
     marker_pub_          =  nh_.advertise<visualization_msgs::Marker>("PATH", 1);
@@ -195,6 +201,7 @@ ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandl
         ROS_ERROR("Could not start. Parameters missing!");
     }
     ExplorationBase::InitCameraParams();
+
     area_marker_ = ExplorationBase::ExplorationAreaInit() ;
     exploration_area_pub_.publish(area_marker_);
 
@@ -224,7 +231,7 @@ void ExplorationBase::InitCameraParams()
     //std::cout << "cam_params_.cam_pitch.size()" <<cam_params.cam_pitch.size()<< std::endl ;
     // Camera Params pitch: [15.0] -  horizontal: [58.0] - vertical: [45.0]
     for (int i = 0; i < cam_params_.cam_pitch.size(); i++) {
-        double pitch = M_PI * cam_params_.cam_pitch[i] / 180.0;
+        double pitch = M_PI * cam_params_.cam_pitch[i] / 180.0; // conert to R
         double camTop = (pitch - M_PI * cam_params_.cam_vertical[i] / 360.0) + M_PI / 2.0;
         double camBottom = (pitch + M_PI * cam_params_.cam_vertical[i] / 360.0) - M_PI / 2.0;
         double side = M_PI * (cam_params_.cam_horizontal[i]) / 360.0 - M_PI / 2.0;
@@ -281,6 +288,7 @@ void ExplorationBase::RunStateMachine()
     //    }
     // ***************************************************************
 
+    // simulate the camera position publisher / tf
     tf::TransformBroadcaster br;
     tf::Transform transform;
 
@@ -294,16 +302,16 @@ void ExplorationBase::RunStateMachine()
         tf_q = tf::createQuaternionFromYaw(yaw_);
         transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
         br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc.pose.position.x = locationx_;
-        loc.pose.position.y = locationy_;
-        loc.pose.position.z = locationz_;
-        loc.pose.orientation.x = tf_q.getX();
-        loc.pose.orientation.y =  tf_q.getY();
-        loc.pose.orientation.z = tf_q.getZ();
-        loc.pose.orientation.w =tf_q.getW();
-        loc.header.frame_id="world";
-        loc.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc) ;
+        loc_.pose.position.x = locationx_;
+        loc_.pose.position.y = locationy_;
+        loc_.pose.position.z = locationz_;
+        loc_.pose.orientation.x = tf_q.getX();
+        loc_.pose.orientation.y = tf_q.getY();
+        loc_.pose.orientation.z = tf_q.getZ();
+        loc_.pose.orientation.w = tf_q.getW();
+        loc_.header.frame_id="world";
+        loc_.header.stamp=ros::Time::now();
+        current_pose_pub_.publish(loc_) ;
 
         if (!ExplorationBase::IterationTerminate(iteration_flag) && pointcloud_recieved_sub_Flag ) {
             //  if (!ExplorationBase::IterationTerminate(iteration_flag) && !feof(file1) && pointcloud_recieved_sub_Flag  ) {
@@ -315,16 +323,18 @@ void ExplorationBase::RunStateMachine()
             std::vector<double> gains;
 
             // Publish current position;
-            // viewpoints.poses.push_back(loc.pose);
+            // viewpoints.poses.push_back(loc_.pose);
             // viewpoints.header.frame_id= "world";
             // viewpoints.header.stamp = ros::Time::now();
             // sensor_pose_pub_.publish(viewpoints);
 
             // ------------------------------------------ Viewpoints Generation------------------------------------
-            std::vector<geometry_msgs::Pose> view_points_list = ExplorationBase::GenerateViewPoints(iteration_flag) ;
+            //std::vector<geometry_msgs::Pose> view_points_list = ExplorationBase::GenerateViewPoints(iteration_flag) ;
+            std::vector<geometry_msgs::Pose> view_points_list = ExplorationBase::GenerateViewPointsRandom(iteration_flag) ;
+
             // ----------------------------------------------------------------------------------------------------
 
-            if (view_points_list.size() == 0 )
+            if (view_points_list.size() == 0 ) // stay in ur current palce ( I should make a counter here)
             {
                 ROS_INFO("No Valid Viewpoints");
                 locationx_ = locationx_  ;
@@ -340,7 +350,8 @@ void ExplorationBase::RunStateMachine()
 
                 for (int k = 0 ; k< view_points_list.size() ; k++){
                     // ----------------------------- Viewpoints Evaluation ------------------------------
-                    gains.push_back(ExplorationBase::EvaluateViewPoints(view_points_list[k], k) ) ;
+                    double viewpoint_gain  = ExplorationBase::EvaluateViewPoints(view_points_list[k], k) ;
+                    gains.push_back(viewpoint_gain) ;
                     // ----------------------------------------------------------------------------------
 
                     // -------------- Visualize the generated view points -------------------------------
@@ -354,6 +365,8 @@ void ExplorationBase::RunStateMachine()
                     viewpoints2.header.stamp = ros::Time::now();
                     sensor_pose_pub_.publish(viewpoints2);
                     // ---------------------------------------------------------------------------------
+                    std::cout << "The current generated gain added to the list is: " << viewpoint_gain << std::endl ;
+                    std::cout << "The comparied  gain added to the list is: " << gains[k] << std::endl ;
 
                     if (gains[k] > global_gain )
                     {
@@ -369,7 +382,7 @@ void ExplorationBase::RunStateMachine()
                 // change the target pose
                 locationx_ = view_points_list[global_index].position.x ;
                 locationy_ = view_points_list[global_index].position.y ;
-                locationz_ = locationz_ ; // view_points_list[global_index].position.z ;
+                locationz_ = view_points_list[global_index].position.z ;
                 tf::Quaternion q(view_points_list[global_index].orientation.x, view_points_list[global_index].orientation.y, view_points_list[global_index].orientation.z, view_points_list[global_index].orientation.w);
                 tf::Matrix3x3 m(q);
                 double roll, pitch;
@@ -388,6 +401,7 @@ void ExplorationBase::RunStateMachine()
                 double pure_entropy_gain = 0 , probability,Entropy =0 ;
                 for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max ; x += res_map) {
                     for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max  ; y += res_map) {
+                        // ?????????????????? Why this one - res map
                         for (z = params_.env_bbx_z_min; z<= params_.env_bbx_z_max  - res_map; z += res_map) {
                             vec[0] = x; vec[1] = y ; vec[2] = z ;
                             all_cells_counter++;
@@ -398,6 +412,7 @@ void ExplorationBase::RunStateMachine()
                                 p = probability;
                                 // ROS_INFO("probability %f \n", p);
                             }
+                            // MAKE SURE FROM THE EQUATION
                             Entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
                             pure_entropy_gain = pure_entropy_gain + Entropy ;
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
@@ -416,8 +431,11 @@ void ExplorationBase::RunStateMachine()
             }
             iteration_flag++ ;
             pointcloud_recieved_sub_Flag = false ;
-            sleep(3); // I change it according to the dense data
-        }
+            // ????????? chck a different way to buil the map generation thsn this apparoach
+            sleep(1); // I change it according to the dense data
+        } // Finished the first iteration exploration
+
+
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -430,7 +448,7 @@ void ExplorationBase::OcclusionCloudCallback(sensor_msgs::PointCloud2::ConstPtr 
 }
 bool ExplorationBase::IterationTerminate(int iteration_flag)
 {
-    if (iteration_flag == params_.iterationTermination)
+    if (iteration_flag == params_.num_of_iteration)
         return true ;
 
     return false ;
@@ -451,36 +469,36 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
     {
         for (double i_y=start_y; i_y<=end_y; i_y=i_y+params_.res_y)
         {
-            // for (double i_z=start_z; i_z<=end_z; i_z=i_z+params_.res_z) //
-            //{
-            for (double i_yaw=-M_PI; i_yaw<M_PI; i_yaw+=params_.res_yaw)
+            for (double i_z=start_z; i_z<=end_z; i_z=i_z+params_.res_z) //
             {
-                // Do not generate any viewpoints in current location // it will skip the 7 orientations for at the same position
-                // if (!generate_at_current_location && i_x==0 && i_y==0 && i_z==0)
-               if (!generate_at_current_location && i_x==0 && i_y==0 )
-                    continue;
+                for (double i_yaw=-M_PI; i_yaw<M_PI; i_yaw+=params_.res_yaw)
+                {
 
-                // i_yaw = 0 means in the cuurent orientation
-                //if (i_x==0 && i_y==0 &&i_z ==0 && i_yaw==0)
-                if (i_x==0 && i_y==0 && i_yaw==0)
+                    // Do not generate any viewpoints in current location // it will skip the 7 orientations for at the same position
+                    if (!generate_at_current_location && i_x==0 && i_y==0 && i_z==0)
+                        //if (!generate_at_current_location && i_x==0 && i_y==0 )
+                        continue;
 
-                    continue;
+                    // i_yaw = 0 means in the cuurent orientation
+                    if (i_x==0 && i_y==0 &&i_z ==0 && i_yaw==0)
+                        //if (i_x==0 && i_y==0 && i_yaw==0)
+                        continue;
 
-                geometry_msgs::Pose p;
-                p.position.x = loc.pose.position.x + i_x*cos(yaw_) + i_y*sin(yaw_);
-                p.position.y = loc.pose.position.y - i_x*sin(yaw_) + i_y*cos(yaw_);
-                p.position.z = loc.pose.position.z ; // + params_.res_z*i_z; // z-axis movement is fixed
-                tf::Quaternion tf_q ;
-                tf_q = tf::createQuaternionFromYaw(yaw_ + i_yaw);
-                p.orientation.x = tf_q.getX() ;
-                p.orientation.y = tf_q.getY() ;
-                p.orientation.z = tf_q.getZ() ;
-                p.orientation.w = tf_q.getW() ;
-                //p.orientation. =  pose_conversion::getQuaternionFromYaw(yaw_ + i_yaw);
-                initial_poses.push_back(p);
+                    geometry_msgs::Pose p;
+                    p.position.x = loc_.pose.position.x + i_x*cos(yaw_) + i_y*sin(yaw_);
+                    p.position.y = loc_.pose.position.y - i_x*sin(yaw_) + i_y*cos(yaw_);
+                    p.position.z = loc_.pose.position.z  + params_.res_z*i_z; // z-axis movement is fixed
+                    tf::Quaternion tf_q ;
+                    tf_q = tf::createQuaternionFromYaw(yaw_ + i_yaw);
+                    p.orientation.x = tf_q.getX() ;
+                    p.orientation.y = tf_q.getY() ;
+                    p.orientation.z = tf_q.getZ() ;
+                    p.orientation.w = tf_q.getW() ;
+                    //p.orientation. =  pose_conversion::getQuaternionFromYaw(yaw_ + i_yaw);
+                    initial_poses.push_back(p);
 
+                }
             }
-            // }
         }
     }
 
@@ -503,10 +521,73 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
     visualization_msgs::Marker regected_poses_list =  ExplorationBase::RegectedPoses(rejected_poses_,iteration_flag) ;
     generated_poses_pub_.publish(generated_poses_list);
     regected_poses_pub_.publish(regected_poses_list);
-
     return generated_poses_ ;
 }
 
+std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int iteration_flag){
+
+    std::vector<geometry_msgs::Pose> initial_poses;
+    double extension_range = 0.5 ;
+
+    int num_of_viewpoints=3 ;
+    double radius = sqrt(
+                SQ(params_.env_bbx_x_min - params_.env_bbx_x_max) + SQ(params_.env_bbx_y_min - params_.env_bbx_y_max)
+                + SQ(params_.env_bbx_z_min - params_.env_bbx_z_max));
+
+    for (int it = 0 ; it < num_of_viewpoints ; it++)
+    {
+
+        // Random Point;
+        double i_x = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
+        double i_y = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
+        double i_z = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
+
+        Eigen::Vector3d origin(loc_.pose.position.x, loc_.pose.position.y, loc_.pose.position.z);
+        Eigen::Vector3d direction(i_x - origin[0], i_y - origin[1], i_z - origin[2]);
+
+        if (direction.norm() >extension_range)
+        {
+            direction = extension_range * direction.normalized();
+        }
+
+       double i_yaw = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5); // ?????? Check if it is radian or degree
+        geometry_msgs::Pose p;
+        p.position.x = origin[0] + direction[0];
+        p.position.y = origin[1] + direction[1];
+        p.position.z = origin[2] + direction[2];
+        tf::Quaternion tf_q ;
+        tf_q = tf::createQuaternionFromYaw(yaw_ + i_yaw);
+        p.orientation.x = tf_q.getX() ;
+        p.orientation.y = tf_q.getY() ;
+        p.orientation.z = tf_q.getZ() ;
+        p.orientation.w = tf_q.getW() ;
+        initial_poses.push_back(p);
+
+    }
+
+
+
+    rejected_poses_.clear()  ;
+    generated_poses_.clear() ;
+    //  std::cout << "initial_poses.size() "  <<initial_poses.size()  << std::endl << std::flush;
+    for (int i=0; i<initial_poses.size(); i++)
+    {
+        if ( ExplorationBase::IsValidViewpoint(initial_poses[i]))
+        {
+            generated_poses_.push_back(initial_poses[i]);
+        }
+        else
+        {
+            rejected_poses_.push_back(initial_poses[i]);
+        }
+    }
+    std::cout << "[ViewGenerator] Generated " << generated_poses_.size() << " poses (" << rejected_poses_.size() << " rejected)" << std::endl << std::flush;
+    visualization_msgs::Marker generated_poses_list =  ExplorationBase::AcceptedPoses(generated_poses_,iteration_flag) ;
+    visualization_msgs::Marker regected_poses_list =  ExplorationBase::RegectedPoses(rejected_poses_,iteration_flag) ;
+    generated_poses_pub_.publish(generated_poses_list);
+    regected_poses_pub_.publish(regected_poses_list);
+    return generated_poses_ ;
+}
 bool ExplorationBase::IsInsideBounds(geometry_msgs::Pose p)
 {
     if (p.position.x < params_.env_bbx_x_min || p.position.x > params_.env_bbx_x_max ||
@@ -520,14 +601,14 @@ bool ExplorationBase::IsInsideBounds(geometry_msgs::Pose p)
 
 bool ExplorationBase::IsSafe(geometry_msgs::Pose p)
 {
-    Eigen::Vector3d loc(p.position.x, p.position.y,p.position.z);
+    Eigen::Vector3d loc_current(p.position.x, p.position.y,p.position.z);
     Eigen::Vector3d box_size(0.3,0.3,0.3);
     //Eigen::Vector3d box_size(0.1,0.1,0.1);
     //std::cout << "manager_->getCellStatusBoundingBox(loc,box_size)" << manager_->getCellStatusBoundingBox(loc,box_size) << std::endl ;
     // cell status 0: free , 1: occupied , 2: unknown
     // both unknown and free will be accepted to be visited x !=1
     // If only free views are accepted, then the condition should be changed to if X==0
-    if (manager_->getCellStatusBoundingBox(loc,box_size)==0)
+    if (manager_->getCellStatusBoundingBox(loc_current,box_size)==0)
     {
         return true;
     }
@@ -538,11 +619,11 @@ bool ExplorationBase::IsCollide(geometry_msgs::Pose p) {
     return false;
 
     // Check for collision of new connection plus some overshoot distance.
-    boundingbox_[0]=0.3;
-    boundingbox_[1]=0.3;
-    boundingbox_[2]=0.3;
+    collision_bounding_box_[0]=0.3;
+    collision_bounding_box_[1]=0.3;
+    collision_bounding_box_[2]=0.3;
 
-    Eigen::Vector3d origin(loc.pose.position.x , loc.pose.position.y ,loc.pose.position.z);
+    Eigen::Vector3d origin(loc_.pose.position.x , loc_.pose.position.y ,loc_.pose.position.z);
     Eigen::Vector3d end(p.position.x, p.position.y, p.position.z);
 
     //  Eigen::Vector3d direction(p.position.x - origin[0], p.position.y - origin[1], p.position.z - origin[2]);
@@ -551,14 +632,14 @@ bool ExplorationBase::IsCollide(geometry_msgs::Pose p) {
     //    direction = params_.extensionRange * direction.normalized();
     //  }
 
-    volumetric_mapping::OctomapManager::CellStatus cellStatus;
+    volumetric_mapping::OctomapManager::CellStatus cell_status;
     //std::cout << "Pose: "<< p << " NewPose: " << direction + origin + direction.normalized() * dOvershoot_ << std::endl;
-    cellStatus = manager_->getLineStatusBoundingBox(
+    cell_status = manager_->getLineStatusBoundingBox(
                 origin,
                 end,
-                boundingbox_);
-    std::cout << "status is: " << cellStatus << std::endl;//|| volumetric_mapping::OctomapManager::CellStatus::kUnknown
-    if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree  )
+                collision_bounding_box_);
+    std::cout << "status is: " << cell_status << std::endl;//|| volumetric_mapping::OctomapManager::CellStatus::kUnknown
+    if (cell_status == volumetric_mapping::OctomapManager::CellStatus::kFree  )
         return false;
 
     return true;
@@ -576,15 +657,17 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
         ROS_INFO("rejected by Safety" );
         return false;
     }
-    if (IsCollide(p)){
-        ROS_INFO("rejected by collision" );
-        return false;
-    }
 
     if (manager_ == NULL) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: No octomap available!");
         return false ;
     }
+
+    if (IsCollide(p)){
+        ROS_INFO("rejected by collision" );
+        return false;
+    }
+
     if (manager_->getMapSize().norm() <= 0.0) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return false ;
@@ -606,25 +689,25 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
     double gain = 0.0;
     const double disc = manager_->getResolution();
     Eigen::Vector3d vec;
-    double rangeSq = pow(params_.gainRange, 2.0);
+    double rangeSq = pow(params_.gain_range, 2.0);
     //FOVPoints_.clear() ;
     //range_points_.clear();
     //visualization_msgs::Marker fov_poses_list ;
     //visualization_msgs::Marker range_poses_list ;
     int numOfVoxelInOneView = 0 ;
-    double startX = std::max(p.position.x - params_.gainRange, params_.env_bbx_x_min) ;
-    double endX = std::min(p.position.x + params_.gainRange, params_.env_bbx_x_max) ;
-    double startY = std::max(p.position.y - params_.gainRange, params_.env_bbx_y_min)  ;
-    double endY= std::min(p.position.y + params_.gainRange, params_.env_bbx_y_max) ;
-    double startZ= std::max(p.position.z - params_.gainRange, params_.env_bbx_z_min)  ;
-    double endZ= std::min(p.position.z + params_.gainRange, params_.env_bbx_z_max)  ;
+    double startX = std::max(p.position.x - params_.gain_range, params_.env_bbx_x_min) ;
+    double endX = std::min(p.position.x + params_.gain_range, params_.env_bbx_x_max) ;
+    double startY = std::max(p.position.y - params_.gain_range, params_.env_bbx_y_min)  ;
+    double endY= std::min(p.position.y + params_.gain_range, params_.env_bbx_y_max) ;
+    double startZ= std::max(p.position.z - params_.gain_range, params_.env_bbx_z_min)  ;
+    double endZ= std::min(p.position.z + params_.gain_range, params_.env_bbx_z_max)  ;
     // old limits
-    //    for (vec[0] = std::max(p.position.x - params_.gainRange_, params_.env_bbx_x_min);
-    //                //         vec[0] < std::min(p.position.x + params_.gainRange, params_.env_bbx_x_max); vec[0] += disc) {
-    //                //        for (vec[1] = std::max(p.position.y - params_.gainRange, params_.env_bbx_y_min);
-    //                //             vec[1] < std::min(p.position.y + params_.gainRange, params_.env_bbx_y_max); vec[0] += disc) {
-    //                //            for (vec[2] = std::max(p.position.z - params_.gainRange, params_.env_bbx_z_min);
-    //                //                 vec[2] < std::min(p.position.z + params_.gainRange, params_.env_bbx_z_max); vec[2] += disc) {
+    //    for (vec[0] = std::max(p.position.x - params_.gain_range, params_.env_bbx_x_min);
+    //                //         vec[0] < std::min(p.position.x + params_.gain_range, params_.env_bbx_x_max); vec[0] += disc) {
+    //                //        for (vec[1] = std::max(p.position.y - params_.gain_range, params_.env_bbx_y_min);
+    //                //             vec[1] < std::min(p.position.y + params_.gain_range, params_.env_bbx_y_max); vec[0] += disc) {
+    //                //            for (vec[2] = std::max(p.position.z - params_.gain_range, params_.env_bbx_z_min);
+    //                //                 vec[2] < std::min(p.position.z + params_.gain_range, params_.env_bbx_z_max); vec[2] += disc) {
 
     for (double x = startX ; x <endX; x =x+disc){
         for (double y = startY; y <endY;y=y+disc){
@@ -962,14 +1045,14 @@ bool ExplorationBase::SetParams()
 
     // Environment Params
     // Note1: using (ns + "env/bbx/minX").c_str() will not work. It should be (ns + "/env/bbx/minX").c_str()
-    // Note2: ros::param::get uses the params related to the namespaze
+    // Note2: ros::param::get uses the params related to the namespace
 
+    // Exploration area params
     params_.env_bbx_x_min = -100;
     if (!ros::param::get( (ns + "/env/bbx/minX").c_str(), params_.env_bbx_x_min))
     {
         ROS_WARN("No environment bounding box X specified. Looking for %s.",  (ns + "/env/bbx/minX").c_str());
     }
-    //std::cout << "params_.env_bbx_x_min" << params_.env_bbx_x_min << std::endl;
 
     params_.env_bbx_x_max = 100;
     if (!ros::param::get( ns+ "/env/bbx/maxX", params_.env_bbx_x_max))
@@ -999,10 +1082,11 @@ bool ExplorationBase::SetParams()
         ROS_WARN("No environment bounding box Z specified. Looking for %s.", ( "env/bbx/maxZ"));
     }
 
+
     // Exploration Algorithm Params
     // 1- Termination
-    params_.iterationTermination = 60;
-    if (!ros::param::get( ns+"/exp/ter/num_iteration", params_.iterationTermination))
+    params_.num_of_iteration = 60;
+    if (!ros::param::get( ns+"/exp/ter/num_iteration", params_.num_of_iteration))
     {
         ROS_WARN("No number of iteration for termination specified. Looking for %s.", ( "exp/ter/num_iteration"));
     }
@@ -1014,7 +1098,7 @@ bool ExplorationBase::SetParams()
     //        ROS_WARN("No number of view point generation distanse YAW specified. Looking for %s.", ("exp/gen/res_yaw"));
     //    }
 
-    params_.res_x = 0.5;
+    params_.res_x = 0.5; // step size
     if (!ros::param::get(ns+ "/exp/gen/res_x", params_.res_x))
     {
         ROS_WARN("No number of view point generation distanse X  specified. Looking for %s.", ( "exp/gen/res_x"));
@@ -1030,11 +1114,12 @@ bool ExplorationBase::SetParams()
         ROS_WARN("No number of view point generation distanse Z  specified. Looking for %s.", "exp/gen/res_z");
     }
 
-    //
-    params_.gainRange = 1.0;
-    if (!ros::param::get( ns+"/nbvp/gain/range", params_.gainRange))
+
+    // 3- Viewpoints Evaluation
+    params_.gain_range = 1.0;
+    if (!ros::param::get( ns+"/exp/gain/range", params_.gain_range))
     {
-        ROS_WARN("No gain range specified. Looking for %s. Default is 1.0m.","/nbvp/gain/range");
+        ROS_WARN("No gain range specified. Looking for %s. Default is 1.0m.","/exp/gain/range");
     }
 
     // Camera Params

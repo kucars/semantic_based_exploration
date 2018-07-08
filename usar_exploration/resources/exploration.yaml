@@ -7,9 +7,9 @@
 #/exploration_node/init/pose/z: 1.2
 #/exploration_node/init/pose/yaw: 3.14
 
-/exploration_node/init/pose/x: 1
-/exploration_node/init/pose/y: 1
-/exploration_node/init/pose/z: 1.2
+/exploration_node/init/pose/x: 2
+/exploration_node/init/pose/y: 2
+/exploration_node/init/pose/z: 2
 /exploration_node/init/pose/yaw: 0
 # Camera Params
 /exploration_node/camera/pitch: [15.0]
@@ -32,7 +32,7 @@
 
 
 # - viewpointEvaluation
-/exploration_node/nbvp/gain/range: 1
+/exploration_node/exp/gain/range: 1
 
 #Termination
 /exploration_node/exp/ter/num_iteration: 1000
@@ -40,7 +40,7 @@
 # Environment Related Paramters 
 # bounding box: necessary to limit the simulation 
 # scenario (smaller than actual gazebo scenario)
-#a1 and a6
+# Exploration Area (Stanford dataset for area1 and area6)
 /exploration_node/env/bbx/minX: 1.0
 /exploration_node/env/bbx/maxX: 1.5
 /exploration_node/env/bbx/minY: -2.5
@@ -48,7 +48,7 @@
 /exploration_node/env/bbx/minZ: 0.0
 /exploration_node/env/bbx/maxZ: 3.0
 
-#a3
+# Exploration Area (Stanford dataset for area3)
 /exploration_node/env/bbx/minX: 0.0
 /exploration_node/env/bbx/maxX: 350
 /exploration_node/env/bbx/minY: -12
@@ -56,13 +56,22 @@
 /exploration_node/env/bbx/minZ: 0.0
 /exploration_node/env/bbx/maxZ: 3.0
 
-#2
+# Exploration Area for bosch dataset
 /exploration_node/env/bbx/minX: -2.0
 /exploration_node/env/bbx/maxX: 7
 /exploration_node/env/bbx/minY: -4.5
 /exploration_node/env/bbx/maxY: 6
 /exploration_node/env/bbx/minZ: 0.0
 /exploration_node/env/bbx/maxZ: 2.0
+/exploration_node/env/bbx/softBounds: false
+
+# Exploration Area for the manual Generated Area (CAD)
+/exploration_node/env/bbx/minX: -5.2
+/exploration_node/env/bbx/maxX: 5.2
+/exploration_node/env/bbx/minY: -4
+/exploration_node/env/bbx/maxY: 4
+/exploration_node/env/bbx/minZ: 0.0
+/exploration_node/env/bbx/maxZ: 3.5
 /exploration_node/env/bbx/softBounds: false
 
 #Mavros related settings
