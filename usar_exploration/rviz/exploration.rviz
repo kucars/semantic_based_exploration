@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /OccupancyGrid1
-        - /maxGainPose1
-        - /Current pose1
-        - /PoseArray1
+        - /PointCloud22
       Splitter Ratio: 0.5
     Tree Height: 843
   - Class: rviz/Selection
@@ -29,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Accumulated pointcloud
+    SyncSource: PointCloud2
 Visualization Manager:
   Class: ""
   Displays:
@@ -159,14 +157,14 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: octomap_rviz_plugin/OccupancyGrid
-      Enabled: false
+      Enabled: true
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
       Min. Height Display: -3.40282347e+38
       Name: OccupancyGrid
       Octomap Topic: /exploration_node/octomap_full
       Queue Size: 5
-      Value: false
+      Value: true
       Voxel Alpha: 1
       Voxel Coloring: Z-Axis
       Voxel Rendering: Occupied Voxels
@@ -245,7 +243,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -258,17 +256,17 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.00999999978
       Style: Flat Squares
-      Topic: /accumulated_pointcloud
+      Topic: /current_view_pointcloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /PATH
       Name: Path
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -278,6 +276,36 @@ Visualization Manager:
       Namespaces:
         {}
       Queue Size: 100
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.100000001
+      Style: Boxes
+      Topic: /pointcloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: false
   Enabled: true
   Global Options:
@@ -304,25 +332,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 43.4698257
+      Distance: 42.6123772
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.95845973
-        Y: 3.40799832
-        Z: -7.8201108
+        X: 1.55478907
+        Y: -1.19659734
+        Z: -7.82212877
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.56479645
+      Pitch: 1.55479634
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.12667727
+      Yaw: 0.481677055
     Saved: ~
 Window Geometry:
   Displays:

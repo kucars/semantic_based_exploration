@@ -94,17 +94,9 @@ public:
     ~OcclusionCulling();
     // pcl::PointCloud<pcl::PointXYZ> extractVisibleSurface(geometry_msgs::Pose location);
     pcl::PointCloud<pcl::PointXYZRGB> extractColoredVisibleSurface(geometry_msgs::Pose location);
-
     //    float calcCoveragePercent(geometry_msgs::Pose location);
-    float calcCoveragePercent(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered);
-    double calcAvgAccuracy(pcl::PointCloud<pcl::PointXYZ> pointCloud);
-    double calcAvgAccuracy(pcl::PointCloud<pcl::PointXYZ> pointCloud, geometry_msgs::Pose cameraPose);
-    void transformPointMatVec(tf::Vector3 translation, tf::Matrix3x3 rotation, geometry_msgs::Point32 in, geometry_msgs::Point32& out);
-    pcl::PointCloud<pcl::PointXYZ> pointCloudViewportTransform(pcl::PointCloud<pcl::PointXYZ> pointCloud, geometry_msgs::Pose cameraPose);
-    void SSMaxMinAccuracy(std::vector<geometry_msgs::PoseArray> sensorsPoses);
     void visualizeFOV(geometry_msgs::Pose location);
     visualization_msgs::Marker drawLines(std::vector<geometry_msgs::Point> links, int id, int c_color[]);
-    void visualizeOriginalPointcloud() ;
 
 
 };

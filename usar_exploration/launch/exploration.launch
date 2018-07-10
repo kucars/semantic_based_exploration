@@ -2,11 +2,11 @@
 <launch>
     <arg name="tf_frame" default="world" />
     <arg name="robot_frame" default="base_point_cloud" />
-    <arg name="resolution" default="0.1" />
+    <arg name="resolution" default="0.15" />
     <arg name="mesh_resolution" default="1.0" />
     <arg name="visualize_max_z" default="5" />
     <arg name="sensor_max_range" default="5.0" />
-    <arg name="map_publish_frequency" default="1.0" />
+    <arg name="map_publish_frequency" default="0.08" />
     <arg name="probability_hit" default="0.7" />
     <arg name="probability_miss" default="0.4" />
     <arg name="threshold_min" default="0.12" />
@@ -14,6 +14,9 @@
     <arg name="threshold_occupancy" default="0.7" />
     <arg name="pcl_topic" default="/pointcloud" />
     <arg name="stl_file_path" default="" />
+    <arg name="treat_unknown_as_occupied" default="false" />
+    <arg name="latch_topics" default="false" />
+
 
     <arg name="param_file" default="$(find usar_exploration)/resources/exploration.yaml"/>
     <arg name="octomap_manager_params_file" default="$(find usar_exploration)/resources/octomap_manager_params.yaml"/>
