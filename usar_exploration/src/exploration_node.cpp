@@ -229,7 +229,7 @@ void ExplorationBase::InitCameraParams()
     // Precompute the camera field of view boundaries. The normals of the separating hyperplanes are stored
     cam_params_.cam_bound_normals.clear();
     // This loop will only be executed once because we have one camera
-    //std::cout << "cam_params_.cam_pitch.size()" <<cam_params.cam_pitch.size()<< std::endl ;
+    // std::cout << "cam_params_.cam_pitch.size()" <<cam_params.cam_pitch.size()<< std::endl ;
     // Camera Params pitch: [15.0] -  horizontal: [58.0] - vertical: [45.0]
     for (int i = 0; i < cam_params_.cam_pitch.size(); i++) {
         double pitch = M_PI * cam_params_.cam_pitch[i] / 180.0; // conert to R

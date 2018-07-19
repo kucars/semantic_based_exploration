@@ -33,8 +33,6 @@ OcclusionCulling::OcclusionCulling(ros::NodeHandle &n, std::string modelName):
     fc(true)
 {
     ROS_INFO("Occlusion culling constructor ");
-    //fov_pub  = n.advertise<visualization_msgs::MarkerArray>("fov", 10);
-
     rayCloud =  pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud <pcl::PointXYZRGB>); // cloud of original model
     //occlusionFreeCloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud <pcl::PointXYZRGB>);
@@ -122,14 +120,12 @@ pcl::PointCloud<pcl::PointXYZRGB> OcclusionCulling::extractColoredVisibleSurface
 
         if(index!=-1 )
         {
-            //out_ray.clear();
+            out_ray.clear();
             ret = voxelFilter.occlusionEstimation(state,out_ray, ijk);
-            // ROS_INFO("out_ray \n" ) ;
             if(state == 1)
             {
-                // ROS_INFO("state \n" ) ;
-
-
+                // WARNING : The following code produce a meomery leakage specialy when using a dense and continous point cloud extraction
+                // Only used for debugging 
                 //                for(uint j=0; j< out_ray.size(); j++)
                 //                {
                 //                    Eigen::Vector4f centroid = voxelFilter.getCentroidCoordinate (out_ray[j]);
