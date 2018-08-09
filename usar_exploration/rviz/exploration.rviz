@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /OccupancyGrid1
+        - /Marker1
         - /PointCloud22
       Splitter Ratio: 0.5
     Tree Height: 843
@@ -181,7 +182,7 @@ Visualization Manager:
       Marker Topic: /accepted_Poses
       Name: "Accepted poses "
       Namespaces:
-        marker: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -189,7 +190,7 @@ Visualization Manager:
       Marker Topic: /regected_Poses
       Name: Regected poses
       Namespaces:
-        marker: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -266,17 +267,17 @@ Visualization Manager:
       Marker Topic: /PATH
       Name: Path
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /textPose
+      Enabled: true
+      Marker Topic: /range_vox
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -332,25 +333,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 42.6123772
+      Distance: 28.297039
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.55478907
-        Y: -1.19659734
-        Z: -7.82212877
+        X: 13.1496534
+        Y: 1.99521422
+        Z: -2.72378683
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.55479634
+      Pitch: 1.00979733
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.481677055
+      Yaw: 2.67667723
     Saved: ~
 Window Geometry:
   Displays:

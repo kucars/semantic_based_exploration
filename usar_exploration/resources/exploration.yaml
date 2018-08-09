@@ -7,7 +7,7 @@
 #/exploration_node/init/pose/z: 1.2
 #/exploration_node/init/pose/yaw: 3.14
 
-/exploration_node/init/pose/x: 2
+/exploration_node/init/pose/x: 4
 /exploration_node/init/pose/y: 2
 /exploration_node/init/pose/z: 2
 /exploration_node/init/pose/yaw: 0

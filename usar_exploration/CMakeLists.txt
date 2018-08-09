@@ -4,6 +4,16 @@ project(usar_exploration)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 #add_definitions(-std=c++11)
+
+find_package(octomap REQUIRED)
+
+set(OCTOMAP_LIBRARIES_DIRS "/home/kuri/catkin_ws/src/octomap/lib")
+set(OCTOMAP_INCLUDE_DIRS "/home/kuri/catkin_ws/src/octomap/octomap/include")
+set(OCTOMAP_LIBRARIES
+"/home/kuri/catkin_ws/src/octomap/lib/liboctomap.so"
+"/home/kuri/catkin_ws/src/octomap/lib/liboctomath.so"
+)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
@@ -15,7 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
   eigen_conversions
   nav_msgs
-  shape_msgs
+  #shape_msgs
   rviz_visual_tools
   octomap_world
 )
@@ -25,7 +35,7 @@ find_package(octomap REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   ${OCTOMAP_INCLUDE_DIRS}
-  LIBRARIES ${OCTOMAP_LIBRARIES}
+  LIBRARIES ${OCTOMAP_LIBRARIES} ${OCTOMAP_LIBRARIES_DIR}
   #LIBRARIES usar_exploration occlusion_culling
   CATKIN_DEPENDS roscpp rospy std_msgs pcl_ros octomap_world
 )
@@ -41,6 +51,11 @@ include_directories(include
 #   src/${PROJECT_NAME}/usar_exploration.cpp
 # )
 
+
+
+add_executable(testlabel src/testlabel.cpp)
+add_dependencies(testlabel ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(testlabel ${catkin_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
 add_executable(occlusion_culling_test src/occlusion_culling_test.cpp src/occlusion_culling.cpp src/voxel_grid_occlusion_estimation.cpp src/frustum_culling.cpp)
 add_dependencies(occlusion_culling_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
