@@ -22,6 +22,3 @@
 [submodule "octomap/octomap_msgs"]
 	path = octomap/octomap_msgs
 	url = https://github.com/OctoMap/octomap_msgs.git
-[submodule "octomap/octomap_ros"]
-	path = octomap/octomap_ros
-	url = https://github.com/OctoMap/octomap_ros.git
