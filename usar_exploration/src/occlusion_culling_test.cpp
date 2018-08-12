@@ -47,6 +47,7 @@
 using namespace std;
 using namespace octomap;
 //using namespace fcl;
+
 visualization_msgs::Marker drawLines(std::vector<geometry_msgs::Point> links, int c_color, float scale);
 geometry_msgs::Pose uav2camTransformation(geometry_msgs::Pose pose, std::vector<float> rpy, std::vector<float> xyz);
 
