@@ -19,6 +19,3 @@
 [submodule "misc/glog_catkin"]
 	path = misc/glog_catkin
 	url = https://github.com/ethz-asl/glog_catkin.git
-[submodule "octomap/octomap_msgs"]
-	path = octomap/octomap_msgs
-	url = https://github.com/OctoMap/octomap_msgs.git
