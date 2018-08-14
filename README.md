@@ -16,9 +16,19 @@ $ mkdir build
 $ cd build 
 $ sudo cmake ..
 $ sudo make install 
+```
+
+It is important to change the lib directory in volumetric_mapping/octomap_world/CMakeLists.txt
+```
+from home/kuri/catkin_ws/src/octomap/lib to /Your/Diroctory
+```
+Then build all
+```
 $ cd 
 $ cd catkin_ws/
-$ catkin_make_isolated
+$ sudo rm -rf build_isolated/ devel_isolated/
+$ catkin config -DCMAKE_BUILD_TYPE=Release
+$ catkin build
 ```
 
 We tested this repository with ROS Kinect on Ubuntu 16.04.
@@ -40,6 +50,7 @@ $ sudo make install
 $ cd 
 $ cd catkin_ws/
 $ sudo rm -rf build_isolated/ devel_isolated/
-$ catkin_make_isolated
+$ catkin config -DCMAKE_BUILD_TYPE=Release
+$ catkin build
 ```
 
