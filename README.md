@@ -4,15 +4,17 @@ The repository aims to provide an exploration algorithm and relevant packages to
 
 # Building 
 create a new workspace and clone all the modules into that workspace.
+
 '''
-mkdir catkin_ws && cd catkin_ws && mkdir src && cd src 
-git clone https://github.com/kucars/semantic_based_exploration.git
-git clone https://github.com/reem90/volumetric_mapping.git
-git clone https://github.com/reem90/octomap.git
-git submodule update --init --recursive
-cd ..
-catkin_make_isolated
+$ mkdir catkin_ws && cd catkin_ws && mkdir src && cd src 
+$ git clone https://github.com/kucars/semantic_based_exploration.git
+$ git clone https://github.com/reem90/volumetric_mapping.git
+$ git clone https://github.com/reem90/octomap.git
+$ git submodule update --init --recursive
+$ cd ..
+$ catkin_make_isolated
 '''
+
 We tested this repository with ROS Kinect on Ubuntu 16.04.
 
 #  Current State 
