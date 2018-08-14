@@ -11,7 +11,13 @@ $ git clone https://github.com/kucars/semantic_based_exploration.git
 $ git clone https://github.com/reem90/volumetric_mapping.git
 $ git clone https://github.com/reem90/octomap.git
 $ git submodule update --init --recursive
-$ cd ..
+$ cd /octomap
+$ mkdir build 
+$ cd build 
+$ sudo cmake ..
+$ sudo make install 
+$ cd 
+$ cd catkin_ws/
 $ catkin_make_isolated
 ```
 
@@ -24,15 +30,16 @@ Still under development
 #  Notes
 If any changes in octomap pkg, re-build is essential  
 ```
-cd catkin_ws/src/octomap
-sudo rm -rf bin/ lib/ build/
-mkdir build 
-cd build 
-sudo cmake ..
-sudo make install 
-cd 
-cd catkin_ws/
-sudo rm -rf build_isolated/ devel_isolated/
-catkin_make_isolated
+$ cd catkin_ws/src/octomap
+$ sudo rm -rf bin/ lib/ build/
+$ cd ..
+$ mkdir build 
+$ cd build 
+$ sudo cmake ..
+$ sudo make install 
+$ cd 
+$ cd catkin_ws/
+$ sudo rm -rf build_isolated/ devel_isolated/
+$ catkin_make_isolated
 ```
 
