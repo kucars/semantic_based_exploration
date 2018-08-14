@@ -55,3 +55,14 @@ $ catkin config -DCMAKE_BUILD_TYPE=Release
 $ catkin build
 ```
 
+# Test 
+```
+roscore 
+rosrun usar_exploration occlusion_culling_test
+rosrun octomap_world octomap_manager
+rosrun rviz rviz 
+```
+
+# RUN
+ 
+
