@@ -57,8 +57,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "coverge_quantification");
     ros::NodeHandle n;
 
-    ros::Publisher originalCloudPub             = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 100);
-    ros::Publisher predictedCloudPub            = n.advertise<sensor_msgs::PointCloud2>("occlusion_free_cloud", 100);
+    ros::Publisher originalCloudPub             = n.advertise<sensor_msgs::PointCloud2>("originalpointcloud", 100);
+    ros::Publisher predictedCloudPub            = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 100);
     ros::Publisher currentPosePub               = n.advertise<geometry_msgs::PoseStamped>("currentPose", 100);
     ros::Publisher FrustumCloudPub              = n.advertise<sensor_msgs::PointCloud2>("frustum_cloud", 100);
     ros::Publisher sensorPosePub                = n.advertise<geometry_msgs::PoseArray>("sensor_pose", 10);
@@ -76,10 +76,10 @@ int main(int argc, char **argv)
     std::string path = ros::package::getPath("usar_exploration");
 
     //pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/semantic_area6.pcd", *originalCloud); // for visualization
-    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/2.pcd", *originalCloud); // for visualization
+    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/house_colored4.pcd", *originalCloud); // for visualization
 
    // OcclusionCulling occlusionCulling(n,"semantic_area6.pcd");
-    OcclusionCulling occlusionCulling(n,"2.pcd");
+    OcclusionCulling occlusionCulling(n,"house_colored4.pcd");
 
     // read positiongs from txt file
     // only add the start position
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
         loc.pose.orientation.y = tf_q.getY();
         loc.pose.orientation.z = tf_q.getZ();
         loc.pose.orientation.w =tf_q.getW();
-        loc.header.frame_id="base_point_cloud";
+        loc.header.frame_id="world";
         currentPosePub.publish(loc);
         viewpoints.poses.push_back(loc.pose);
 
@@ -231,15 +231,15 @@ int main(int argc, char **argv)
         cloud2.header.stamp = ros::Time::now();
         cloud5.header.stamp = ros::Time::now();
 
-        cloud1.header.frame_id = "base_point_cloud";
-        cloud2.header.frame_id = "base_point_cloud";
-        cloud5.header.frame_id = "base_point_cloud";
+        cloud1.header.frame_id = "world";
+        cloud2.header.frame_id = "world";
+        cloud5.header.frame_id = "world";
 
         originalCloudPub.publish(cloud1);
         predictedCloudPub.publish(cloud2);
         FrustumCloudPub.publish(cloud5);
 
-        viewpoints.header.frame_id= "base_point_cloud";
+        viewpoints.header.frame_id= "world-";
         viewpoints.header.stamp = ros::Time::now();
         sensorPosePub.publish(viewpoints);
         generagedPathPub.publish(linesList);
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 visualization_msgs::Marker drawLines(std::vector<geometry_msgs::Point> links, int c_color, float scale)
 {
     visualization_msgs::Marker linksMarkerMsg;
-    linksMarkerMsg.header.frame_id="base_point_cloud";
+    linksMarkerMsg.header.frame_id="world";
     linksMarkerMsg.header.stamp=ros::Time::now();
     linksMarkerMsg.ns="link_marker";
     linksMarkerMsg.id = 0;

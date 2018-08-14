@@ -109,6 +109,7 @@ pcl::PointCloud<pcl::PointXYZRGB> OcclusionCulling::extractColoredVisibleSurface
     for ( int i = 0; i < (int)output->points.size(); i ++ )
     {
         pcl::PointXYZRGB ptest = output->points[i];
+        //std::cout << "ptest" << ptest.x << "   ptest"<< (int)ptest.r <<  "   ptest"<< (int)ptest.g <<std::endl;
         Eigen::Vector3i ijk = voxelFilter.getGridCoordinates( ptest.x, ptest.y, ptest.z);
         // process all free voxels
         int index = voxelFilter.getCentroidIndexAt (ijk);

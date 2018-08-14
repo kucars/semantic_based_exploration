@@ -76,7 +76,7 @@ namespace pcl
    * \author Aravindhan K Krishnan
    * \ingroup filters
    */
-  class FrustumCullingTT : public FilterIndices<pcl::PointXYZRGB>
+  class FrustumCullingTT : public FilterIndices <pcl::PointXYZRGB>
   {
     typedef typename Filter<pcl::PointXYZRGB>::PointCloud PointCloud;
     typedef typename PointCloud::Ptr PointCloudPtr;
