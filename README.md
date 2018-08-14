@@ -10,8 +10,10 @@ $ mkdir catkin_ws && cd catkin_ws && mkdir src && cd src
 $ git clone https://github.com/kucars/semantic_based_exploration.git
 $ git clone https://github.com/reem90/volumetric_mapping.git
 $ git clone https://github.com/reem90/octomap.git
+$ cd semantic_based_exploration/
 $ git submodule update --init --recursive
-$ cd /octomap
+$ cd .. 
+$ cd octomap/
 $ mkdir build 
 $ cd build 
 $ sudo cmake ..
@@ -26,7 +28,6 @@ Then build all
 ```
 $ cd 
 $ cd catkin_ws/
-$ sudo rm -rf build_isolated/ devel_isolated/
 $ catkin config -DCMAKE_BUILD_TYPE=Release
 $ catkin build
 ```
@@ -49,7 +50,7 @@ $ sudo cmake ..
 $ sudo make install 
 $ cd 
 $ cd catkin_ws/
-$ sudo rm -rf build_isolated/ devel_isolated/
+$ sudo rm -rf build/ devel/
 $ catkin config -DCMAKE_BUILD_TYPE=Release
 $ catkin build
 ```
