@@ -752,20 +752,31 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                 // rp.position.z = vec[2] ;
                 // FOVPoints_.push_back(rp);
 
+                // Volumetric Gain 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 // std::cout << "probability" << probability <<  std::endl ;
-
                 double entropy , p ;
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown )
                     p = 0.5 ;
                 else
                     p = probability ;
                 entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
+                
+                // Semantic gain 
+                double semantic_gain, semantic_entropy ; 
+                volumetric_mapping::OctomapManager::CellStatus node2 = manager_->getCellIneterestGainPoint(
+                            vec, &semantic_gain);
+                
+                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
+
+                
+                
+                
                 //gain += abs(entropy);
-                gain = gain + entropy ;
+                gain = gain + entropy + semantic_entropy ;
 
             }
         }
@@ -1199,3 +1210,4 @@ int main(int argc, char **argv)
     expObj.RunStateMachine() ;
     return 0;
 }
+
