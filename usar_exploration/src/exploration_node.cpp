@@ -315,7 +315,7 @@ void ExplorationBase::RunStateMachine()
             std::cout << "In the " << iteration_flag <<"th Iteration" << std::endl << std::flush ;
             double global_gain = 0 ;
             int global_index = 0 ;
-            std::vector<double> gains;
+           // std::vector<double> gains;
 
             // Publish current position;
             // viewpoints.poses.push_back(loc_.pose);
@@ -345,7 +345,7 @@ void ExplorationBase::RunStateMachine()
                 for (int k = 0 ; k< view_points_list.size() ; k++){
                     // ----------------------------- Viewpoints Evaluation ------------------------------
                     double viewpoint_gain  = ExplorationBase::EvaluateViewPoints(view_points_list[k], k) ;
-                    gains.push_back(viewpoint_gain) ;
+                    //gains.push_back(viewpoint_gain) ;
                     // ----------------------------------------------------------------------------------
 
                     // -------------- Visualize the generated view points -------------------------------
@@ -359,12 +359,12 @@ void ExplorationBase::RunStateMachine()
                     viewpoints2.header.stamp = ros::Time::now();
                     sensor_pose_pub_.publish(viewpoints2);
                     // ---------------------------------------------------------------------------------
-                    //std::cout << "The current generated gain added to the list is: " << viewpoint_gain << std::endl ;
-                    //std::cout << "The comparied  gain added to the list is: " << gains[k] << std::endl ;
+                  //  std::cout << "The current generated gain added to the list is: " << viewpoint_gain << std::endl ;
+                   // std::cout << "global_gain before" << global_index  << " " << global_gain << std::endl <<std::flush ;
 
-                    if (gains[k] > global_gain )
+                    if (viewpoint_gain > global_gain )
                     {
-                        global_gain = gains[k];
+                        global_gain = viewpoint_gain;
                         global_index = k;
                     }
                     //std::cout<< "view point orientation " << view_points_list[k].position.x << "  "  <<view_points_list[k].position.y << "  "  <<  view_points_list[k].position.z << std::endl ;
@@ -372,7 +372,7 @@ void ExplorationBase::RunStateMachine()
                     //std::cout << "Gain " << k << " " << gains[k] << std::endl <<std::flush ;
                 }
 
-                //std::cout << "global_gain " << global_index  << " " << global_gain << std::endl <<std::flush ;
+                //std::cout << "global_gain after " << global_index  << " " << global_gain << std::endl <<std::flush ;
                 // change the target pose
                 locationx_ = view_points_list[global_index].position.x ;
                 locationy_ = view_points_list[global_index].position.y ;
@@ -384,27 +384,28 @@ void ExplorationBase::RunStateMachine()
 
                 // ----------------- Visualization ---------------------------
                 information_gain = information_gain + global_gain ;
+                //std::cout << "Information gain " << information_gain <<std::endl ;
                 visualization_msgs::Marker highest_gain_point =  ExplorationBase::MaxGainPose(view_points_list[global_index],iteration_flag) ;
                 max_point_pub_.publish(highest_gain_point) ;
 
                 //**************** logging results ************************************************************************** //
-                double res_map = 0.1 ;
+                double res_map = 0.15 ;
                 Eigen::Vector3d vec;
                 double x , y , z ;
-                int  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
+                double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
                 double pure_entropy_gain = 0 , probability,Entropy =0 ;
-                for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max ; x += res_map) {
-                    for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max  ; y += res_map) {
+                for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max- res_map; x += res_map) {
+                    for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max- res_map ; y += res_map) {
                         // TODO: Check the boundries
                         for (z = params_.env_bbx_z_min; z<= params_.env_bbx_z_max  - res_map; z += res_map) {
-                            vec[0] = x; vec[1] = y ; vec[2] = z ;
                             all_cells_counter++;
+                            vec[0] = x; vec[1] = y ; vec[2] = z ;
                             volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
                             double p = 0.5 ;
                             if (probability != -1)
                             {
                                 p = probability;
-                                // ROS_INFO("probability %f \n", p);
+                               // ROS_INFO("probability %f \n", p);
                             }
                             // TODO: Revise the equation
                             Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
@@ -417,9 +418,10 @@ void ExplorationBase::RunStateMachine()
                 }
                 double theoretical_cells_value = ((params_.env_bbx_x_max - params_.env_bbx_x_min) *(params_.env_bbx_y_max  -params_.env_bbx_y_min) *(params_.env_bbx_z_max - params_.env_bbx_z_min)) /(res_map*res_map*res_map);
                 double knownCells = free_cells_counter+ occupied_cells_counter ;
-                double calculated_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100 ;
+                double calculated_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
+               // std::cout << "Calculated Coverage " << free_cells_counter << "  " << occupied_cells_counter << "  "  << free_cells_counter+occupied_cells_counter << "  " << all_cells_counter << "  "  << (free_cells_counter+occupied_cells_counter)/all_cells_counter << "  " << ((free_cells_counter+occupied_cells_counter)/all_cells_counter) * 100 << std::endl ;
                 double gain_average_entropy = pure_entropy_gain / all_cells_counter ;
-                file_path_ <<  calculated_coverage << "," << pure_entropy_gain<< "," << gain_average_entropy<< "," << information_gain <<","<< free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells<< "," << all_cells_counter << "," <<theoretical_cells_value<< "\n";
+                file_path_ <<  calculated_coverage << "," << pure_entropy_gain<< "," << gain_average_entropy<< "," << information_gain <<","<< free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," <<theoretical_cells_value<< "\n";
                 //***********************************************************************************************************//
             }
             iteration_flag++ ;
@@ -739,6 +741,7 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
 
                     if (inThisFieldOfView) {
                         insideAFieldOfView = true;
+
                         break;
                     }
                 }
@@ -766,26 +769,29 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                 entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
                 
                 // Semantic gain 
-                double semantic_gain, semantic_entropy ; 
-                volumetric_mapping::OctomapManager::CellStatus node2 = manager_->getCellIneterestGainPoint(
-                            vec, &semantic_gain);
-                
-                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-
-                
+                double semantic_entropy ;
+               // volumetric_mapping::OctomapManager::CellStatus node2 = manager_->getCellIneterestGainPoint(
+               //             vec, &semantic_gain);
+                double s_gain = manager_->getCellIneterestGain(vec);
+                semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
                 
                 
+               // std::cout << "entropy" << entropy <<  std::endl ;
+               // std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
+               // std::cout << "gain" << gain <<  std::endl ;
+               // std::flush ;
                 //gain += abs(entropy);
                 gain = gain + entropy + semantic_entropy ;
 
             }
         }
     }
-    // std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
+    std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
     //fov_poses_list =  ExplorationBase::FOVPoses(FOVPoints_, id ) ;
     //evaluated_voxels_pub_.publish(fov_poses_list);
     //range_poses_list =  ExplorationBase::RangePoses(range_points_, id ) ;
     //range_voxels_pub_.publish(range_poses_list);
+    std::cout << "EVALUATE FUNCTION GAIN is " << gain << std::endl ;
     return gain;
 }
 

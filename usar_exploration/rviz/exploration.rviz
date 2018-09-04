@@ -85,7 +85,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -102,7 +102,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -142,13 +142,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: false
+      Enabled: true
       Marker Topic: /exploration_node/octomap_occupied
       Name: Octomap_occupied marer array
       Namespaces:
-        {}
+        map: true
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /fov
@@ -158,14 +158,14 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: octomap_rviz_plugin/OccupancyGrid
-      Enabled: true
+      Enabled: false
       Max. Height Display: 3.40282347e+38
       Max. Octree Depth: 16
       Min. Height Display: -3.40282347e+38
       Name: OccupancyGrid
       Octomap Topic: /exploration_node/octomap_full
       Queue Size: 5
-      Value: true
+      Value: false
       Voxel Alpha: 1
       Voxel Coloring: Z-Axis
       Voxel Rendering: Occupied Voxels
@@ -182,7 +182,7 @@ Visualization Manager:
       Marker Topic: /accepted_Poses
       Name: "Accepted poses "
       Namespaces:
-        {}
+        marker: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -190,7 +190,7 @@ Visualization Manager:
       Marker Topic: /regected_Poses
       Name: Regected poses
       Namespaces:
-        {}
+        marker: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -267,7 +267,7 @@ Visualization Manager:
       Marker Topic: /PATH
       Name: Path
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
