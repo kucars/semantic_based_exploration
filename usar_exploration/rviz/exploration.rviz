@@ -4,6 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
+        - /Status1
         - /TF1/Frames1
         - /OccupancyGrid1
         - /Marker1
@@ -142,13 +144,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /exploration_node/octomap_occupied
       Name: Octomap_occupied marer array
       Namespaces:
-        map: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /fov
@@ -178,29 +180,29 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /accepted_Poses
       Name: "Accepted poses "
-      Namespaces:
-        marker: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /regected_Poses
-      Name: Regected poses
-      Namespaces:
-        marker: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /maxGainPoint
-      Name: maxGainPose
       Namespaces:
         {}
       Queue Size: 100
       Value: false
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /regected_Poses
+      Name: Regected poses
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /maxGainPoint
+      Name: maxGainPose
+      Namespaces:
+        marker: true
+      Queue Size: 100
+      Value: true
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.100000001
@@ -222,7 +224,7 @@ Visualization Manager:
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
       Color: 255; 170; 255
-      Enabled: true
+      Enabled: false
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
       Name: PoseArray
@@ -231,7 +233,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /sensor_pose
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -310,7 +312,7 @@ Visualization Manager:
       Value: false
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
+    Background Color: 255; 255; 255
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -333,25 +335,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 28.297039
+      Distance: 16.1592426
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 13.1496534
-        Y: 1.99521422
-        Z: -2.72378683
+        X: 0.00857994705
+        Y: -0.0448710248
+        Z: 1.77002764
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.00979733
+      Pitch: 1.56979632
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.67667723
+      Yaw: 3.14349914
     Saved: ~
 Window Geometry:
   Displays:

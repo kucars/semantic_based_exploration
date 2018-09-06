@@ -60,6 +60,11 @@ using namespace octomap;
 bool pointcloud_recieved_sub_Flag = false ;
 double pure_entropy_gain = 0;
 visualization_msgs::Marker line_strip ;
+double traveled_distance = 0 ;
+double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
+{
+    return sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );
+}
 
 struct CamParams
 {
@@ -289,8 +294,8 @@ void ExplorationBase::RunStateMachine()
 
     while (ros::ok())
     {
-        exploration_area_pub_.publish(area_marker_);
 
+        exploration_area_pub_.publish(area_marker_);
         // Broadcast the TF of the camera location
         transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
         tf::Quaternion tf_q ;
@@ -339,7 +344,8 @@ void ExplorationBase::RunStateMachine()
             }
             else
             {
-                ROS_INFO("Points Evaluation");
+
+                //ROS_INFO("Points Evaluation");
                 geometry_msgs::PoseArray viewpoints2;
 
                 for (int k = 0 ; k< view_points_list.size() ; k++){
@@ -383,17 +389,22 @@ void ExplorationBase::RunStateMachine()
                 m.getRPY(roll, pitch, yaw_);
 
                 // ----------------- Visualization ---------------------------
-                information_gain = information_gain + global_gain ;
+
                 //std::cout << "Information gain " << information_gain <<std::endl ;
                 visualization_msgs::Marker highest_gain_point =  ExplorationBase::MaxGainPose(view_points_list[global_index],iteration_flag) ;
                 max_point_pub_.publish(highest_gain_point) ;
 
                 //**************** logging results ************************************************************************** //
+                double distance = calculateDistance(loc_.pose,view_points_list[global_index]);
+                traveled_distance +=  distance ;
+                information_gain = information_gain + global_gain ;
                 double res_map = 0.15 ;
                 Eigen::Vector3d vec;
                 double x , y , z ;
                 double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
-                double pure_entropy_gain = 0 , probability,Entropy =0 ;
+                double information_gain_entropy = 0 , probability,Entropy =0 ;
+                double semantic_entropy_gain = 0 , semantic_entropy =0 ;
+                double totalGain = 0 ;
                 for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max- res_map; x += res_map) {
                     for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max- res_map ; y += res_map) {
                         // TODO: Check the boundries
@@ -409,7 +420,14 @@ void ExplorationBase::RunStateMachine()
                             }
                             // TODO: Revise the equation
                             Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                            pure_entropy_gain = pure_entropy_gain + Entropy ;
+                            information_gain_entropy +=  + Entropy ;
+
+
+                            double s_gain = manager_->getCellIneterestGain(vec);
+                            semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+                            semantic_entropy_gain += semantic_entropy ;
+                            totalGain += (information_gain_entropy + semantic_entropy_gain) ;
+
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
@@ -418,10 +436,10 @@ void ExplorationBase::RunStateMachine()
                 }
                 double theoretical_cells_value = ((params_.env_bbx_x_max - params_.env_bbx_x_min) *(params_.env_bbx_y_max  -params_.env_bbx_y_min) *(params_.env_bbx_z_max - params_.env_bbx_z_min)) /(res_map*res_map*res_map);
                 double knownCells = free_cells_counter+ occupied_cells_counter ;
-                double calculated_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
+                double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
                // std::cout << "Calculated Coverage " << free_cells_counter << "  " << occupied_cells_counter << "  "  << free_cells_counter+occupied_cells_counter << "  " << all_cells_counter << "  "  << (free_cells_counter+occupied_cells_counter)/all_cells_counter << "  " << ((free_cells_counter+occupied_cells_counter)/all_cells_counter) * 100 << std::endl ;
-                double gain_average_entropy = pure_entropy_gain / all_cells_counter ;
-                file_path_ <<  calculated_coverage << "," << pure_entropy_gain<< "," << gain_average_entropy<< "," << information_gain <<","<< free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," <<theoretical_cells_value<< "\n";
+               // double gain_average_entropy = pure_entropy_gain / all_cells_counter ;
+                file_path_ <<  volumetric_coverage << "," << information_gain_entropy<< "," << semantic_entropy_gain<< "," << totalGain << "," << free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," << traveled_distance<< "\n";
                 //***********************************************************************************************************//
             }
             iteration_flag++ ;
@@ -645,7 +663,7 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
         return false;
     }
     if (!IsSafe(p)){
-        ROS_INFO("rejected by Safety" );
+       // ROS_INFO("rejected by Safety" );
         return false;
     }
 
@@ -655,7 +673,7 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
     }
 
     if (IsCollide(p)){
-        ROS_INFO("rejected by collision" );
+       // ROS_INFO("rejected by collision" );
         return false;
     }
 
@@ -781,17 +799,19 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                // std::cout << "gain" << gain <<  std::endl ;
                // std::flush ;
                 //gain += abs(entropy);
+                //gain += entropy ;
+                 //gain+=semantic_entropy ;
                 gain = gain + entropy + semantic_entropy ;
 
             }
         }
     }
-    std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
+   // std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
     //fov_poses_list =  ExplorationBase::FOVPoses(FOVPoints_, id ) ;
     //evaluated_voxels_pub_.publish(fov_poses_list);
     //range_poses_list =  ExplorationBase::RangePoses(range_points_, id ) ;
     //range_voxels_pub_.publish(range_poses_list);
-    std::cout << "EVALUATE FUNCTION GAIN is " << gain << std::endl ;
+    //std::cout << "EVALUATE FUNCTION GAIN is " << gain << std::endl ;
     return gain;
 }
 

@@ -35,7 +35,7 @@
 /exploration_node/exp/gain/range: 1
 
 #Termination
-/exploration_node/exp/ter/num_iteration: 1000
+/exploration_node/exp/ter/num_iteration: 500
 
 # Environment Related Paramters 
 # bounding box: necessary to limit the simulation 
