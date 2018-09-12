@@ -66,10 +66,10 @@ int main(int argc, char **argv)
 
     // Publishers and subscribers
     ros::Publisher original_cloud_pub                 = n.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 100);
-    ros::Publisher current_view_converted_cloud_pub   = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 40); // subscribed from volumetric mapping pkg, converted means the point cloud are on the sensor frame
+    ros::Publisher current_view_converted_cloud_pub   = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 1); // subscribed from volumetric mapping pkg, converted means the point cloud are on the sensor frame
     ros::Publisher current_view_cloud_pub             =  n.advertise<sensor_msgs::PointCloud2>("current_view_pointcloud", 40); // point cloud in the word frame used for visualization
     ros::Publisher accumulated_cloud_Pub              = n.advertise<sensor_msgs::PointCloud2>("accumulated_pointcloud", 100); // in world frame
-    ros::Subscriber current_pose_sub                  = n.subscribe("current_pose", 1, CurrentPoseCallback);
+    ros::Subscriber current_pose_sub                  = n.subscribe("current_pose", 40, CurrentPoseCallback);
 
     // PointCloud and sensor msgs defenitions
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
