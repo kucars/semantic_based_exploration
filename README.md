@@ -64,5 +64,7 @@ rosrun rviz rviz
 ```
 
 # RUN
- 
-
+```
+roslaunch usar_exploration exploration.launch 
+rosrun usar_exploration current_view_extraction
+```
