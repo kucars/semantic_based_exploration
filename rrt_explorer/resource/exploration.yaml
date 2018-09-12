@@ -1,0 +1,61 @@
+system/v_max: 0.2
+system/dyaw_max: 0.75
+system/camera/pitch: [15.0]
+system/camera/horizontal: [58.0]
+system/camera/vertical: [45.0]
+system/bbx/x: 0.3
+system/bbx/y: 0.3
+system/bbx/z: 0.3
+system/bbx/overshoot: 0.5 # becasue I am not using a real drone 
+
+nbvp/gain/free: 0.0
+nbvp/gain/occupied: 0.0
+nbvp/gain/unmapped: 1.0
+nbvp/gain/area: 0.0
+nbvp/gain/probabilistic: 0.0
+nbvp/gain/range: 0.5 # step size 
+nbvp/gain/zero: 0.0
+nbvp/gain/degressive_coeff: 0.5
+nbvp/tree/extension_range: 1.0
+nbvp/tree/exact_root: false
+nbvp/tree/initial_iterations: 5
+nbvp/tree/cuttoff_iterations: 200
+nbvp/dt: 0.1
+
+nbvp/log/throttle: 0.25 # ?? 
+nbvp/log/on: true
+
+# bounding box: necessary to limit the simulation 
+# scenario (smaller than actual gazebo scenario)
+bbx/minX: -12.0
+bbx/minY: -12.0
+bbx/minZ: -0.0
+bbx/maxX: 12.0
+bbx/maxY: 12.0
+bbx/maxZ: 3.0
+bbx/softBounds: false
+# Exploration Area for the manual Generated Area (CAD)
+bbx/minX: -5.2
+bbx/maxX: 5.2
+bbx/minY: -4
+bbx/maxY: 4
+bbx/minZ: 0.0
+bbx/maxZ: 3.5
+bbx/softBounds: false
+
+pcl_throttle: 0.5 # when to accept the next topic 
+inspection_throttle: 0.5
+
+
+
+#Mavros related settings
+/uav_1/mavros/local_position/frame_id: world           #(string, default: fcu) frame_id for message.
+/uav_1/mavros/local_position/tf/send: true             #(bool, default: true)
+/uav_1/mavros/local_position/tf/frame_id: world        #(string, default: local_origin) Origin frame_id for TF.
+/uav_1/mavros/local_position/tf/child_frame_id: fcu    #(string, default: fcu) Child frame_id for TF.
+
+# Planning Methods
+# Classic 1
+# Density 2
+# RRT     3
+/planMethod: 1

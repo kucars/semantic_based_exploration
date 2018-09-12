@@ -1,0 +1,5 @@
+/exploration_planner_node_old/log/on: true
+/exploration_planner_node_old/init/pose/x: 4
+/exploration_planner_node_old/init/pose/y: -2
+/exploration_planner_node_old/init/pose/z: 2
+/exploration_planner_node_old/init/pose/yaw: 3.14

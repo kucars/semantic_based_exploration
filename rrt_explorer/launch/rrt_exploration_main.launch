@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- MAVROS posix SITL environment launch script -->
+    <arg name="headless" default="false"/>
+    <arg name="gui" default="true"/>
+    <arg name="debug" default="false"/>
+    <arg name="paused" default="false"/> 
+    <arg name="verbose" default="false"/>
+    <arg name="pluginlists_yaml" default="$(find mavros)/launch/px4_pluginlists.yaml" />
+    <arg name="config_yaml" default="$(find mavros)/launch/px4_config.yaml" />
+    <arg name="screen" default="screen"/>
+    <arg name="ns" default="uav_1"/>
+    <arg name="log_file" default="$(arg ns)"/>
+    <arg name="gazebo_arg" default=""/>
+    <arg name="world" default="$(find kuri_usar_sim)/gazebo_models/world/SimpleWorlWithObjects.world"/>
+    <arg name="mav_name" default="uav_1" />
+    <arg name="enable_logging" default="false" />
+    <arg name="enable_ground_truth" default="true" />
+
+    <!-- UAV 1 - IRIS 1 -->
+    <arg name="x" value="2"/>
+    <arg name="y" value="0"/>
+    <arg name="z" default="0.2"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" value="0"/>
+    <arg name="est" default="lpe"/>
+    <arg name="sdf" default="$(find kuri_usar_sim)/models/iris_kinect/iris_kinect.sdf"/>
+    <!--arg name="sdf" default="$(find kuri_usar_sim)/urdf/iris/iris_with_sensors.sdf"/-->
+    <!--arg name="sdf" default="$(find mavlink_sitl_gazebo)/models/$(arg vehicle)/$(arg vehicle).sdf"/-->
+    <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
+    <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+
+
+    <node pkg="tf" type="static_transform_publisher" name="tf_001" args="0 0 0 0 0 0  map world 10" />
+    <node pkg="tf" type="static_transform_publisher" name="tf_002" args="0 0 0.07 1.57 3.14 1.57  fcu kinect1_depth_optical_frame 10" />
+
+    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+        <arg name="R" value="$(arg R)"/>
+        <arg name="P" value="$(arg P)"/>
+        <arg name="Y" value="$(arg Y)"/>
+        <arg name="world" value="$(arg world)"/>
+        <arg name="vehicle" value="$(arg mav_name)"/>
+        <arg name="sdf" value="$(arg sdf)"/>
+        <arg name="rcS" value="$(arg rcS)"/>
+        <arg name="headless" value="$(arg headless)"/>
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="ns" value="$(arg ns)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="fcu_url" value="$(arg fcu_url)"/>
+        <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)" />
+        <arg name="config_yaml" value="$(arg config_yaml)" />
+    </include>
+
+    <arg name="subscript" default="" />
+    <arg name="param_file" default="$(find rrt_explorer)/resource/exploration.yaml" />
+    <arg name="tf_frame" default="world" />
+    <arg name="pcl_topic" default="/front_camera/depth/points" />
+    <arg name="stl_file_path" default="" />
+    <arg name="mesh_resolution" default="1.0" />
+    <arg name="resolution" default="0.3" />
+    <arg name="visualize_max_z" default="2.5" />
+    <arg name="sensor_max_range" default="9.0" />
+
+    <group ns="$(arg mav_name)$(arg subscript)">
+      <node name="rrt_planner_deep" pkg="rrt_explorer" type="rrt_planner_deep" output="screen">
+        <param name="tf_frame" type="string" value="$(arg tf_frame)" />
+        <param name="resolution" type="double" value="$(arg resolution)" />
+        <param name="visualize_max_z" type="double" value="$(arg visualize_max_z)" />
+        <param name="sensor_max_range" type="double" value="$(arg sensor_max_range)" />
+        <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
+        <param name="mesh_resolution" type="double" value="$(arg mesh_resolution)" />
+        <param name="map_publish_frequency" type="double" value="1.0" />
+        <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
+        <remap from="poseStamped" to="/$(arg mav_name)/mavros/local_position/pose"/>
+        <remap from="rrt_explorer" to="/$(arg mav_name)$(arg subscript)/rrt_explorer"/>
+        <rosparam command="load" file="$(arg param_file)" />
+      </node>
+
+      <!-- No need for the transform broadcaster: Mavros is doing this, check exploration.yaml -->
+      <!--node name="transform_broadcaster" pkg="rrt_explorer" type="transform_broadcaster.py" output="$(arg screen)"/-->
+
+      <!-- DroneCommander  -->
+      <node name="droneCommander" pkg="rrt_explorer" type="drone_commander" output="$(arg screen)" />
+
+      <node name="rrt_navigator_px4_deep" pkg="rrt_explorer" type="rrt_navigator_px4_deep" output="screen" >
+        <rosparam command="load" file="$(arg param_file)"/>
+      </node>
+    </group>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find rrt_explorer)/rviz/rrt_planner.rviz"/>
+
+</launch>
