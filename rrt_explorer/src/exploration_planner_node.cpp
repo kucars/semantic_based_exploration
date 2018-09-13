@@ -191,7 +191,8 @@ void ExplorationPlanner::RunStateMachine()
         current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
         
 
-          for (int i = 0 ; i < 25 ; i++ )
+
+        for (int i = 0 ; i < 30 ; i++ )
         {
         transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
         tf::Quaternion tf_q ;

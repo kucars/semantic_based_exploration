@@ -25,7 +25,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
   posStampedClient_            = nh_.subscribe("current_pose",     10, &rrtNBV::RRTPlanner::posStampedCallback, this);
   odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
   plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
-  pointcloud_sub_           	 = nh_.subscribe("pointcloud", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+  pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
   pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
   pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
   params_.transfromedPoseDebug = nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 1000);
@@ -220,13 +220,13 @@ void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::
 {
   //std::cout<<"FAME IS:"<<pointcloud->header.frame_id<<"\n";
   //ROS_INFO("Received PointCloud");
-  static double last = ros::Time::now().toSec();
-  if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
-  {
+  //static double last = ros::Time::now().toSec();
+  //if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
+ // {
     //ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
     rrtTree->insertPointcloudWithTf(pointcloud);
-    last += params_.pcl_throttle_;
-  }
+  //  last += params_.pcl_throttle_;
+ // }
 }
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)

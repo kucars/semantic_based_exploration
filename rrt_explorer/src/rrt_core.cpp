@@ -188,6 +188,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
   ROS_INFO("pose callback");
   static tf::TransformListener listener;
   tf::StampedTransform transform;
+  std::cout<<"pose.header.frame_id  " << pose.header.frame_id << std::endl << std::flush; 
   try {
     listener.lookupTransform(params_.navigationFrame_, pose.header.frame_id, pose.header.stamp,
                              transform);
@@ -395,7 +396,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     solutionFound = true;
   }
 
-  std::cout << "NewState  "  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl << std::flush ; 
+  std::cout << "NewState  1 "  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl << std::flush ; 
   // Find nearest neighbour
   kdres * nearest = kd_nearest3(kdTree_, newState.x(), newState.y(), newState.z());
   if (kd_res_size(nearest) <= 0)
@@ -411,7 +412,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
   // Check for collision of new connection plus some overshoot distance.
   Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
-  std::cout << "origin  "  <<origin[0] << "   " <<origin[1] << "   " <<origin[2]  << std::endl << std::flush; 
+  std::cout << "origin 2 "  <<origin[0] << "   " <<origin[1] << "   " <<origin[2]  << std::endl << std::flush; 
 
   Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
       newState[2] - origin[2]);
@@ -425,25 +426,27 @@ bool rrtNBV::RrtTree::iterate(int iterations)
   newState[0] = origin[0] + direction[0];
   newState[1] = origin[1] + direction[1];
   newState[2] = origin[2] + direction[2];
-    std::cout << "NewState  "  <<newState[0] << "   " <<newState[1] << "   " <<newState[2]  << std::endl << std::flush ; 
+    std::cout << "NewState  3"  <<newState[0] << "   " <<newState[1] << "   " <<newState[2]  << std::endl << std::flush ; 
 
   volumetric_mapping::OctomapManager::CellStatus cellStatus;
   cellStatus = manager_->getLineStatusBoundingBox(
         origin, direction + origin + direction.normalized() * params_.dOvershoot_,
         params_.boundingBox_);
   ROS_INFO("params_.boundingBox_ %f    %f    %f  ",params_.boundingBox_[0], params_.boundingBox_[1], params_.boundingBox_[2]);
-    ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
+  ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
     
 
-  if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree);// || cellStatus == volumetric_mapping::OctomapManager::CellStatus::kUnknown)
+  if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree)// || cellStatus == volumetric_mapping::OctomapManager::CellStatus::kUnknown)
   {
-    ROS_INFO("   - Ray is Free");
     if(cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree)
     {
       ROS_INFO("   - Ray is Free");
     }
     else
-      ROS_INFO("   - Ray is Unknown");
+    {
+      ROS_INFO("   - Ray is Unknown - here");
+    }
+    
     // Sample the new orientation
     newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5);
     // Create new node and insert into tree
@@ -458,7 +461,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
     kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
    
-    std::cout << "NewState 3 "  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl ; 
+    std::cout << "NewState 4"  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl ; 
     // Display new node
     publishNode(newNode);
     std::cout << "newNode->gain_"  << newNode->gain_ << " bestGain_  " <<bestGain_ << std::endl ; 

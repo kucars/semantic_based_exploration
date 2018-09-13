@@ -1,39 +1,47 @@
-system/v_max: 0.2
-system/dyaw_max: 0.75
+# System Related Parameters
+system/v_max: 0.25
+system/dyaw_max: 0.5
 system/camera/pitch: [15.0]
 system/camera/horizontal: [58.0]
 system/camera/vertical: [45.0]
 system/bbx/x: 0.3
 system/bbx/y: 0.3
 system/bbx/z: 0.3
-system/bbx/overshoot: 0.5 # becasue I am not using a real drone 
+system/bbx/overshoot: 0.3
 
+# Gain Computation Parameters
 nbvp/gain/free: 0.0
 nbvp/gain/occupied: 0.0
 nbvp/gain/unmapped: 1.0
 nbvp/gain/area: 0.0
 nbvp/gain/probabilistic: 0.0
-nbvp/gain/range: 0.5 # step size 
+nbvp/gain/range: 1 # Maximum distance of volumes to be considered for the gain computation (double, default: 1.0) 
 nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
+inspection_throttle: 0.5
+
+
+# Path Planning Parameters
 nbvp/tree/extension_range: 1.0
-nbvp/tree/exact_root: false
 nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
+nbvp/tree/exact_root: false
 nbvp/dt: 0.1
 
+# Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
 # bounding box: necessary to limit the simulation 
 # scenario (smaller than actual gazebo scenario)
-bbx/minX: -12.0
-bbx/minY: -12.0
-bbx/minZ: -0.0
-bbx/maxX: 12.0
-bbx/maxY: 12.0
-bbx/maxZ: 3.0
-bbx/softBounds: false
+# Scenario Parameters
+#bbx/minX: -12.0
+#bbx/minY: -12.0
+#bbx/minZ: -0.0
+#bbx/maxX: 12.0
+#bbx/maxY: 12.0
+#bbx/maxZ: 3.0
+#bbx/softBounds: false
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -5.2
 bbx/maxX: 5.2
@@ -43,8 +51,24 @@ bbx/minZ: 0.0
 bbx/maxZ: 3.5
 bbx/softBounds: false
 
+
+
+#Occupancy Map Parameters
+tf_frame: "world"
+robot_frame: "base_point_cloud"
+resolution: 0.2
+visualize_max_z: 5.0
+sensor_max_range: 3.0
+map_publish_frequency: 0.08 # it was 100
+probability_hit: 0.7
+probability_miss: 0.4
+threshold_min: 0.12
+threshold_max: 0.97
+threshold_occupancy: 0.7
+treat_unknown_as_occupied: false
+filter_speckles: true
+latch_topics: false
 pcl_throttle: 0.5 # when to accept the next topic 
-inspection_throttle: 0.5
 
 
 
