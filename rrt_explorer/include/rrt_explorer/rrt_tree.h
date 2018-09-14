@@ -64,6 +64,7 @@ struct Params
 
   ros::Publisher inspectionPath_;
   ros::Publisher sampledPoints_;
+  ros::Publisher explorationarea_;
 
   ros::Publisher transfromedPoseDebug;
   ros::Publisher rootNodeDebug;
@@ -121,6 +122,7 @@ class TreeBase
   virtual void clear() = 0;
   virtual std::vector<geometry_msgs::Pose> getPathBackToPrevious(std::string targetFrame) = 0;
   virtual void memorizeBestBranch() = 0;
+ 
 
   //virtual void initializeDeep() =0 ;
   //virtual  bool iterateDeep(int iterations, double informationGain, int numOfSamples)=0;

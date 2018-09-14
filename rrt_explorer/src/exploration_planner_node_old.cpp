@@ -514,8 +514,6 @@ void ExplorationPlanner::RunStateMachine()
         
         
     geometry_msgs::PoseStamped poseMsg_ ; // ??? 
-
-        
     ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
     rrt_explorer::rrt_srv planSrv;
     planSrv.request.header.stamp = ros::Time::now();
@@ -576,6 +574,10 @@ void ExplorationPlanner::RunStateMachine()
     rate.sleep();
     sleep(2) ;
   }
+    ros::Time endTime = ros::Time::now() ;
+    double elapsed =  endTime.toSec() - startTime.toSec();
+    std::cout<< "The planning Time " << elapsed << std::endl ; 
+
 }
   
   

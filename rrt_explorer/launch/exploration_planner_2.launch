@@ -20,7 +20,6 @@
   <arg name="stl_file_path" default="" />
   <arg name="mesh_resolution" default="1.0" />
  <arg name="treat_unknown_as_occupied" default="false" />
-    <arg name="octomap_manager_params_file" default="$(find usar_exploration)/resources/octomap_manager_params.yaml"/>
 
     <node name="rrt_planner" pkg="rrt_explorer" type="rrt_planner" output="screen">
       <param name="tf_frame" type="string" value="$(arg tf_frame)" />
@@ -36,7 +35,6 @@
       <!--remap from="pose" to="/$(arg mav_name)$(arg subscript)/mavros/local_position/pose"/-->
       <remap from="rrt_explorer" to="/rrt_explorer"/>
       <rosparam command="load" file="$(arg param_file)" />
-      <rosparam command="load" file="$(arg octomap_manager_params_file)" />
 
     </node>
 

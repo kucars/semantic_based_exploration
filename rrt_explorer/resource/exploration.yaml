@@ -4,9 +4,9 @@ system/dyaw_max: 0.5
 system/camera/pitch: [15.0]
 system/camera/horizontal: [58.0]
 system/camera/vertical: [45.0]
-system/bbx/x: 0.3
-system/bbx/y: 0.3
-system/bbx/z: 0.3
+system/bbx/x: 0.1
+system/bbx/y: 0.1
+system/bbx/z: 0.1
 system/bbx/overshoot: 0.3
 
 # Gain Computation Parameters
@@ -23,7 +23,7 @@ inspection_throttle: 0.5
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1.0
-nbvp/tree/initial_iterations: 5
+nbvp/tree/initial_iterations: 1
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1

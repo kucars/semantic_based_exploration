@@ -30,6 +30,8 @@ public:
   void setHandlers(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
   bool setParams();
   rrtNBV::Params getParams();
+  void MaxGainPose(geometry_msgs::Pose p , int id);
+
 protected:
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
@@ -45,7 +47,12 @@ protected:
   rrtNBV::RrtTree *rrtTree;
   bool ready_;
   rrtNBV::Params params_;
-  std::string logFilePathGain_;
+  std::string logFilePathName_;
+  std::ofstream file_path_;
+visualization_msgs::Marker line_strip ;
+    ros::Publisher marker_pub_;
+
+  
 };
 }
 #endif // RRT_PLANNER_H

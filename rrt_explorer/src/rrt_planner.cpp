@@ -10,6 +10,22 @@
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <eigen3/Eigen/Dense>
 #include <fstream>
+#include <iostream>
+
+double traveled_distance = 0 ;
+double information_gain =0; 
+bool FirstPoseCalled=true;
+geometry_msgs::Pose prePose;
+int iterationNum = 0 ; 
+double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
+{
+    std::cout << " F:1 " << p1.position.x << " " << p2.position.x << std::endl; 
+    std::cout << " F:2 " << p1.position.y << " " << p2.position.y << std::endl; 
+    std::cout << " F:3 " << p1.position.z << " " << p2.position.z << std::endl; 
+     std::cout << sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );;
+
+    return sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );
+}
 using namespace std;
 
 using namespace Eigen;
@@ -21,6 +37,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
 
   // Set up the topics and services
   params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 1000);
+  params_.explorationarea_       = nh_.advertise<visualization_msgs::Marker>("explorationarea", 1000);
   posClient_  			           = nh_.subscribe("pose",     10, &rrtNBV::RRTPlanner::posCallback, this);
   posStampedClient_            = nh_.subscribe("current_pose",     10, &rrtNBV::RRTPlanner::posStampedCallback, this);
   odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
@@ -30,9 +47,27 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
   pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
   params_.transfromedPoseDebug = nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 1000);
   params_.rootNodeDebug        = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 1000);
-  logFilePathGain_ = ros::package::getPath("rrt_explorer") + "/data/params";
-  system(("mkdir -p " + logFilePathGain_).c_str());
-  logFilePathGain_ += "/";
+  marker_pub_                 =  nh_.advertise<visualization_msgs::Marker>("PATH", 1);
+
+  //logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/params";
+  //system(("mkdir -p " + logFilePathName_).c_str());
+ // logFilePathName_ += "/";
+  
+    // setup logging files
+    if (params_.log_) {
+        time_t rawtime;
+        struct tm * ptm;
+        time(&rawtime);
+        ptm = gmtime(&rawtime);
+        logFilePathName_ = ros::package::getPath("usar_exploration") + "/data/"
+                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
+                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
+                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+        system(("mkdir -p " + logFilePathName_).c_str());
+        logFilePathName_ += "/";
+        file_path_.open((logFilePathName_ + "gains.csv").c_str(), std::ios::out);
+    }
+  
   //debug
   //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
   //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
@@ -116,6 +151,9 @@ rrtNBV::RRTPlanner::~RRTPlanner()
   if (mesh_) {
     delete mesh_;
   }
+  if (file_path_.is_open()) {
+        file_path_.close();
+  }
 }
 
 bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rrt_explorer::rrt_srv::Response& res)
@@ -191,11 +229,128 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
   std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  ;
   rrtTree->memorizeBestBranch();
   ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
+  
+    //**************** logging results ************************************************************************** //
+                //information_gain = information_gain + global_gain ;
+                double res_map = 0.15 ;
+                Eigen::Vector3d vec;
+                double x , y , z ;
+                double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
+                int FreeCouter=0,UnknownCounter = 0 ,  InterestNotVisitedCounter =0 ,InterestVisitedCounter=0,NotInterestCounter=0; 
+                double information_gain_entropy = 0 ,Entropy =0 ;
+                double semantic_gain_entropy = 0 , semantic_entropy =0 ;
+                double totalGain = 0 ;
+                double probability ; 
+                double maxThreshold = 0.5 * std::log(0.5) + ((1-0.5) * std::log(1-0.5));
+
+                for (x = params_.minX_; x <= params_.maxX_- res_map; x += res_map) {
+                    for (y = params_.minY_; y <= params_.maxY_- res_map ; y += res_map) {
+                        // TODO: Check the boundries
+                        for (z = params_.minZ_; z<= params_.maxZ_ - res_map; z += res_map) {
+                             vec[0] = x; vec[1] = y ; vec[2] = z ;
+
+                            // Counting Cell Types 
+                            int cellType= manager_->getCellIneterestCellType(x,y,z) ;
+                            switch(cellType){
+                                case 0:
+                                    FreeCouter++;
+                                    break; 
+                                case 1: 
+                                    UnknownCounter++;
+                                    break; 
+                                case 2 : 
+                                    InterestNotVisitedCounter++;
+                                    break; 
+                                case 3: 
+                                    InterestVisitedCounter++;
+                                    break ; 
+                                case 4: 
+                                    NotInterestCounter++;
+                                    break ; 
+                            }
+            
+                            all_cells_counter++;
+                            
+                            // calculate information_gain
+                            volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
+                            double p = 0.5 ;
+                            if (probability != -1)
+                            {
+                                p = probability;
+                               // ROS_INFO("probability %f \n", p);
+                            }
+
+                            // TODO: Revise the equation
+                            Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
+                            Entropy = Entropy / maxThreshold ; 
+                            information_gain_entropy += Entropy ;
+
+                            // Calculate semantic_gain
+                            double semantic_gain  = manager_->getCellIneterestGain(vec);
+                            semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
+                            semantic_entropy = semantic_entropy /maxThreshold ; 
+                            semantic_gain_entropy += semantic_entropy ;
+                            
+                            totalGain += (information_gain_entropy + semantic_gain_entropy) ;
+
+                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
+                            if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
+                            if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
+
+                        }
+                    }
+                }
+                
+              
+                double theoretical_cells_value = ((params_.maxX_ - params_.minX_) *(params_.maxY_  -params_.minY_) *(params_.maxZ_ - params_.minZ_)) /(res_map*res_map*res_map);
+                double knownCells = free_cells_counter+ occupied_cells_counter ;
+                double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
+                iterationNum++;
+                file_path_ <<  iterationNum << "," <<
+                                volumetric_coverage << "," << 
+                                information_gain_entropy << "," <<
+                                semantic_gain_entropy << "," << 
+                                totalGain << "," << 
+                                free_cells_counter << "," << 
+                                occupied_cells_counter <<"," <<
+                                unKnown_cells_counter  << "," <<
+                                knownCells << "," <<
+                                all_cells_counter << "," <<
+                                traveled_distance<< "," <<
+                                FreeCouter << "," <<
+                                UnknownCounter << "," <<
+                                InterestNotVisitedCounter << ","<<
+                                InterestVisitedCounter << "," <<
+                                NotInterestCounter << ",";
+                file_path_ << res.path[0].position.x << ",";
+                file_path_ << res.path[0].position.y << ",";
+                file_path_ << res.path[0].position.z<< ",";
+                file_path_ << res.path[0].orientation.x<< ",";
+                file_path_ << res.path[0].orientation.y<< ",";
+                file_path_ << res.path[0].orientation.z<< ",";
+                file_path_ << res.path[0].orientation.w << "\n";
+                
+                //***********************************************************************************************************//
+
   return true;
 }
 
 void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& pose)
 {
+    ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
+
+    if (FirstPoseCalled)
+    {
+        FirstPoseCalled = false ; 
+        prePose = pose.pose ; 
+        return ; 
+    }
+    else
+    {
+        traveled_distance+=calculateDistance(prePose,pose.pose);
+        prePose = pose.pose ; 
+        ROS_INFO ("Traveled Distance " , traveled_distance) ;
+    }
   //std::cout<<"FRAME IS:"<<pose.header.frame_id<<"\n";
   rrtTree->setStateFromPoseStampedMsg(pose);
   // Planner is now ready to plan.
@@ -442,4 +597,27 @@ bool rrtNBV::RRTPlanner::setParams()
              (ns + "/nbvp/tree/exact_root").c_str());
   }
   return ret;
+}
+
+void rrtNBV::RRTPlanner::MaxGainPose(geometry_msgs::Pose p , int id)
+{
+    line_strip.header.frame_id = "world";
+    line_strip.header.stamp = ros::Time::now();
+    line_strip.ns = "points_and_lines";
+    line_strip.id = id;
+    line_strip.action =  visualization_msgs::Marker::ADD;
+    line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    geometry_msgs::Point p1;
+    p1.x = p.position.x;
+    p1.y = p.position.y;
+    p1.z = p.position.z;
+    line_strip.points.push_back(p1);
+    line_strip.pose.orientation.w =  1.0;
+    line_strip.scale.x = 0.05;
+    line_strip.color.a = 1;
+    line_strip.color.g = 1;
+    line_strip.lifetime  = ros::Duration();
+
+    marker_pub_.publish(line_strip);
+
 }

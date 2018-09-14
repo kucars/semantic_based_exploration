@@ -904,7 +904,7 @@ void rrtNBV::RrtTree::initializeDeep()
   p.color.a = 0.1;
   p.lifetime = ros::Duration(0.0);
   p.frame_locked = false;
-  params_.inspectionPath_.publish(p);
+  params_.explorationarea_.publish(p);
 
   // Create The Root Node with is the current location of the robot
   // root_ variable is assigned from the position callbak function
@@ -1096,6 +1096,8 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
     history_.push(current->parent_->state_);
     exact_root_ = current->state_;
   }
+  
+
   return ret;
 }
 
@@ -1175,19 +1177,23 @@ double rrtNBV::RrtTree::gain(StateVec state)
               vec, &probability);
         
                 
+        double maxThreshold = 0.5 * std::log(0.5) + ((1-0.5) * std::log(1-0.5));
 
         //*************** Pure Entropy ***************************** //
-        //double entropy;
-        //entropy= probability * std::log(probability) + ((1-probability) * std::log(1-probability));
+        double entropy;
+        entropy= probability * std::log(probability) + ((1-probability) * std::log(1-probability));
+        entropy= entropy/maxThreshold ; 
         //gain += abs(entropy);
 
         // ************** Semantic gain ************************* // 
                                
          // Semantic gain 
-          //double semantic_entropy ;
-          //double s_gain = manager_->getCellIneterestGain(vec);
-          //semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-          //gain = gain + entropy + semantic_entropy ;
+          double semantic_entropy ;
+          double s_gain = manager_->getCellIneterestGain(vec);
+          semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+          semantic_entropy = semantic_entropy/maxThreshold ; 
+          
+          gain = gain + entropy + semantic_entropy ;
             //gain += abs(entropy);
             //gain += entropy ;
             //gain+=semantic_entropy ;
@@ -1198,7 +1204,7 @@ double rrtNBV::RrtTree::gain(StateVec state)
                 
 
         //*************** RRT IG *********************************** //
-        if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+       /* if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
           // Rayshooting to evaluate inspectability of cell
           if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
               != this->manager_->getVisibility(origin, vec, false)) {
@@ -1222,7 +1228,10 @@ double rrtNBV::RrtTree::gain(StateVec state)
             // TODO: Add probabilistic gain
             // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
           }
+          
+          
         }
+        */
 
       }
     }
