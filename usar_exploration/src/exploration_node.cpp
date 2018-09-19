@@ -401,10 +401,13 @@ void ExplorationBase::RunStateMachine()
                 double res_map = 0.15 ;
                 Eigen::Vector3d vec;
                 double x , y , z ;
+                double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
+
                 double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
                 double information_gain_entropy = 0 , probability,Entropy =0 ;
                 double semantic_entropy_gain = 0 , semantic_entropy =0 ;
                 double totalGain = 0 ;
+                int FreeCouter=0,UnknownCounter = 0 ,  InterestNotVisitedCounter =0 ,InterestVisitedCounter=0,NotInterestCounter=0; 
                 for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max- res_map; x += res_map) {
                     for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max- res_map ; y += res_map) {
                         // TODO: Check the boundries
@@ -412,6 +415,26 @@ void ExplorationBase::RunStateMachine()
                             all_cells_counter++;
                             vec[0] = x; vec[1] = y ; vec[2] = z ;
                             volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
+                                                        // Counting Cell Types 
+                            int cellType= manager_->getCellIneterestCellType(x,y,z) ;
+                            switch(cellType){
+                                case 0:
+                                    FreeCouter++;
+                                    break; 
+                                case 1: 
+                                    UnknownCounter++;
+                                    break; 
+                                case 2 : 
+                                    InterestNotVisitedCounter++;
+                                    break; 
+                                case 3: 
+                                    InterestVisitedCounter++;
+                                    break ; 
+                                case 4: 
+                                    NotInterestCounter++;
+                                    break ; 
+                            }
+                            
                             double p = 0.5 ;
                             if (probability != -1)
                             {
@@ -420,12 +443,15 @@ void ExplorationBase::RunStateMachine()
                             }
                             // TODO: Revise the equation
                             Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
+                            Entropy = Entropy/maxTher ; 
                             information_gain_entropy +=  + Entropy ;
 
 
                             double s_gain = manager_->getCellIneterestGain(vec);
                             semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+                            semantic_entropy = semantic_entropy/maxTher ; 
                             semantic_entropy_gain += semantic_entropy ;
+                            
                             totalGain += (information_gain_entropy + semantic_entropy_gain) ;
 
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
@@ -439,7 +465,7 @@ void ExplorationBase::RunStateMachine()
                 double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
                // std::cout << "Calculated Coverage " << free_cells_counter << "  " << occupied_cells_counter << "  "  << free_cells_counter+occupied_cells_counter << "  " << all_cells_counter << "  "  << (free_cells_counter+occupied_cells_counter)/all_cells_counter << "  " << ((free_cells_counter+occupied_cells_counter)/all_cells_counter) * 100 << std::endl ;
                // double gain_average_entropy = pure_entropy_gain / all_cells_counter ;
-                file_path_ <<  volumetric_coverage << "," << information_gain_entropy<< "," << semantic_entropy_gain<< "," << totalGain << "," << free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," << traveled_distance<< "\n";
+                file_path_ <<  volumetric_coverage << "," << information_gain_entropy<< "," << semantic_entropy_gain<< "," << totalGain << "," << free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," << traveled_distance<<  ","<< FreeCouter << "," <<  UnknownCounter << "," << InterestNotVisitedCounter << ","<< InterestVisitedCounter << "," <<                              NotInterestCounter <<","<<locationx_ << "," << locationy_ << "," << locationz_ << "," << yaw_<< "\n";
                 //***********************************************************************************************************//
             }
             iteration_flag++ ;
@@ -542,11 +568,11 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int 
     std::vector<geometry_msgs::Pose> initial_poses;
     double extension_range = 0.5 ;
 
-    int num_of_viewpoints= 100 ;
+    int num_of_viewpoints= 215 ;
     double radius = sqrt(
                 SQ(params_.env_bbx_x_min - params_.env_bbx_x_max) + SQ(params_.env_bbx_y_min - params_.env_bbx_y_max)
                 + SQ(params_.env_bbx_z_min - params_.env_bbx_z_max));
-
+    std::srand(time(NULL));
     for (int it = 0 ; it < num_of_viewpoints ; it++)
     {
 
@@ -775,6 +801,8 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
 
                 // Volumetric Gain 
                 // Check cell status and add to the gain considering the corresponding factor.
+                double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
+
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
@@ -785,6 +813,7 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                 else
                     p = probability ;
                 entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
+                entropy = entropy/maxTher ;
                 
                 // Semantic gain 
                 double semantic_entropy ;
@@ -792,16 +821,16 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                //             vec, &semantic_gain);
                 double s_gain = manager_->getCellIneterestGain(vec);
                 semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-                
+                semantic_entropy = semantic_entropy/maxTher ; 
                 
                // std::cout << "entropy" << entropy <<  std::endl ;
                // std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
                // std::cout << "gain" << gain <<  std::endl ;
                // std::flush ;
                 //gain += abs(entropy);
-                //gain += entropy ;
-                 //gain+=semantic_entropy ;
-                gain = gain + entropy + semantic_entropy ;
+                gain += entropy ;
+                // gain+=semantic_entropy ;
+                //gain = gain + entropy + semantic_entropy ;
 
             }
         }

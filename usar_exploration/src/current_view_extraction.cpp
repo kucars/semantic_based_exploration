@@ -86,8 +86,9 @@ int main(int argc, char **argv)
 
     // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
+    ROS_INFO("Loading File");
     pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/house_colored4.pcd", *originalCloud); // for visualization
-
+    ROS_INFO("Done"); 
     OcclusionCulling occlusionCulling(n,"house_colored4.pcd");
 
     //Publish the original map once
@@ -102,6 +103,7 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
+        
         listener.waitForTransform("/base_point_cloud", "/world", ros::Time(0), ros::Duration(0.1));
         try{
             listener.lookupTransform("/base_point_cloud", "/world",ros::Time(0), transform);

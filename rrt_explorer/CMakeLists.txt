@@ -18,7 +18,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
-find_package(octomap REQUIRED)
+
+#find_package(octomap REQUIRED)
+include("/usr/local/share/octomap/octomap-config.cmake")
 
 add_service_files(
   FILES

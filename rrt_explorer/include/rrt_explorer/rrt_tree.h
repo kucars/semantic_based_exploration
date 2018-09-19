@@ -80,7 +80,10 @@ struct Params
   double log_throttle_;
   double pcl_throttle_;
   double inspection_throttle_;
-
+  
+  
+  std::string output_file_name_ ; 
+  int utility_mathod_ ; 
 };
 
 class Node

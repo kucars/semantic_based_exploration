@@ -506,12 +506,7 @@ void ExplorationPlanner::RunStateMachine()
         loc_.header.frame_id="world";
         loc_.header.stamp=ros::Time::now();
         current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        
-        
-        
-        
-        
-        
+
         
     geometry_msgs::PoseStamped poseMsg_ ; // ??? 
     ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
@@ -579,12 +574,6 @@ void ExplorationPlanner::RunStateMachine()
     std::cout<< "The planning Time " << elapsed << std::endl ; 
 
 }
-  
-  
-  
-
- 
-
 
 bool ExplorationPlanner::SetParams()
 {

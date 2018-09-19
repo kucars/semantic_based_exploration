@@ -1,5 +1,5 @@
 # System Related Parameters
-system/v_max: 0.25
+system/v_max: 0.5
 system/dyaw_max: 0.5
 system/camera/pitch: [15.0]
 system/camera/horizontal: [58.0]
@@ -7,7 +7,7 @@ system/camera/vertical: [45.0]
 system/bbx/x: 0.1
 system/bbx/y: 0.1
 system/bbx/z: 0.1
-system/bbx/overshoot: 0.3
+system/bbx/overshoot: 0.0
 
 # Gain Computation Parameters
 nbvp/gain/free: 0.0
@@ -23,7 +23,7 @@ inspection_throttle: 0.5
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1.0
-nbvp/tree/initial_iterations: 1
+nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
@@ -56,7 +56,7 @@ bbx/softBounds: false
 #Occupancy Map Parameters
 tf_frame: "world"
 robot_frame: "base_point_cloud"
-resolution: 0.2
+resolution: 0.15
 visualize_max_z: 5.0
 sensor_max_range: 3.0
 map_publish_frequency: 0.08 # it was 100
@@ -82,4 +82,17 @@ pcl_throttle: 0.5 # when to accept the next topic
 # Classic 1
 # Density 2
 # RRT     3
-/planMethod: 1
+/utility/method: 1
+/output/file/name: "1.csv"
+
+
+#/utility/method: 2
+#/output/file/name: "2.csv"
+
+
+#/utility/method: 3
+#/output/file/name: "3.csv"
+
+
+#/utility/method: 4
+#/output/file/name: "4.csv"

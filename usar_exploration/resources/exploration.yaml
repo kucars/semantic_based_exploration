@@ -4,13 +4,15 @@
 # initial position param
 #exploration_node/init/pose/x: -5
 #/exploration_node/init/pose/y: 39
-#/exploration_node/init/pose/z: 1.2
+#/exploration_node/init/pose/z: 1.209
 #/exploration_node/init/pose/yaw: 3.14
 
 /exploration_node/init/pose/x: 4
 /exploration_node/init/pose/y: 2
 /exploration_node/init/pose/z: 2
 /exploration_node/init/pose/yaw: 0
+
+#4 2 2 0 
 # Camera Params
 /exploration_node/camera/pitch: [15.0]
 /exploration_node/camera/horizontal: [58.0]
@@ -35,7 +37,7 @@
 /exploration_node/exp/gain/range: 1
 
 #Termination
-/exploration_node/exp/ter/num_iteration: 500
+/exploration_node/exp/ter/num_iteration: 1000
 
 # Environment Related Paramters 
 # bounding box: necessary to limit the simulation 

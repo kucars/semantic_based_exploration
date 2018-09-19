@@ -185,7 +185,7 @@ void rrtNBV::RrtTree::setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianc
 void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStamped& pose)
 {
   // Get latest transform to the planning frame and transform the pose
-  ROS_INFO("pose callback");
+  //ROS_INFO("pose callback");
   static tf::TransformListener listener;
   tf::StampedTransform transform;
   std::cout<<"pose.header.frame_id  " << pose.header.frame_id << std::endl << std::flush; 
@@ -208,6 +208,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
   root_[2] = position.z();
   root_[3] = tf::getYaw(quat);
 
+  // debugiing 
   geometry_msgs::PoseStamped poseMsg;
   poseMsg.header.stamp       = ros::Time::now();
   poseMsg.header.frame_id    = params_.navigationFrame_;
@@ -233,6 +234,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
       fileResponse_ << root_[root_.size() - 1] << "\n";
     }
   }
+  
   // Update the inspected parts of the mesh using the current position
   if (ros::Time::now().toSec() - inspectionThrottleTime_[0] > params_.inspection_throttle_) {
     inspectionThrottleTime_[0] += params_.inspection_throttle_;
@@ -355,7 +357,7 @@ void rrtNBV::RrtTree::setStateFromOdometryMsg(const nav_msgs::Odometry& pose)
 
 bool rrtNBV::RrtTree::iterate(int iterations)
 {
-      ROS_INFO("iterate callback");
+  //    ROS_INFO("iterate callback");
 
   // In this function a new configuration is sampled and added to the tree.
   StateVec newState;
@@ -396,23 +398,23 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     solutionFound = true;
   }
 
-  std::cout << "NewState  1 "  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl << std::flush ; 
+  //std::cout << "NewState  1 "  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl << std::flush ; 
   // Find nearest neighbour
   kdres * nearest = kd_nearest3(kdTree_, newState.x(), newState.y(), newState.z());
   if (kd_res_size(nearest) <= 0)
   {
-      ROS_ERROR("IN") ; 
+    //  ROS_ERROR("IN") ; 
     kd_res_free(nearest);
     return false;
   }
-        ROS_ERROR("OUT") ; 
+    // ROS_ERROR("OUT") ; 
 
   rrtNBV::Node * newParent = (rrtNBV::Node*) kd_res_item_data(nearest);
   kd_res_free(nearest);
 
   // Check for collision of new connection plus some overshoot distance.
   Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
-  std::cout << "origin 2 "  <<origin[0] << "   " <<origin[1] << "   " <<origin[2]  << std::endl << std::flush; 
+  // std::cout << "origin 2 "  <<origin[0] << "   " <<origin[1] << "   " <<origin[2]  << std::endl << std::flush; 
 
   Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
       newState[2] - origin[2]);
@@ -426,14 +428,14 @@ bool rrtNBV::RrtTree::iterate(int iterations)
   newState[0] = origin[0] + direction[0];
   newState[1] = origin[1] + direction[1];
   newState[2] = origin[2] + direction[2];
-    std::cout << "NewState  3"  <<newState[0] << "   " <<newState[1] << "   " <<newState[2]  << std::endl << std::flush ; 
+ //   std::cout << "NewState  3"  <<newState[0] << "   " <<newState[1] << "   " <<newState[2]  << std::endl << std::flush ; 
 
   volumetric_mapping::OctomapManager::CellStatus cellStatus;
   cellStatus = manager_->getLineStatusBoundingBox(
         origin, direction + origin + direction.normalized() * params_.dOvershoot_,
         params_.boundingBox_);
-  ROS_INFO("params_.boundingBox_ %f    %f    %f  ",params_.boundingBox_[0], params_.boundingBox_[1], params_.boundingBox_[2]);
-  ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
+ // ROS_INFO("params_.boundingBox_ %f    %f    %f  ",params_.boundingBox_[0], params_.boundingBox_[1], params_.boundingBox_[2]);
+ // ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
     
 
   if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree)// || cellStatus == volumetric_mapping::OctomapManager::CellStatus::kUnknown)
@@ -456,15 +458,16 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     newNode->distance_ = newParent->distance_ + direction.norm();
     newParent->children_.push_back(newNode);
     //gain with distance
-    newNode->gain_ = newParent->gain_+ gain(newNode->state_) * exp(-params_.degressiveCoeff_ * newNode->distance_);
-    ROS_INFO("GAIN IS:%f",newNode->gain_);
+    if (iterations == 1)
+    newNode->gain_ = newParent->gain_ + gain(newNode->state_) * exp(-params_.degressiveCoeff_ * newNode->distance_);
+    //ROS_INFO("GAIN IS:%f",newNode->gain_);
 
     kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
    
-    std::cout << "NewState 4"  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl ; 
+    //std::cout << "NewState 4"  <<newState.x() << "   " <<newState.y() << "   " <<newState.z()  << std::endl ; 
     // Display new node
     publishNode(newNode);
-    std::cout << "newNode->gain_"  << newNode->gain_ << " bestGain_  " <<bestGain_ << std::endl ; 
+    //std::cout << "newNode->gain_"  << newNode->gain_ << " bestGain_  " <<bestGain_ << std::endl ; 
 
     // Update best IG and node if applicable
     if (newNode->gain_ > bestGain_)
@@ -472,11 +475,11 @@ bool rrtNBV::RrtTree::iterate(int iterations)
       bestGain_ = newNode->gain_;
       bestNode_ = newNode;
     }
-    
-    ROS_INFO("bestGain_ IS:%f",bestGain_);
-
     counter_++;
     return true;
+    //ROS_INFO("bestGain_ IS:%f",bestGain_);
+
+
   }
   return false;
 }
@@ -1182,22 +1185,23 @@ double rrtNBV::RrtTree::gain(StateVec state)
         //*************** Pure Entropy ***************************** //
         double entropy;
         entropy= probability * std::log(probability) + ((1-probability) * std::log(1-probability));
-        entropy= entropy/maxThreshold ; 
+        //entropy= entropy/maxThreshold ; 
         //gain += abs(entropy);
 
         // ************** Semantic gain ************************* // 
                                
-         // Semantic gain 
+         // Semantic gain    
+        double s_gain = manager_->getCellIneterestGain(vec);
+
           double semantic_entropy ;
-          double s_gain = manager_->getCellIneterestGain(vec);
           semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-          semantic_entropy = semantic_entropy/maxThreshold ; 
+          //semantic_entropy = semantic_entropy/maxThreshold ; 
           
-          gain = gain + entropy + semantic_entropy ;
             //gain += abs(entropy);
             //gain += entropy ;
             //gain+=semantic_entropy ;
                     
+          gain = gain + entropy + semantic_entropy ;
 
          //std::cout << "entropy" << entropy <<  std::endl ;
          //std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
@@ -1232,13 +1236,14 @@ double rrtNBV::RrtTree::gain(StateVec state)
           
         }
         */
+        
 
       }
     }
   }
 
   // Scale with volume
-  gain *= pow(disc, 3.0);
+  //gain *= pow(disc, 3.0);
   // Check the gain added by inspectable surface
   if (mesh_) {
     // ROS_INFO("****gain added by inspectable surface*****");
@@ -1350,7 +1355,7 @@ void rrtNBV::RrtTree::publishNode(Node * node)
   p.frame_locked = false;
   params_.inspectionPath_.publish(p);
 
-  /*if (params_.log_) {
+  if (params_.log_) {
     for (int i = 0; i < node->state_.size(); i++) {
       fileTree_ << node->state_[i] << ",";
     }
@@ -1359,7 +1364,7 @@ void rrtNBV::RrtTree::publishNode(Node * node)
       fileTree_ << node->parent_->state_[i] << ",";
     }
     fileTree_ << node->parent_->gain_ << "\n";
-  }*/
+  }
 
 }
 

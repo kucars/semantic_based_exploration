@@ -12,23 +12,22 @@
 #include <fstream>
 #include <iostream>
 
+
+using namespace std;
+using namespace Eigen;
+
+// Global variables 
 double traveled_distance = 0 ;
 double information_gain =0; 
 bool FirstPoseCalled=true;
 geometry_msgs::Pose prePose;
-int iterationNum = 0 ; 
+int iteration_num = 0 ;
+
 double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
 {
-    std::cout << " F:1 " << p1.position.x << " " << p2.position.x << std::endl; 
-    std::cout << " F:2 " << p1.position.y << " " << p2.position.y << std::endl; 
-    std::cout << " F:3 " << p1.position.z << " " << p2.position.z << std::endl; 
-     std::cout << sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );;
-
     return sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );
 }
-using namespace std;
 
-using namespace Eigen;
 rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private)
   : nh_(nh),
     nh_private_(nh_private)
@@ -36,18 +35,20 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
   manager_ = new volumetric_mapping::OctomapManager(nh, nh_private);
 
   // Set up the topics and services
-  params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 1000);
-  params_.explorationarea_       = nh_.advertise<visualization_msgs::Marker>("explorationarea", 1000);
-  posClient_  			           = nh_.subscribe("pose",     10, &rrtNBV::RRTPlanner::posCallback, this);
-  posStampedClient_            = nh_.subscribe("current_pose",     10, &rrtNBV::RRTPlanner::posStampedCallback, this);
+  params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
+  params_.explorationarea_       = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
+  params_.transfromedPoseDebug   = nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
+  params_.rootNodeDebug          = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 100);
+  marker_pub_                    = nh_.advertise<visualization_msgs::Marker>("path", 1);
+  
+  posClient_  			 = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
+  posStampedClient_              = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
   odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-  plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
   pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
   pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
   pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
-  params_.transfromedPoseDebug = nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 1000);
-  params_.rootNodeDebug        = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 1000);
-  marker_pub_                 =  nh_.advertise<visualization_msgs::Marker>("PATH", 1);
+
+  plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
 
   //logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/params";
   //system(("mkdir -p " + logFilePathName_).c_str());
@@ -59,13 +60,37 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
         struct tm * ptm;
         time(&rawtime);
         ptm = gmtime(&rawtime);
-        logFilePathName_ = ros::package::getPath("usar_exploration") + "/data/"
+        logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/"
                 + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
                 + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
                 + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + logFilePathName_).c_str());
         logFilePathName_ += "/";
-        file_path_.open((logFilePathName_ + "gains.csv").c_str(), std::ios::out);
+        file_path_.open((logFilePathName_ + params_.output_file_name_).c_str(), std::ios::out);
+        file_path_ <<  "iteration_num"              << "," <<
+                       "volumetric_coverage"        << "," << 
+                       "information_gain_entropy"   << "," <<
+                       "semantic_gain_entropy"      << "," << 
+                       "total_gain"                 << "," << 
+                       "free_cells_counter"         << "," << 
+                       "occupied_cells_counter"     << "," <<
+                       "unknown_cells_counter"      << "," <<
+                       "known_cells_counter"        << "," <<
+                       "all_cells_counter"          << "," <<
+                       "traveled_distance"          << "," <<
+                       "free_type_counter"          << "," <<
+                       "unknown_type_count"         << "," <<
+                       "occ_intr_not_vis_type_count"<< "," <<
+                       "occ_intr_vis_type_count"    << "," <<
+                       "occ_not_intr_type_count"    << "," <<
+                       "position.x"                 << "," << 
+                       "position.y"                 << "," << 
+                       "position.z"                 << "," <<
+                       "orientation.x"              << "," <<
+                       "orientation.y"              << "," <<
+                       "orientation.z"              << "," <<
+                       "orientation.w"              << "\n";    
+        
     }
   
   //debug
@@ -105,6 +130,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     // I added the sleep here to make a time difference between the creation of the publisher and publishing function
     //sleep(10) ;
   }
+  
   std::string ns = ros::this_node::getName();
   std::string stlPath = "";
   mesh_ = NULL;
@@ -134,6 +160,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
       }
     }
   }
+  
   ROS_INFO("********************* The topic name is:%s",posStampedClient_.getTopic().c_str());
   ROS_INFO("********************* The Pointcloud topic name is:%s",pointcloud_sub_.getTopic().c_str());
   // Initialize the tree instance.
@@ -200,7 +227,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
       res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
       return true;
     }
-    rrtTree->iterate(1);
+    rrtTree->iterate(params_.utility_mathod_);
     loopCount++;
   }
   /*
@@ -222,26 +249,25 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
     ROS_INFO ("DONE ITERATE");
   }
   */
-    ROS_INFO ("OUT OF WHILE LOOP ");
 
   // Extract the best edge.
   res.path = rrtTree->getBestEdge(req.header.frame_id);
   std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  ;
   rrtTree->memorizeBestBranch();
   ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
-  
+  ros::Time tic_log = ros::Time::now();
     //**************** logging results ************************************************************************** //
                 //information_gain = information_gain + global_gain ;
-                double res_map = 0.15 ;
+                double res_map = manager_->getResolution() ;
                 Eigen::Vector3d vec;
                 double x , y , z ;
-                double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
-                int FreeCouter=0,UnknownCounter = 0 ,  InterestNotVisitedCounter =0 ,InterestVisitedCounter=0,NotInterestCounter=0; 
-                double information_gain_entropy = 0 ,Entropy =0 ;
+                double  all_cells_counter =0 , free_cells_counter =0 ,unknown_cells_counter = 0 ,occupied_cells_counter =0 ;
+                int free_type_counter=0,unknown_type_count = 0, occ_intr_not_vis_type_count =0 ,occ_intr_vis_type_count=0, occ_not_intr_type_count=0; 
+                double information_gain_entropy = 0 ,occupancy_entropy =0 ;
                 double semantic_gain_entropy = 0 , semantic_entropy =0 ;
-                double totalGain = 0 ;
+                double total_gain = 0 ;
                 double probability ; 
-                double maxThreshold = 0.5 * std::log(0.5) + ((1-0.5) * std::log(1-0.5));
+                double maxThreshold = - 0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
 
                 for (x = params_.minX_; x <= params_.maxX_- res_map; x += res_map) {
                     for (y = params_.minY_; y <= params_.maxY_- res_map ; y += res_map) {
@@ -253,19 +279,19 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
                             int cellType= manager_->getCellIneterestCellType(x,y,z) ;
                             switch(cellType){
                                 case 0:
-                                    FreeCouter++;
+                                    free_type_counter++;
                                     break; 
                                 case 1: 
-                                    UnknownCounter++;
+                                    unknown_type_count++;
                                     break; 
                                 case 2 : 
-                                    InterestNotVisitedCounter++;
+                                    occ_intr_not_vis_type_count++;
                                     break; 
                                 case 3: 
-                                    InterestVisitedCounter++;
+                                    occ_intr_vis_type_count++;
                                     break ; 
                                 case 4: 
-                                    NotInterestCounter++;
+                                    occ_not_intr_type_count++;
                                     break ; 
                             }
             
@@ -281,19 +307,19 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
                             }
 
                             // TODO: Revise the equation
-                            Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                            Entropy = Entropy / maxThreshold ; 
-                            information_gain_entropy += Entropy ;
+                            occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
+                            //occupancy_entropy = occupancy_entropy / maxThreshold ; 
+                            information_gain_entropy += occupancy_entropy ;
 
                             // Calculate semantic_gain
                             double semantic_gain  = manager_->getCellIneterestGain(vec);
                             semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-                            semantic_entropy = semantic_entropy /maxThreshold ; 
+                            //semantic_entropy = semantic_entropy /maxThreshold ; 
                             semantic_gain_entropy += semantic_entropy ;
                             
-                            totalGain += (information_gain_entropy + semantic_gain_entropy) ;
+                            total_gain += (information_gain_entropy + semantic_gain_entropy) ;
 
-                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
+                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
 
@@ -303,25 +329,25 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
                 
               
                 double theoretical_cells_value = ((params_.maxX_ - params_.minX_) *(params_.maxY_  -params_.minY_) *(params_.maxZ_ - params_.minZ_)) /(res_map*res_map*res_map);
-                double knownCells = free_cells_counter+ occupied_cells_counter ;
+                double known_cells_counter = free_cells_counter+ occupied_cells_counter ;
                 double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
-                iterationNum++;
-                file_path_ <<  iterationNum << "," <<
+                iteration_num++;
+                file_path_ <<  iteration_num << "," <<
                                 volumetric_coverage << "," << 
                                 information_gain_entropy << "," <<
                                 semantic_gain_entropy << "," << 
-                                totalGain << "," << 
+                                total_gain << "," << 
                                 free_cells_counter << "," << 
                                 occupied_cells_counter <<"," <<
-                                unKnown_cells_counter  << "," <<
-                                knownCells << "," <<
+                                unknown_cells_counter  << "," <<
+                                known_cells_counter << "," <<
                                 all_cells_counter << "," <<
                                 traveled_distance<< "," <<
-                                FreeCouter << "," <<
-                                UnknownCounter << "," <<
-                                InterestNotVisitedCounter << ","<<
-                                InterestVisitedCounter << "," <<
-                                NotInterestCounter << ",";
+                                free_type_counter << "," <<
+                                unknown_type_count << "," <<
+                                occ_intr_not_vis_type_count << ","<<
+                                occ_intr_vis_type_count << "," <<
+                                occ_not_intr_type_count << ",";
                 file_path_ << res.path[0].position.x << ",";
                 file_path_ << res.path[0].position.y << ",";
                 file_path_ << res.path[0].position.z<< ",";
@@ -329,6 +355,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
                 file_path_ << res.path[0].orientation.y<< ",";
                 file_path_ << res.path[0].orientation.z<< ",";
                 file_path_ << res.path[0].orientation.w << "\n";
+                ros::Time toc_log = ros::Time::now();
+                std::cout<<"\logging Filter took:"<< toc_log.toSec() - tic_log.toSec() << std::endl << std::flush;
                 
                 //***********************************************************************************************************//
 
@@ -596,6 +624,18 @@ bool rrtNBV::RRTPlanner::setParams()
     ROS_WARN("No option for exact root selection specified. Looking for %s. Default is true.",
              (ns + "/nbvp/tree/exact_root").c_str());
   }
+  params_.output_file_name_ = "gains.csv";
+  if (!ros::param::get(ns + "/output/file/name", params_.output_file_name_)) {
+    ROS_WARN("No option for output file name. Looking for %s. Default is true.",
+             (ns + "/output/file/name").c_str());
+  }
+  
+  params_.utility_mathod_ = 1;
+  if (!ros::param::get(ns + "/utility/method", params_.utility_mathod_)) {
+    ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
+             (ns + "/utility/method").c_str());
+  }
+  
   return ret;
 }
 
