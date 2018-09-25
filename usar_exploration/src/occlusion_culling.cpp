@@ -39,6 +39,7 @@ OcclusionCulling::OcclusionCulling(ros::NodeHandle &n, std::string modelName):
     //FrustumCloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud <pcl::PointXYZRGB>);
     std::string path = ros::package::getPath("usar_exploration");
     pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/"+model, *cloud);
+    std::cout << "DIR: " << path+"/resources/pcd/"+model << std::endl ; 
     voxelRes = 0.5;
     OriginalVoxelsSize=0.0;
     id=0.0;

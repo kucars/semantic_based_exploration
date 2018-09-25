@@ -67,9 +67,9 @@ add_dependencies(rrt_navigator_px4 ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_ge
 
 
 #PX4 Commander
-add_executable(drone_commander src/drone_commander.cpp)
-target_link_libraries(drone_commander ${catkin_LIBRARIES} )
-add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(drone_commander src/drone_commander.cpp)
+#target_link_libraries(drone_commander ${catkin_LIBRARIES} )
+#add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 # New planner, new node file
 add_executable(rrt_planner_deep src/rrt_node_deep.cpp src/mesh_structure.cpp src/rrt_tree.cpp src/rrt_planner_deep.cpp src/information_gain_base.cpp src/information_gain_classic.cpp src/information_gain_point_density.cpp src/information_gain_average_entropy.cpp)

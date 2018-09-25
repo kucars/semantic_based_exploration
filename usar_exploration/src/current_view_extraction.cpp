@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
 
     // Publishers and subscribers
-    ros::Publisher original_cloud_pub                 = n.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 100);
+    ros::Publisher original_cloud_pub                 = n.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 1);
     ros::Publisher current_view_converted_cloud_pub   = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 1); // subscribed from volumetric mapping pkg, converted means the point cloud are on the sensor frame
     ros::Publisher current_view_cloud_pub             =  n.advertise<sensor_msgs::PointCloud2>("current_view_pointcloud", 40); // point cloud in the word frame used for visualization
     ros::Publisher accumulated_cloud_Pub              = n.advertise<sensor_msgs::PointCloud2>("accumulated_pointcloud", 100); // in world frame
@@ -87,15 +87,18 @@ int main(int argc, char **argv)
     // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
     ROS_INFO("Loading File");
-    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/house_colored4.pcd", *originalCloud); // for visualization
+    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/one_closed_room.pcd", *originalCloud); // for visualization
     ROS_INFO("Done"); 
-    OcclusionCulling occlusionCulling(n,"house_colored4.pcd");
+    OcclusionCulling occlusionCulling(n,"one_closed_room.pcd");
 
     //Publish the original map once
     pcl::toROSMsg(*originalCloud, cloud1); //cloud of original
     cloud1.header.stamp = ros::Time::now();
     cloud1.header.frame_id = "world";
     original_cloud_pub.publish(cloud1);
+    //ROS_INFO("SIZE %f" , cloud1.width);
+    //ROS_INFO("SIZE %f" , cloud1.height);
+    //ROS_INFO("SIZE2 %f" , originalCloud->points.size ());
 
     // create listener for the sensor position
     tf::TransformListener listener;
@@ -103,7 +106,8 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-        
+
+
         listener.waitForTransform("/base_point_cloud", "/world", ros::Time(0), ros::Duration(0.1));
         try{
             listener.lookupTransform("/base_point_cloud", "/world",ros::Time(0), transform);
