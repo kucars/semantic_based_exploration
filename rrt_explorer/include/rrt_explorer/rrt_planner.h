@@ -49,10 +49,8 @@ protected:
   rrtNBV::Params params_;
   std::string logFilePathName_;
   std::ofstream file_path_;
-visualization_msgs::Marker line_strip ;
-    ros::Publisher marker_pub_;
-
-  
-};
+  visualization_msgs::Marker line_strip ;
+  ros::Publisher marker_pub_;
+    };
 }
 #endif // RRT_PLANNER_H

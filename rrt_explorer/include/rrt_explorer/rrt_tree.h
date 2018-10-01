@@ -65,9 +65,10 @@ struct Params
   ros::Publisher inspectionPath_;
   ros::Publisher sampledPoints_;
   ros::Publisher explorationarea_;
-
   ros::Publisher transfromedPoseDebug;
   ros::Publisher rootNodeDebug;
+  ros::Publisher sensor_pose_pub_ ; 
+  
   //ros::Publisher camboundries_;
   //ros::Publisher fovHyperplanes;
   std::string navigationFrame_;
@@ -134,6 +135,7 @@ class TreeBase
   int getCounter();
   bool gainFound();
   void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+  double getGain() ; 
 };
 }
 #endif

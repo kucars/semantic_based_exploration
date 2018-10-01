@@ -59,7 +59,7 @@ class RrtTree : public TreeBase
   geometry_msgs::Pose getBestEdgeDeep(std::string targetFrame);
   double gainPureEntropy(StateVec state);
   double gainDinsity(StateVec state, int &dinsity);
-  double getBestGain() ;
+  virtual double getBestGain() ;
 
  protected:
   kdtree * kdTree_;

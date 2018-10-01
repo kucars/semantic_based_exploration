@@ -57,13 +57,14 @@ target_link_libraries(rrt_planner
 add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 #Rotor Simulator
-add_executable(rrt_navigator src/rrt_navigator.cpp)
-target_link_libraries(rrt_navigator ${catkin_LIBRARIES} )
-add_dependencies(rrt_navigator ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(rrt_navigator src/rrt_navigator.cpp)
+#target_link_libraries(rrt_navigator ${catkin_LIBRARIES} )
+#add_dependencies(rrt_navigator ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+
 #PX4 with rrt original service call (returns a path)
-add_executable(rrt_navigator_px4 src/rrt_navigator_px4.cpp)
-target_link_libraries(rrt_navigator_px4 ${catkin_LIBRARIES} )
-add_dependencies(rrt_navigator_px4 ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(rrt_navigator_px4 src/rrt_navigator_px4.cpp)
+#target_link_libraries(rrt_navigator_px4 ${catkin_LIBRARIES} )
+#add_dependencies(rrt_navigator_px4 ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 
 #PX4 Commander
@@ -72,22 +73,22 @@ add_dependencies(rrt_navigator_px4 ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_ge
 #add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 # New planner, new node file
-add_executable(rrt_planner_deep src/rrt_node_deep.cpp src/mesh_structure.cpp src/rrt_tree.cpp src/rrt_planner_deep.cpp src/information_gain_base.cpp src/information_gain_classic.cpp src/information_gain_point_density.cpp src/information_gain_average_entropy.cpp)
-target_link_libraries(rrt_planner_deep
-  ${catkin_LIBRARIES}
-  ${OCTOMAP_LIBRARIES}
-)
-add_dependencies(rrt_planner_deep ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(rrt_planner_deep src/rrt_node_deep.cpp src/mesh_structure.cpp src/rrt_tree.cpp src/rrt_planner_deep.cpp src/information_gain_base.cpp src/information_gain_classic.cpp src/information_gain_point_density.cpp src/information_gain_average_entropy.cpp)
+#target_link_libraries(rrt_planner_deep
+#  ${catkin_LIBRARIES}
+#  ${OCTOMAP_LIBRARIES}
+#)
+#add_dependencies(rrt_planner_deep ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 #PX4 with rrt original service call (returns a point)
-add_executable(rrt_navigator_px4_deep src/rrt_navigator_px4_deep.cpp)
-target_link_libraries(rrt_navigator_px4_deep ${catkin_LIBRARIES} )
-add_dependencies(rrt_navigator_px4_deep ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(rrt_navigator_px4_deep src/rrt_navigator_px4_deep.cpp)
+#target_link_libraries(rrt_navigator_px4_deep ${catkin_LIBRARIES} )
+#add_dependencies(rrt_navigator_px4_deep ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 #PX4 with rrt original service call (returns a point)
-add_executable(exploration_planner_node src/exploration_planner_node.cpp)
-target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
-add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+#add_executable(exploration_planner_node src/exploration_planner_node.cpp)
+#target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
+#add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
 add_executable(exploration_planner_node_old src/exploration_planner_node_old.cpp)
 target_link_libraries(exploration_planner_node_old ${catkin_LIBRARIES} )

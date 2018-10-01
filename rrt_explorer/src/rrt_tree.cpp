@@ -62,6 +62,11 @@ int rrtNBV::TreeBase::getCounter()
   return counter_;
 }
 
+//int rrtNBV::TreeBase::getGain()
+//{
+ // return bestGain_;
+//}
+
 bool rrtNBV::TreeBase::gainFound()
 {
   return bestGain_ > params_.zero_gain_;
