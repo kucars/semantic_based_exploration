@@ -9,7 +9,7 @@
 
 /exploration_node/init/pose/x: 4
 /exploration_node/init/pose/y: 2
-/exploration_node/init/pose/z: 2
+/exploration_node/init/pose/z: 0
 /exploration_node/init/pose/yaw: 0
 
 #4 2 2 0 
@@ -19,9 +19,9 @@
 /exploration_node/camera/vertical: [45.0]
 
 # Robot Params
-/exploration_node/robot/bbx/x: 0.3
-/exploration_node/robot/bbx/y: 0.3
-/exploration_node/robot/bbx/z: 0.3
+/exploration_node/robot/bbx/x: 0.1
+/exploration_node/robot/bbx/y: 0.1
+/exploration_node/robot/bbx/z: 0.1
 /exploration_node/robot/bbx/overshoot: 0.5
 
 # Exploration Algorithm Params 
@@ -37,7 +37,11 @@
 /exploration_node/exp/gain/range: 1
 
 #Termination
-/exploration_node/exp/ter/num_iteration: 1000
+/exploration_node/exp/ter/num_iteration: 100
+
+
+#StepSize 
+/exploration_node/exp/ter/step_size: 1
 
 # Environment Related Paramters 
 # bounding box: necessary to limit the simulation 
@@ -75,6 +79,16 @@
 /exploration_node/env/bbx/minZ: 0.0
 /exploration_node/env/bbx/maxZ: 3.5
 /exploration_node/env/bbx/softBounds: false
+
+# NewArea:  Exploration Area for the manual Generated Area (CAD)
+/exploration_node/env/bbx/minX: -5.2
+/exploration_node/env/bbx/maxX: 5.2
+/exploration_node/env/bbx/minY: -3
+/exploration_node/env/bbx/maxY: 5.2
+/exploration_node/env/bbx/minZ: 0.0
+/exploration_node/env/bbx/maxZ: 3.0
+/exploration_node/env/bbx/softBounds: false
+
 
 #Mavros related settings
 /uav_1/mavros/local_position/frame_id: world           #(string, default: fcu) frame_id for message.

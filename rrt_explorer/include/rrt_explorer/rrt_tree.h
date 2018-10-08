@@ -68,7 +68,7 @@ struct Params
   ros::Publisher transfromedPoseDebug;
   ros::Publisher rootNodeDebug;
   ros::Publisher sensor_pose_pub_ ; 
-  
+  ros::Publisher evaluatedPoints_ ;
   //ros::Publisher camboundries_;
   //ros::Publisher fovHyperplanes;
   std::string navigationFrame_;

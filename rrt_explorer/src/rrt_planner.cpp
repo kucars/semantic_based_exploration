@@ -45,7 +45,7 @@ nh_private_(nh_private)
     marker_pub_                  = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_  	 = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
     params_.sensor_pose_pub_             = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
-    
+    // params_.evaluatedPoints_    = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
     
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
@@ -227,10 +227,13 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
     ROS_INFO("Tree Initilization called");
     // Iterate the tree construction method.
     int loopCount = 0;
+    int k = 1 ; 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
+        ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );  
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
+            
             ROS_INFO("No gain found, shutting down");
             //  ros::shutdown();
             return true;
@@ -242,26 +245,30 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
             return true;
         }
-        rrtTree->iterate(1);
+        int m = rrtTree->iterate(1);
+        
         loopCount++;
+        k++ ;
+        std::cout << "Candidate Number : " << k << std::endl ; 
+        std::cout << "Candidate Gain : " << rrtTree->getBestGain() ; 
     }
     /*
-     *  while(rrtTree->getCounter() < params_.initIterations_)
-     *  {
-     *      std::cout << "rrtTree->getCounter()  " << rrtTree->getCounter()  << "    params_.initIterations_  "  << params_.initIterations_ << std::endl ; 
+     *       ROS_ERROR("%d %d", rrtTree->getCounter() , params_.initIterations_);
      * 
-     *      double x = 1000 * (rrtTree->getCounter() )+ 1 ; 
-     *      std::cout << "loopCount:   " << loopCount << "  1000 * (rrtTree->getCounter() + 1    "  << x << std::endl ; 
+     *       while(rrtTree->getCounter() < params_.initIterations_)
+     *        {
+     *         //ROS_WARN("%d %d", rrtTree->getCounter() , params_.initIterations_);
      * 
-     *    if (loopCount > 1000 * (rrtTree->getCounter() + 1))
-     *    {
-     *      ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
-     *      res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
-     *      return true;
-}
-loopCount++;
+     *         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
+     *         {
+     *           ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
+     *           res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
+     *           return true;
+}      
 rrtTree->iterate(1);
-ROS_INFO ("DONE ITERATE");
+
+loopCount++;
+// ROS_INFO ("DONE ITERATE");
 }
 */
     
@@ -276,7 +283,6 @@ ROS_INFO ("DONE ITERATE");
     
     ros::Time tic_log = ros::Time::now();
     //**************** logging results ************************************************************************** //
-    //information_gain = information_gain + global_gain ;
     double res_map = manager_->getResolution() ;
     Eigen::Vector3d vec;
     double x , y , z ;
@@ -324,16 +330,17 @@ ROS_INFO ("DONE ITERATE");
                     p = probability;
                     // ROS_INFO("probability %f \n", p);
                 }
-
+                
+                
                 // TODO: Revise the equation
                 occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                //occupancy_entropy = occupancy_entropy / maxThreshold ; 
+                occupancy_entropy = occupancy_entropy / maxThreshold ; 
                 information_gain_entropy += occupancy_entropy ;
                 
                 // Calculate semantic_gain
                 double semantic_gain  = manager_->getCellIneterestGain(vec);
                 semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-                //semantic_entropy = semantic_entropy /maxThreshold ; 
+                semantic_entropy = semantic_entropy /maxThreshold ; 
                 semantic_gain_entropy += semantic_entropy ;
                 
                 total_gain += (information_gain_entropy + semantic_gain_entropy) ;
@@ -390,7 +397,7 @@ ROS_INFO ("DONE ITERATE");
 
 void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& pose)
 {
-    ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
+    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
     
     if (FirstPoseCalled)
     {
@@ -402,7 +409,7 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
     {
         traveled_distance+=calculateDistance(prePose,pose.pose);
         prePose = pose.pose ; 
-        ROS_INFO ("Traveled Distance %f" , traveled_distance) ;
+        //ROS_INFO ("Traveled Distance %f" , traveled_distance) ;
     }
     //std::cout<<"FRAME IS:"<<pose.header.frame_id<<"\n";
     rrtTree->setStateFromPoseStampedMsg(pose);
@@ -682,11 +689,7 @@ void rrtNBV::RRTPlanner::MaxGainPose(geometry_msgs::Pose p , int id)
     line_strip.color.a = 1;
     line_strip.color.g = 1;
     line_strip.lifetime  = ros::Duration();
-    
     marker_pub_.publish(line_strip);
-    
-    
-    
     viewpoints2.poses.push_back(p);
     viewpoints2.header.frame_id= "world";
     viewpoints2.header.stamp = ros::Time::now();

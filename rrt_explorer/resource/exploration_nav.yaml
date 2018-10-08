@@ -2,7 +2,7 @@
 /exploration_planner_node_old/init/pose/x: 4
 #-4
 /exploration_planner_node_old/init/pose/y: 2.5
-#-2
+#2.5
 /exploration_planner_node_old/init/pose/z: 0.3
 /exploration_planner_node_old/init/pose/yaw: 0
 

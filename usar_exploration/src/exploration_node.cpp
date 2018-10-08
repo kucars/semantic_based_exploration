@@ -83,7 +83,7 @@ struct Params
     double env_bbx_y_max  ;
     double env_bbx_z_min  ;
     double env_bbx_z_max  ;
-
+    
     // Exploration Algorithm
     int num_of_iteration ;
     double gain_range ;
@@ -92,7 +92,7 @@ struct Params
     double res_y   ;
     double res_z  ;
     double res_yaw ;
-
+    
     // Initial position params
     double init_loc_x ;
     double init_loc_y ;
@@ -102,7 +102,7 @@ struct Params
 };
 
 class ExplorationBase {
-
+    
 protected:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
@@ -112,7 +112,7 @@ protected:
     double locationx_,locationy_,locationz_,yaw_; // current location information (target position)
     geometry_msgs::PoseStamped loc_; // exploration positions
     Eigen::Vector3d collision_bounding_box_;
-
+    
     // for visualization
     geometry_msgs::PoseArray viewpoints;
     visualization_msgs::Marker area_marker_ ;
@@ -120,7 +120,7 @@ protected:
     std::vector<geometry_msgs::Pose> rejected_poses_;
     std::vector<geometry_msgs::Pose> FOVPoints_;
     std::vector<geometry_msgs::Pose> range_points_;
-
+    
     // Publishers and subscribers
     ros::Publisher regected_poses_pub_;
     ros::Publisher generated_poses_pub_;
@@ -132,19 +132,19 @@ protected:
     ros::Publisher sensor_pose_pub_;
     ros::Publisher marker_pub_;
     ros::Publisher marker_text_pub_;
-
+    
     ros::Subscriber occlusion_cloud_sub_;
-
+    
     // logging
     std::string log_file_path_;
     ofstream file_path_;
-
-
+    
+    
 public:
     //ExplorationBase();
     ExplorationBase (const ros::NodeHandle &nh, const ros::NodeHandle &nh_private) ;
     ~ExplorationBase();
-
+    
     //void init() ;
     bool SetParams();
     void InitCameraParams() ;
@@ -157,10 +157,10 @@ public:
     bool IsSafe(geometry_msgs::Pose p) ;
     bool IsCollide(geometry_msgs::Pose p) ;
     double EvaluateViewPoints(geometry_msgs::Pose, int id);
-
+    
     // callback functions
     void OcclusionCloudCallback(sensor_msgs::PointCloud2::ConstPtr msg);
-
+    
     // visualization functions
     visualization_msgs::Marker AcceptedPoses(std::vector<geometry_msgs::Pose> accepted, int id);
     visualization_msgs::Marker RegectedPoses(std::vector<geometry_msgs::Pose> regected, int id) ;
@@ -169,7 +169,7 @@ public:
     visualization_msgs::Marker MaxGainPose(geometry_msgs::Pose p, int id) ;
     visualization_msgs::Marker ExplorationAreaInit() ;
     visualization_msgs::MarkerArray  MarkerPoses(std::vector<geometry_msgs::Pose> a);
-
+    
 };
 
 #endif //
@@ -177,7 +177,7 @@ public:
 ExplorationBase::~ExplorationBase()
 {
     if (manager_) {
-      delete manager_;
+        delete manager_;
     }
     if (file_path_.is_open()) {
         file_path_.close();
@@ -185,14 +185,14 @@ ExplorationBase::~ExplorationBase()
 }
 
 ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private)
-    : nh_(nh),
-      nh_private_(nh_private)
+: nh_(nh),
+nh_private_(nh_private)
 {
     manager_ =  new volumetric_mapping::OctomapManager(nh_, nh_private_);
     // Subscriber
-    occlusion_cloud_sub_   = nh_.subscribe("pointcloud", 40, &ExplorationBase::OcclusionCloudCallback , this);
+    occlusion_cloud_sub_   = nh_.subscribe("pointcloud", 1, &ExplorationBase::OcclusionCloudCallback , this);
     // publishers
-    current_pose_pub_      = nh_.advertise<geometry_msgs::PoseStamped>("current_pose", 40);
+    current_pose_pub_      = nh_.advertise<geometry_msgs::PoseStamped>("current_pose", 10);
     exploration_area_pub_  = nh_.advertise<visualization_msgs::Marker>("explorationArea", 1);
     generated_poses_pub_   = nh_.advertise<visualization_msgs::Marker>("accepted_Poses", 10);
     regected_poses_pub_    = nh_.advertise<visualization_msgs::Marker>("regected_Poses", 10);
@@ -203,15 +203,15 @@ ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandl
     sensor_pose_pub_       = nh_.advertise<geometry_msgs::PoseArray>("sensor_pose", 10);
     marker_text_pub_       = nh_.advertise<visualization_msgs::Marker>("textPose", 1);
     marker_pub_            =  nh_.advertise<visualization_msgs::Marker>("PATH", 1);
-
+    
     if (!ExplorationBase::SetParams())
     {
         ROS_ERROR("Could not start. Parameters missing!");
     }
     ExplorationBase::InitCameraParams();
-
+    
     area_marker_ = ExplorationBase::ExplorationAreaInit() ;
-
+    
     // setup logging files
     if (params_.iflog) {
         time_t rawtime;
@@ -219,14 +219,41 @@ ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandl
         time(&rawtime);
         ptm = gmtime(&rawtime);
         log_file_path_ = ros::package::getPath("usar_exploration") + "/data/"
-                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
-                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
-                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+        + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
+        + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
+        + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + log_file_path_).c_str());
         log_file_path_ += "/";
         file_path_.open((log_file_path_ + "gains.csv").c_str(), std::ios::out);
+        file_path_ <<  
+        "iteration_num"  << "," <<
+        "volumetric_coverage"        << "," << 
+        "information_gain_entropy"   << "," <<
+        "semantic_gain_entropy"      << "," << 
+        "total_gain"                 << "," << 
+        "free_cells_counter"         << "," << 
+        "occupied_cells_counter"     << "," <<
+        "unknown_cells_counter"      << "," <<
+        "known_cells_counter"        << "," <<
+        "all_cells_counter"          << "," <<
+        "traveled_distance"          << "," <<
+        "free_type_counter"          << "," <<
+        "unknown_type_count"         << "," <<
+        "occ_intr_not_vis_type_count"<< "," <<
+        "occ_intr_vis_type_count"    << "," <<
+        "occ_not_intr_type_count"    << "," <<
+        "position.x"                 << "," << 
+        "position.y"                 << "," << 
+        "position.z"                 << "," <<
+        "yaw"                        << "," <<
+        //"orientation.x"              << "," <<
+        //"orientation.y"              << "," <<
+        //"orientation.z"              << "," <<
+        //"orientation.w"              << "," << 
+        "accumulativeGain"           << "\n" ;  
+        //"rrt_gain"                   << "\n"; 
     }
-
+    
 }
 
 void ExplorationBase::InitCameraParams()
@@ -262,15 +289,16 @@ void ExplorationBase::InitCameraParams()
 void ExplorationBase::RunStateMachine()
 {
     // read initial position from param file
-    locationx_ =params_.init_loc_x ;
+    locationx_ = params_.init_loc_x ;
     locationy_ = params_.init_loc_y;
     locationz_ = params_.init_loc_z;
     yaw_       = params_.init_loc_yaw  ;
     ROS_INFO("initial Position %f , %f , %f , %f", locationx_ ,locationy_,locationz_ ,yaw_);
-
+    
     int iteration_flag = 0 ;
     ros::Rate loop_rate(10);
-    double information_gain = 0;
+    double accumulative_gain = 0 ;
+    int iteration_num = 0 ; 
 
     //    *************read positions from txt file ****************
     //    // only add the start position
@@ -287,14 +315,14 @@ void ExplorationBase::RunStateMachine()
     //        fclose(file1);
     //    }
     // ***************************************************************
-
+    
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
     tf::Transform transform;
-
+    int initial_map_generation = 1 ; 
     while (ros::ok())
     {
-
+        
         exploration_area_pub_.publish(area_marker_);
         // Broadcast the TF of the camera location
         transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
@@ -312,27 +340,346 @@ void ExplorationBase::RunStateMachine()
         loc_.header.frame_id="world";
         loc_.header.stamp=ros::Time::now();
         current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+        
 
-        if (!ExplorationBase::IterationTerminate(iteration_flag) && pointcloud_recieved_sub_Flag ) {
-        //  if (!ExplorationBase::IterationTerminate(iteration_flag) && !feof(file1) && pointcloud_recieved_sub_Flag  ) {
-        //  fscanf(file1,"%lf %lf %lf %lf\n",&locationx_,&locationy_,&locationz_,&yaw_);
+        if (initial_map_generation ) 
+        {
+            initial_map_generation = 0 ; 
+             for (int i = 0 ; i < 5 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationz_ = locationz_ + 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+             for (int i = 0 ; i < 5 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationz_ = locationz_ + 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+              for (int i = 0 ; i < 5 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationz_ = locationz_ + 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }  
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+              for (int i = 0 ; i < 5 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationx_ = locationx_ + 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }  
+                for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
 
-            std::cout << "In the " << iteration_flag <<"th Iteration" << std::endl << std::flush ;
+                for (int i = 0 ; i < 15 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationx_ = locationx_ - 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+    
+                
+                for (int i = 0 ; i < 15; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationy_ = locationy_ + 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }  
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+  
+                for (int i = 0 ; i < 7 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                locationy_ = locationy_ - 0.1 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }           
+              for (int i = 0 ; i < 40 ; i++ )
+                {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(1);
+                }
+                
+        }
+ 
+    if (!ExplorationBase::IterationTerminate(iteration_flag) && pointcloud_recieved_sub_Flag ) {
+            //  if (!ExplorationBase::IterationTerminate(iteration_flag) && !feof(file1) && pointcloud_recieved_sub_Flag  ) {
+            //  fscanf(file1,"%lf %lf %lf %lf\n",&locationx_,&locationy_,&locationz_,&yaw_);
+            
+            //std::cout << "In the " << iteration_flag <<"th Iteration" << std::endl << std::flush ;
             double global_gain = 0 ;
-            int global_index = 0 ;
-           // std::vector<double> gains;
-
+            int global_index = -1 ;
+            // std::vector<double> gains;
+            
             // Publish current position;
             // viewpoints.poses.push_back(loc_.pose);
             // viewpoints.header.frame_id= "world";
             // viewpoints.header.stamp = ros::Time::now();
             // sensor_pose_pub_.publish(viewpoints);
-
+            
             // ------------------------------------------ Viewpoints Generation------------------------------------
             //std::vector<geometry_msgs::Pose> view_points_list = ExplorationBase::GenerateViewPoints(iteration_flag) ;
             std::vector<geometry_msgs::Pose> view_points_list = ExplorationBase::GenerateViewPointsRandom(iteration_flag) ;
             // ----------------------------------------------------------------------------------------------------
-
+            
             if (view_points_list.size() == 0 ) // stay in the current position TODO: create a counter in case it got stuck
             {
                 ROS_INFO("No Valid Viewpoints");
@@ -344,16 +691,16 @@ void ExplorationBase::RunStateMachine()
             }
             else
             {
-
+                
                 //ROS_INFO("Points Evaluation");
                 geometry_msgs::PoseArray viewpoints2;
-
+                
                 for (int k = 0 ; k< view_points_list.size() ; k++){
                     // ----------------------------- Viewpoints Evaluation ------------------------------
                     double viewpoint_gain  = ExplorationBase::EvaluateViewPoints(view_points_list[k], k) ;
                     //gains.push_back(viewpoint_gain) ;
                     // ----------------------------------------------------------------------------------
-
+                    
                     // -------------- Visualize the generated view points -------------------------------
                     geometry_msgs::PoseStamped locc ;
                     locc.pose.position = view_points_list[k].position;
@@ -365,9 +712,9 @@ void ExplorationBase::RunStateMachine()
                     viewpoints2.header.stamp = ros::Time::now();
                     sensor_pose_pub_.publish(viewpoints2);
                     // ---------------------------------------------------------------------------------
-                  //  std::cout << "The current generated gain added to the list is: " << viewpoint_gain << std::endl ;
-                   // std::cout << "global_gain before" << global_index  << " " << global_gain << std::endl <<std::flush ;
-
+                    std::cout << "The current generated gain added to the list is: " << viewpoint_gain << std::endl ;
+                    // std::cout << "global_gain before" << global_index  << " " << global_gain << std::endl <<std::flush ;
+                    
                     if (viewpoint_gain > global_gain )
                     {
                         global_gain = viewpoint_gain;
@@ -377,8 +724,16 @@ void ExplorationBase::RunStateMachine()
                     //std::cout<< "view point orientation " << view_points_list[k].orientation.x << "  "  <<view_points_list[k].orientation.y << "  "  <<  view_points_list[k].orientation.z << " " << view_points_list[k].orientation.w << std::endl ;
                     //std::cout << "Gain " << k << " " << gains[k] << std::endl <<std::flush ;
                 }
-
-                //std::cout << "global_gain after " << global_index  << " " << global_gain << std::endl <<std::flush ;
+                
+                if(global_index == -1) 
+                {
+                    ROS_INFO("No Valid Viewpoints");
+                    locationx_ = locationx_  ;
+                    locationy_ = locationy_  ;
+                    locationz_ = locationz_  ;
+                    yaw_ = yaw_ ;
+                    continue ; // in order to count only the iteration where the sensor acctually move
+                }
                 // change the target pose
                 locationx_ = view_points_list[global_index].position.x ;
                 locationy_ = view_points_list[global_index].position.y ;
@@ -387,51 +742,58 @@ void ExplorationBase::RunStateMachine()
                 tf::Matrix3x3 m(q);
                 double roll, pitch;
                 m.getRPY(roll, pitch, yaw_);
-
+                
                 // ----------------- Visualization ---------------------------
-
+                
                 //std::cout << "Information gain " << information_gain <<std::endl ;
                 visualization_msgs::Marker highest_gain_point =  ExplorationBase::MaxGainPose(view_points_list[global_index],iteration_flag) ;
                 max_point_pub_.publish(highest_gain_point) ;
-
+                
+                ros::Time tic_log = ros::Time::now();
+                //**************** logging results ************************************************************************** //
+                
+         
+                
+                
                 //**************** logging results ************************************************************************** //
                 double distance = calculateDistance(loc_.pose,view_points_list[global_index]);
                 traveled_distance +=  distance ;
-                information_gain = information_gain + global_gain ;
-                double res_map = 0.15 ;
+                accumulative_gain = accumulative_gain + global_gain ;
+                double res_map = manager_->getResolution()  ;
                 Eigen::Vector3d vec;
                 double x , y , z ;
                 double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
-
-                double  all_cells_counter =0 , free_cells_counter =0 ,unKnown_cells_counter = 0 ,occupied_cells_counter =0 ;
+                
+                double  all_cells_counter =0 , free_cells_counter =0 ,unknown_cells_counter = 0 ,occupied_cells_counter =0 ;
                 double information_gain_entropy = 0 , probability,Entropy =0 ;
-                double semantic_entropy_gain = 0 , semantic_entropy =0 ;
-                double totalGain = 0 ;
-                int FreeCouter=0,UnknownCounter = 0 ,  InterestNotVisitedCounter =0 ,InterestVisitedCounter=0,NotInterestCounter=0; 
+                double semantic_gain_entropy = 0 , semantic_entropy =0 ;
+                double total_gain = 0 ;
+                int free_type_counter=0,unknown_type_count = 0 ,  occ_intr_not_vis_type_count =0 ,occ_intr_vis_type_count=0,occ_not_intr_type_count=0; 
                 for (x = params_.env_bbx_x_min; x <= params_.env_bbx_x_max- res_map; x += res_map) {
                     for (y = params_.env_bbx_y_min; y <= params_.env_bbx_y_max- res_map ; y += res_map) {
                         // TODO: Check the boundries
                         for (z = params_.env_bbx_z_min; z<= params_.env_bbx_z_max  - res_map; z += res_map) {
+                                   
                             all_cells_counter++;
                             vec[0] = x; vec[1] = y ; vec[2] = z ;
                             volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
-                                                        // Counting Cell Types 
+                            // Counting Cell Types 
                             int cellType= manager_->getCellIneterestCellType(x,y,z) ;
                             switch(cellType){
                                 case 0:
-                                    FreeCouter++;
+                                    free_type_counter++;
                                     break; 
                                 case 1: 
-                                    UnknownCounter++;
+                                    unknown_type_count++;
                                     break; 
                                 case 2 : 
-                                    InterestNotVisitedCounter++;
+                                    occ_intr_not_vis_type_count++;
                                     break; 
                                 case 3: 
-                                    InterestVisitedCounter++;
+                                    occ_intr_vis_type_count++;
                                     break ; 
                                 case 4: 
-                                    NotInterestCounter++;
+                                    occ_not_intr_type_count++;
                                     break ; 
                             }
                             
@@ -439,40 +801,61 @@ void ExplorationBase::RunStateMachine()
                             if (probability != -1)
                             {
                                 p = probability;
-                               // ROS_INFO("probability %f \n", p);
+                                // ROS_INFO("probability %f \n", p);
                             }
                             // TODO: Revise the equation
                             Entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
                             Entropy = Entropy/maxTher ; 
                             information_gain_entropy +=  + Entropy ;
-
-
+                            
+                            
                             double s_gain = manager_->getCellIneterestGain(vec);
                             semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
                             semantic_entropy = semantic_entropy/maxTher ; 
-                            semantic_entropy_gain += semantic_entropy ;
+                            semantic_gain_entropy += semantic_entropy ;
                             
-                            totalGain += (information_gain_entropy + semantic_entropy_gain) ;
-
-                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unKnown_cells_counter++;}
+                            total_gain += (information_gain_entropy + semantic_gain_entropy) ;
+                            
+                            
+                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
                             if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
                         }
                     }
                 }
                 double theoretical_cells_value = ((params_.env_bbx_x_max - params_.env_bbx_x_min) *(params_.env_bbx_y_max  -params_.env_bbx_y_min) *(params_.env_bbx_z_max - params_.env_bbx_z_min)) /(res_map*res_map*res_map);
-                double knownCells = free_cells_counter+ occupied_cells_counter ;
+                double known_cells_counter = free_cells_counter+ occupied_cells_counter ;
                 double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
-               // std::cout << "Calculated Coverage " << free_cells_counter << "  " << occupied_cells_counter << "  "  << free_cells_counter+occupied_cells_counter << "  " << all_cells_counter << "  "  << (free_cells_counter+occupied_cells_counter)/all_cells_counter << "  " << ((free_cells_counter+occupied_cells_counter)/all_cells_counter) * 100 << std::endl ;
-               // double gain_average_entropy = pure_entropy_gain / all_cells_counter ;
-                file_path_ <<  volumetric_coverage << "," << information_gain_entropy<< "," << semantic_entropy_gain<< "," << totalGain << "," << free_cells_counter << "," << occupied_cells_counter <<"," << unKnown_cells_counter  << "," << knownCells << "," << all_cells_counter << "," << traveled_distance<<  ","<< FreeCouter << "," <<  UnknownCounter << "," << InterestNotVisitedCounter << ","<< InterestVisitedCounter << "," <<                              NotInterestCounter <<","<<locationx_ << "," << locationy_ << "," << locationz_ << "," << yaw_<< "\n";
+                
+                file_path_  << iteration_num++            << ","
+                            << volumetric_coverage      << "," 
+                            << information_gain_entropy << ","
+                            << semantic_gain_entropy    << ","
+                            << total_gain               << "," 
+                            << free_cells_counter       << "," 
+                            << occupied_cells_counter   << ","  
+                            << unknown_cells_counter    << ","      
+                            << known_cells_counter      << "," 
+                            << all_cells_counter        << "," 
+                            << traveled_distance        << ","
+                            << free_type_counter               << "," 
+                            << unknown_type_count          << "," 
+                            << occ_intr_not_vis_type_count << ","
+                            << occ_intr_vis_type_count   << ","
+                            << occ_not_intr_type_count       <<","
+                            << locationx_                << "," 
+                            << locationy_               << "," 
+                            << locationz_               << "," 
+                            << yaw_                     << ","
+                            << accumulative_gain <<   "\n";
+
                 //***********************************************************************************************************//
             }
             iteration_flag++ ;
             pointcloud_recieved_sub_Flag = false ;
             sleep(1); // I change it according to the dense data
         } // Finished one iteration of exploration
-
+        
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -503,7 +886,7 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
     double end_y= params_.res_y;
     double start_z=-1 *params_.res_z ;
     double end_z= params_.res_z;
-
+    
     //Generating 3-D state lattice as z-axis movement is restrained (fixed)
     for (double i_x=start_x; i_x<=end_x; i_x=i_x+params_.res_x)
     {
@@ -517,12 +900,12 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
                     if (!generate_at_current_location && i_x==0 && i_y==0 && i_z==0)
                         //if (!generate_at_current_location && i_x==0 && i_y==0 )
                         continue;
-
+                    
                     // i_yaw = 0 means in the cuurent orientation
                     if (i_x==0 && i_y==0 &&i_z ==0 && i_yaw==0)
                         //if (i_x==0 && i_y==0 && i_yaw==0)
                         continue;
-
+                    
                     geometry_msgs::Pose p;
                     p.position.x = loc_.pose.position.x + i_x*cos(yaw_) + i_y*sin(yaw_);
                     p.position.y = loc_.pose.position.y - i_x*sin(yaw_) + i_y*cos(yaw_);
@@ -535,12 +918,12 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
                     p.orientation.w = tf_q.getW() ;
                     //p.orientation. =  pose_conversion::getQuaternionFromYaw(yaw_ + i_yaw);
                     initial_poses.push_back(p);
-
+                    
                 }
             }
         }
     }
-
+    
     rejected_poses_.clear()  ;
     generated_poses_.clear() ;
     //  std::cout << "initial_poses.size() "  <<initial_poses.size()  << std::endl << std::flush;
@@ -564,32 +947,32 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
 }
 
 std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int iteration_flag){
-
+    
     std::vector<geometry_msgs::Pose> initial_poses;
     double extension_range = 0.5 ;
-
+    
     int num_of_viewpoints= 215 ;
     double radius = sqrt(
-                SQ(params_.env_bbx_x_min - params_.env_bbx_x_max) + SQ(params_.env_bbx_y_min - params_.env_bbx_y_max)
-                + SQ(params_.env_bbx_z_min - params_.env_bbx_z_max));
+        SQ(params_.env_bbx_x_min - params_.env_bbx_x_max) + SQ(params_.env_bbx_y_min - params_.env_bbx_y_max)
+        + SQ(params_.env_bbx_z_min - params_.env_bbx_z_max));
     std::srand(time(NULL));
     for (int it = 0 ; it < num_of_viewpoints ; it++)
     {
-
+        
         // Random Point;
         double i_x = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
         double i_y = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
         double i_z = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
-
+        
         Eigen::Vector3d origin(loc_.pose.position.x, loc_.pose.position.y, loc_.pose.position.z);
         Eigen::Vector3d direction(i_x - origin[0], i_y - origin[1], i_z - origin[2]);
-
+        
         if (direction.norm() >extension_range)
         {
             direction = extension_range * direction.normalized();
         }
-
-       double i_yaw = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5); // ?????? Check if it is radian or degree
+        
+        double i_yaw = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5); // ?????? Check if it is radian or degree
         geometry_msgs::Pose p;
         p.position.x = origin[0] + direction[0];
         p.position.y = origin[1] + direction[1];
@@ -601,9 +984,9 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int 
         p.orientation.z = tf_q.getZ() ;
         p.orientation.w = tf_q.getW() ;
         initial_poses.push_back(p);
-
+        
     }
-
+    
     rejected_poses_.clear()  ;
     generated_poses_.clear() ;
     //  std::cout << "initial_poses.size() "  <<initial_poses.size()  << std::endl << std::flush;
@@ -618,7 +1001,7 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int 
             rejected_poses_.push_back(initial_poses[i]);
         }
     }
-    std::cout << "[ViewGenerator] Generated " << generated_poses_.size() << " poses (" << rejected_poses_.size() << " rejected)" << std::endl << std::flush;
+    //std::cout << "[ViewGenerator] Generated " << generated_poses_.size() << " poses (" << rejected_poses_.size() << " rejected)" << std::endl << std::flush;
     visualization_msgs::Marker generated_poses_list =  ExplorationBase::AcceptedPoses(generated_poses_,iteration_flag) ;
     visualization_msgs::Marker regected_poses_list =  ExplorationBase::RegectedPoses(rejected_poses_,iteration_flag) ;
     generated_poses_pub_.publish(generated_poses_list);
@@ -629,8 +1012,8 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int 
 bool ExplorationBase::IsInsideBounds(geometry_msgs::Pose p)
 {
     if (p.position.x < params_.env_bbx_x_min || p.position.x > params_.env_bbx_x_max ||
-            p.position.y < params_.env_bbx_y_min || p.position.y > params_.env_bbx_y_max ||
-            p.position.z < params_.env_bbx_z_min || p.position.z > params_.env_bbx_z_max)
+        p.position.y < params_.env_bbx_y_min || p.position.y > params_.env_bbx_y_max ||
+        p.position.z < params_.env_bbx_z_min || p.position.z > params_.env_bbx_z_max)
     {
         return false;
     }
@@ -640,7 +1023,7 @@ bool ExplorationBase::IsInsideBounds(geometry_msgs::Pose p)
 bool ExplorationBase::IsSafe(geometry_msgs::Pose p)
 {
     Eigen::Vector3d loc_current(p.position.x, p.position.y,p.position.z);
-    Eigen::Vector3d box_size(0.3,0.3,0.3);
+    Eigen::Vector3d box_size(0.1,0.1,0.1);
     // Eigen::Vector3d box_size(0.1,0.1,0.1);
     // cell status 0: free , 1: occupied , 2: unknown
     // both unknown and free will be accepted to be visited x !=1
@@ -653,31 +1036,37 @@ bool ExplorationBase::IsSafe(geometry_msgs::Pose p)
 }
 
 bool ExplorationBase::IsCollide(geometry_msgs::Pose p) {
-    return false;
-
+    //return false;
+    
     // Check for collision of new connection plus some overshoot distance.
-    collision_bounding_box_[0]=0.3;
-    collision_bounding_box_[1]=0.3;
-    collision_bounding_box_[2]=0.3;
-
+    collision_bounding_box_[0]=0.1;
+    collision_bounding_box_[1]=0.1;
+    collision_bounding_box_[2]=0.1;
+    
     Eigen::Vector3d origin(loc_.pose.position.x , loc_.pose.position.y ,loc_.pose.position.z);
-    Eigen::Vector3d end(p.position.x, p.position.y, p.position.z);
+    Eigen::Vector3d end(p.position.x , p.position.y , p.position.z);
 
-    //  Eigen::Vector3d direction(p.position.x - origin[0], p.position.y - origin[1], p.position.z - origin[2]);
-    //  if (direction.norm() > params_.extensionRange) {
-    //    direction = params_.extensionRange * direction.normalized();
-    //  }
+    Eigen::Vector3d direction(p.position.x - origin[0], p.position.y - origin[1], p.position.z - origin[2]);
+    Eigen::Vector3d newState(origin[0] + direction[0], origin[1] + direction[1], origin[2] + direction[2]);
 
+
+    double extensionRange = 1; 
+    double dOvershoot = 0.1;
+    if (direction.norm() > extensionRange) {
+       direction = extensionRange * direction.normalized();
+     }
+    
     volumetric_mapping::OctomapManager::CellStatus cell_status;
     //std::cout << "Pose: "<< p << " NewPose: " << direction + origin + direction.normalized() * dOvershoot_ << std::endl;
     cell_status = manager_->getLineStatusBoundingBox(
-                origin,
-                end,
-                collision_bounding_box_);
-    std::cout << "status is: " << cell_status << std::endl;//|| volumetric_mapping::OctomapManager::CellStatus::kUnknown
+        origin,
+        end,
+        //direction + origin + direction.normalized() * 0.1,
+        collision_bounding_box_);
+    //std::cout << "status is: " << cell_status << std::endl;//|| volumetric_mapping::OctomapManager::CellStatus::kUnknown
     if (cell_status == volumetric_mapping::OctomapManager::CellStatus::kFree  )
         return false;
-
+    
     return true;
 }
 
@@ -685,41 +1074,41 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
 {
     //check current loc is free.
     if (!IsInsideBounds(p) ){
-        ROS_INFO("rejected by validity");
+       // ROS_INFO("rejected by validity");
         return false;
     }
     if (!IsSafe(p)){
-       // ROS_INFO("rejected by Safety" );
+        // ROS_INFO("rejected by Safety" );
         return false;
     }
-
+    
     if (manager_ == NULL) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: No octomap available!");
         return false ;
     }
-
+    
     if (IsCollide(p)){
-       // ROS_INFO("rejected by collision" );
+        // ROS_INFO("rejected by collision" );
         return false;
     }
-
+    
     if (manager_->getMapSize().norm() <= 0.0) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return false ;
     }
-
+    
     return true;
 }
 
 double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
-
+    
     Eigen::Vector3d origin(p.position.x, p.position.y, p.position.z);
     tf::Quaternion or_orientation(p.orientation.x,p.orientation.y, p.orientation.z, p.orientation.w);
     tf::Matrix3x3 m(or_orientation);
     double yaw_p , roll_p, pitch_p;
     m.getRPY(roll_p, pitch_p, yaw_p);
-
-
+    
+    
     // This function computes the gain
     double gain = 0.0;
     const double disc = manager_->getResolution();
@@ -743,7 +1132,7 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
     //                //             vec[1] < std::min(p.position.y + params_.gain_range, params_.env_bbx_y_max); vec[0] += disc) {
     //                //            for (vec[2] = std::max(p.position.z - params_.gain_range, params_.env_bbx_z_min);
     //                //                 vec[2] < std::min(p.position.z + params_.gain_range, params_.env_bbx_z_max); vec[2] += disc) {
-
+    
     for (double x = startX ; x <endX; x =x+disc){
         for (double y = startY; y <endY;y=y+disc){
             for (double z =startZ ; z<endZ ; z=z+disc){
@@ -758,84 +1147,112 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                 Eigen::Vector3d dir = vec - origin;
                 // Skip if distance is too large
                 if (dir.transpose().dot(dir) > rangeSq) {
-
+                    
                     geometry_msgs::Pose rp ;
                     rp.position.x = vec[0] ;
                     rp.position.y = vec[1] ;
                     rp.position.z = vec[2] ;
                     //std::cout << "Regicted because of the far distance" << std::endl ;
-
+                    
                     continue;
                 }
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = cam_params_
-                     .cam_bound_normals.begin(); itCBN != cam_params_.cam_bound_normals.end(); itCBN++) {
+                    .cam_bound_normals.begin(); itCBN != cam_params_.cam_bound_normals.end(); itCBN++) {
                     bool inThisFieldOfView = true;
-                    for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
-                         itSingleCBN != itCBN->end(); itSingleCBN++) {
-                        Eigen::Vector3d normal = Eigen::AngleAxisd(yaw_p, Eigen::Vector3d::UnitZ())
-                                * (*itSingleCBN);
-                        double val = dir.dot(normal.normalized());
-                        if (val < SQRT2 * disc) {
-                            inThisFieldOfView = false;
-                            break;
-                        }
-                    }
-
-                    if (inThisFieldOfView) {
-                        insideAFieldOfView = true;
-
-                        break;
-                    }
+                for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
+                     itSingleCBN != itCBN->end(); itSingleCBN++) {
+                    Eigen::Vector3d normal = Eigen::AngleAxisd(yaw_p, Eigen::Vector3d::UnitZ())
+                    * (*itSingleCBN);
+                double val = dir.dot(normal.normalized());
+                if (val < SQRT2 * disc) {
+                    inThisFieldOfView = false;
+                    break;
                 }
-                if (!insideAFieldOfView) {
-                    continue;
-                }
-                //  for debugging
-                // geometry_msgs::Pose rp ;
-                // rp.position.x = vec[0] ;
-                // rp.position.y = vec[1] ;
-                // rp.position.z = vec[2] ;
-                // FOVPoints_.push_back(rp);
-
-                // Volumetric Gain 
-                // Check cell status and add to the gain considering the corresponding factor.
-                double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
-
-                double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
-                            vec, &probability);
-                // std::cout << "probability" << probability <<  std::endl ;
-                double entropy , p ;
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown )
-                    p = 0.5 ;
-                else
+                     }
+                     
+                     if (inThisFieldOfView) {
+                         insideAFieldOfView = true;
+                         
+                         break;
+                     }
+                    }
+                    if (!insideAFieldOfView) {
+                        continue;
+                    }
+                    //  for debugging
+                    // geometry_msgs::Pose rp ;
+                    // rp.position.x = vec[0] ;
+                    // rp.position.y = vec[1] ;
+                    // rp.position.z = vec[2] ;
+                    // FOVPoints_.push_back(rp);
+                    
+                    // Volumetric Gain 
+                    // Check cell status and add to the gain considering the corresponding factor.
+                    
+                    double probability;
+                    volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                        vec, &probability);
+                    if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                        // Rayshooting to evaluate inspectability of cell
+                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                            gain += 1;//params_.igUnmapped_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                            }
+                    } else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                        // Rayshooting to evaluate inspectability of cell
+                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                            gain += 0;//params_.igOccupied_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                            }
+                    } else {
+                        // Rayshooting to evaluate inspectability of cell
+                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                            gain += 0;//params_.igFree_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                        
+                        
+                            }
+                    }
+                    
+                    
+                    
+                    double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
+                    //double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5)
+                    
+                    
+                    //*************** Pure Entropy ***************************** //
+                    /*double entropy , p =0.5 ;
+                    i f (*probability != -1 )
                     p = probability ;
-                entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
-                entropy = entropy/maxTher ;
-                
-                // Semantic gain 
-                double semantic_entropy ;
-               // volumetric_mapping::OctomapManager::CellStatus node2 = manager_->getCellIneterestGainPoint(
-               //             vec, &semantic_gain);
-                double s_gain = manager_->getCellIneterestGain(vec);
-                semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-                semantic_entropy = semantic_entropy/maxTher ; 
-                
-               // std::cout << "entropy" << entropy <<  std::endl ;
-               // std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
-               // std::cout << "gain" << gain <<  std::endl ;
-               // std::flush ;
-                //gain += abs(entropy);
-                gain += entropy ;
-                // gain+=semantic_entropy ;
-                //gain = gain + entropy + semantic_entropy ;
-
+                    
+                    entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
+                    entropy = entropy/maxTher ;
+                    gain +=  entropy;*/
+                    // ************** Semantic gain ************************* // 
+                    /*
+                    / / S*emantic gain 
+                    double semantic_entropy ;
+                    // volumetric_mapping::OctomapManager::CellStatus node2 = manager_->getCellIneterestGainPoint(
+                    //             vec, &semantic_gain);
+                    double s_gain = manager_->getCellIneterestGain(vec);
+                    semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+                    semantic_entropy = semantic_entropy/maxTher ; 
+                    gain+=semantic_entropy ;
+                    
+                    gain = gain + entropy + semantic_entropy ;          
+                    */
             }
         }
     }
-   // std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
+    // std::cout << "*******************numOfVoxelInOneView**************" << numOfVoxelInOneView << std::endl ;
     //fov_poses_list =  ExplorationBase::FOVPoses(FOVPoints_, id ) ;
     //evaluated_voxels_pub_.publish(fov_poses_list);
     //range_poses_list =  ExplorationBase::RangePoses(range_points_, id ) ;
@@ -890,12 +1307,12 @@ visualization_msgs::Marker ExplorationBase::RegectedPoses(std::vector<geometry_m
     linksMarkerMsg.action  = visualization_msgs::Marker::ADD;
     linksMarkerMsg.lifetime  = ros::Duration(2);
     std_msgs::ColorRGBA color;
-
+    
     color.r = 1.0;
     color.g = 0.0;
     color.b = 0.0;
     color.a = 1.0;
-
+    
     std::vector<geometry_msgs::Point> acc;
     geometry_msgs::Point s ;
     for (int i = 0 ; i < accepted.size() ; i++)
@@ -944,7 +1361,7 @@ visualization_msgs::Marker ExplorationBase::AcceptedPoses(std::vector<geometry_m
     {
         linksMarkerMsg.points.push_back(*linksIterator);
         linksMarkerMsg.colors.push_back(color);
-
+        
     }
     return linksMarkerMsg;
 }
@@ -979,7 +1396,7 @@ visualization_msgs::Marker ExplorationBase::RangePoses(std::vector<geometry_msgs
     {
         linksMarkerMsg.points.push_back(*linksIterator);
         linksMarkerMsg.colors.push_back(color);
-
+        
     }
     return linksMarkerMsg;
 }
@@ -1008,7 +1425,7 @@ visualization_msgs::Marker ExplorationBase::MaxGainPose(geometry_msgs::Pose p , 
     marker.color.r = 0.0;
     marker.color.g = 0.0;
     marker.color.b = 1.0;
-
+    
     line_strip.header.frame_id = "world";
     line_strip.header.stamp = ros::Time::now();
     line_strip.ns = "points_and_lines";
@@ -1025,9 +1442,9 @@ visualization_msgs::Marker ExplorationBase::MaxGainPose(geometry_msgs::Pose p , 
     line_strip.color.a = 1;
     line_strip.color.g = 1;
     line_strip.lifetime  = ros::Duration();
-
+    
     visualization_msgs::Marker textPose ;
-
+    
     textPose.header.frame_id = "world";
     textPose.header.stamp = ros::Time::now();
     textPose.ns = "points_and_lines";
@@ -1046,15 +1463,15 @@ visualization_msgs::Marker ExplorationBase::MaxGainPose(geometry_msgs::Pose p , 
     textPose.color.g = 0.0f;
     textPose.color.b = 0.0f;
     textPose.color.a = 1.0;
-
+    
     textPose.lifetime  = ros::Duration();
     std::string  m = std::to_string(id) ;
     textPose.text = m ;
-
+    
     marker_text_pub_.publish(textPose) ;
     marker_pub_.publish(line_strip);
     return marker;
-
+    
 }
 
 visualization_msgs::Marker  ExplorationBase::ExplorationAreaInit()
@@ -1068,7 +1485,7 @@ visualization_msgs::Marker  ExplorationBase::ExplorationAreaInit()
     p.type = visualization_msgs::Marker::CUBE;
     p.action = visualization_msgs::Marker::ADD;
     //  std::cout << "params_.env_bbx_x_min + params_.env_bbx_x_max"  << params_.env_bbx_x_min + params_.env_bbx_x_max<< std::endl ;
-
+    
     p.pose.position.x = 0.5 * (params_.env_bbx_x_min + params_.env_bbx_x_max);
     p.pose.position.y = 0.5 * (params_.env_bbx_y_min + params_.env_bbx_y_max);
     p.pose.position.z = 0.5 * (params_.env_bbx_z_min + params_.env_bbx_z_max);
@@ -1095,24 +1512,24 @@ bool ExplorationBase::SetParams()
     std::string ns = ros::this_node::getName();
     std::cout<<"Node name is:"<<ns<<"\n";
     bool ret = true;
-
+    
     // Environment Params
     // Note1: using (ns + "env/bbx/minX").c_str() will not work. It should be (ns + "/env/bbx/minX").c_str()
     // Note2: ros::param::get uses the params related to the namespace
-
+    
     // Exploration area params
     params_.env_bbx_x_min = -100;
     if (!ros::param::get( (ns + "/env/bbx/minX").c_str(), params_.env_bbx_x_min))
     {
         ROS_WARN("No environment bounding box X specified. Looking for %s.",  (ns + "/env/bbx/minX").c_str());
     }
-
+    
     params_.env_bbx_x_max = 100;
     if (!ros::param::get( ns+ "/env/bbx/maxX", params_.env_bbx_x_max))
     {
         ROS_WARN("No environment bounding box X specified. Looking for %s.", ( "env/bbx/maxX"));
     }
-
+    
     params_.env_bbx_y_min = -100;
     if (!ros::param::get(ns + "/env/bbx/minY", params_.env_bbx_y_min))
     {
@@ -1123,7 +1540,7 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No environment bounding box Y specified. Looking for %s. ", ("env/bbx/maxY"));
     }
-
+    
     params_.env_bbx_z_min = -100;
     if (!ros::param::get( ns+"/env/bbx/minZ", params_.env_bbx_z_min))
     {
@@ -1134,8 +1551,8 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No environment bounding box Z specified. Looking for %s.", ( "env/bbx/maxZ"));
     }
-
-
+    
+    
     // Exploration Algorithm Params
     // 1- Termination
     params_.num_of_iteration = 60;
@@ -1143,14 +1560,14 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No number of iteration for termination specified. Looking for %s.", ( "exp/ter/num_iteration"));
     }
-
+    
     //2- Geometric Viewpoints Generation
     params_.res_yaw = M_PI/4.0;
     //    if (!ros::param::get(ns+"/exp/gen/res_yaw", params_.res_yaw))
     //    {
     //        ROS_WARN("No number of view point generation distanse YAW specified. Looking for %s.", ("exp/gen/res_yaw"));
     //    }
-
+    
     params_.res_x = 0.5; // step size
     if (!ros::param::get(ns+ "/exp/gen/res_x", params_.res_x))
     {
@@ -1166,15 +1583,15 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No number of view point generation distanse Z  specified. Looking for %s.", "exp/gen/res_z");
     }
-
-
+    
+    
     // 3- Viewpoints Evaluation
     params_.gain_range = 1.0;
     if (!ros::param::get( ns+"/exp/gain/range", params_.gain_range))
     {
         ROS_WARN("No gain range specified. Looking for %s. Default is 1.0m.","/exp/gain/range");
     }
-
+    
     // Camera Params
     cam_params_.cam_pitch = {15.0};
     if (!ros::param::get( ns+"/camera/pitch", cam_params_.cam_pitch))
@@ -1186,15 +1603,15 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No camera horizontal specified. Looking for %s.",  "camera/horizontal");
     }
-
+    
     cam_params_.cam_vertical = {45.0};
     if (!ros::param::get(ns+ "/camera/vertical", cam_params_.cam_vertical))
     {
         ROS_WARN("No camera vertical specified. Looking for %s.", "camera/vertical");
     }
-
+    
     // initial position params
-
+    
     params_.init_loc_x = 0 ;
     if (!ros::param::get( ns+"/init/pose/x",  params_.init_loc_x))
     {
@@ -1220,7 +1637,7 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No log is specified. Looking for %s.",  "/log/on");
     }
-
+    
     // Octomap manager parameters
     nh_.setParam((ns+"/tf_frame").c_str(), "world");
     nh_.setParam((ns+"/robot_frame").c_str(), "base_point_cloud");
@@ -1236,7 +1653,7 @@ bool ExplorationBase::SetParams()
     nh_.setParam((ns+"/threshold_occupancy").c_str(), 0.7);
     nh_.setParam((ns+"/treat_unknown_as_occupied").c_str(), false);
     nh_.setParam((ns+"/latch_topics").c_str(), false);
-
+    
     //    // Octomap manager parameters
     nh_.setParam(("/tf_frame"), "world");
     nh_.setParam("/robot_frame", "base_point_cloud");
@@ -1252,7 +1669,7 @@ bool ExplorationBase::SetParams()
     nh_.setParam(("/threshold_occupancy"), 0.7);
     nh_.setParam(("/treat_unknown_as_occupied"), false);
     nh_.setParam(("/latch_topics"), false);
-
+    
     return ret;
 }
 

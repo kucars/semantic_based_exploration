@@ -1,5 +1,5 @@
 # System Related Parameters
-system/v_max: 0.2 #0.5
+system/v_max: 1#0.5 ##0.5
 system/dyaw_max: 0.5
 system/camera/pitch: [15.0]
 system/camera/horizontal: [58.0]
@@ -23,7 +23,7 @@ inspection_throttle: 0.5
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1
-nbvp/tree/initial_iterations: 1
+nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
@@ -45,8 +45,8 @@ nbvp/log/on: true
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -5.2
 bbx/maxX: 5.2
-bbx/minY: -4.0
-bbx/maxY: 4.0
+bbx/minY: -3.0
+bbx/maxY: 5.0
 bbx/minZ: 0.0
 bbx/maxZ: 3.5
 bbx/softBounds: false
