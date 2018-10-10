@@ -429,7 +429,8 @@ void ExplorationPlanner::RunStateMachine()
             if (planSrv.response.path.size() == 0)
             {
                 ROS_INFO(" ****************** No Path *************************");
-                ros::Duration(1.0).sleep();
+                sleep(2) ; 
+                //ros::Duration(1.0).sleep();
             }
             else
                 ROS_INFO(" #################### Path Found #######################");
@@ -459,7 +460,7 @@ void ExplorationPlanner::RunStateMachine()
                 locationz_ = poseMsg_.pose.position.z ;
                 yaw_ = yaw; 
                 ros::spinOnce();
-                sleep(1);
+                sleep(2);
                 //ros::Duration(dt).sleep();
             }
             iteration++;
@@ -472,7 +473,7 @@ void ExplorationPlanner::RunStateMachine()
             locationy_ = locationy_ ;
             locationz_ = locationz_;
             yaw_ = yaw_ ; 
-            sleep(1);
+            sleep(2);
             //ros::Duration(1.0).sleep();
         }
         

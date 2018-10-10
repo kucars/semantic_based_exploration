@@ -767,53 +767,59 @@ double rrtNBV::RrtTree::gain(StateVec state)
                 // TODO: Add probabilistic gain
                 // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-            } else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+            } 
+            else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
                 // Rayshooting to evaluate inspectability of cell
                 if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                     != this->manager_->getVisibility(origin, vec, false)) {
                     gain += params_.igOccupied_;
+                    double s_gain = manager_->getCellIneterestGain(vec);
+                    if(s_gain == 0.5) 
+                        gain += 1;
+                    else
+                        gain += params_.igOccupied_;
                 // TODO: Add probabilistic gain
                 // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-            } else {
+            } 
+            else {
                 // Rayshooting to evaluate inspectability of cell
                 if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                     != this->manager_->getVisibility(origin, vec, false)) {
                     gain += params_.igFree_;
                 // TODO: Add probabilistic gain
                 // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
-                
-                
                     }
             }
+           
             
-            
-            //    double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
+             //   double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
             
             //*************** Pure Entropy ***************************** //
-            /* double p = 0.5 ;
-             *                     if (probability != -1)
-             *                     {
-             *                         p = probability;
-             *                         // ROS_INFO("probability %f \n", p);
-                 }
+             //double p = 0.5 ;
+              //                  if (probability != -1)
+                //                  {
+              //                        p = probability;
+                                      // ROS_INFO("probability %f \n", p);
+
+                // }
                  
-                 double entropy;
-                 entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
-                 entropy= entropy/maxThreshold ; 
-                 gain +=  entropy;
+               //  double entropy;
+               //  entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
+               //  entropy= entropy/maxThreshold ; 
+                // gain +=  entropy;
                  
                  // ************** Semantic gain ************************* // 
                  
                  // Semantic gain    
-                 double s_gain = manager_->getCellIneterestGain(vec);
-                 double semantic_entropy ;
-                 semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-                 semantic_entropy = semantic_entropy/maxThreshold ; 
-                 gain+=semantic_entropy ;
+                // double s_gain = manager_->getCellIneterestGain(vec);
+                 //double semantic_entropy ;
+                 //semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+                 //semantic_entropy = semantic_entropy/maxThreshold ; 
+                 //gain+=semantic_entropy ;
                  
-                 gain = gain + entropy + semantic_entropy ;
-                 */
+                // gain = gain + entropy + semantic_entropy ;
+                
             //std::cout << "entropy" << entropy <<  std::endl ;
             //std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
                  }
@@ -843,6 +849,19 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getPathBackToPrevious(
     if (history_.empty()) {
         return ret;
     }
+    /*geometry_msgs::Pose ret_egde;
+    ret_egde.position.x = history_.top()[0] ;
+    ret_egde.position.y = history_.top()[1] ;
+    ret_egde.position.z = history_.top()[2] ;
+    float yaw = history_.top()[3] ;
+    tf::Quaternion q = tf::createQuaternionFromYaw(yaw) ;
+    ret_egde.orientation.x = q[0] ;
+    ret_egde.orientation.y = q[1] ;
+    ret_egde.orientation.z = q[2] ;
+    ret_egde.orientation.w = q[3] ;
+
+    ret.push_back(ret_egde) ; */
+    
     ret = samplePath(root_, history_.top(), targetFrame);
     history_.pop();
     return ret;
