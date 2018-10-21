@@ -36,7 +36,7 @@
 //#include <voxel_grid_occlusion_estimation.h>
 //#include "fcl_utility.h"
 #include <pcl/filters/voxel_grid.h>
-#include <usar_exploration/occlusion_culling.h>
+#include <culling/occlusion_culling.h>
 // octomap
 #include <octomap_msgs/Octomap.h>
 #include <octomap/ColorOcTree.h>

@@ -32,7 +32,7 @@
 //#include <voxel_grid_occlusion_estimation.h>
 //#include "fcl_utility.h"
 #include <pcl/filters/voxel_grid.h>
-#include <usar_exploration/occlusion_culling.h>
+#include <culling/occlusion_culling.h>
 
 // octomap
 #include <octomap_msgs/Octomap.h>
@@ -49,6 +49,8 @@ using namespace std;
 
 geometry_msgs::PoseStamped current_pose ;
 bool current_pose_NOT_recieved_flag = true ;
+typedef pcl::PointXYZRGB pointType;
+typedef pcl::PointCloud<pointType> PointCloud;
 
 void CurrentPoseCallback(const geometry_msgs::PoseStamped::ConstPtr & msg)
 {
@@ -61,44 +63,51 @@ int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "current_view_extraction");
-    ros::NodeHandle n;
+    ros::NodeHandle nh;
     ros::Rate loop_rate(10);
 
     // Publishers and subscribers
-    ros::Publisher original_cloud_pub                 = n.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 1);
-    ros::Publisher current_view_converted_cloud_pub   = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 1); // subscribed from volumetric mapping pkg, converted means the point cloud are on the sensor frame
-    ros::Publisher current_view_cloud_pub             =  n.advertise<sensor_msgs::PointCloud2>("current_view_pointcloud", 40); // point cloud in the word frame used for visualization
-    ros::Publisher accumulated_cloud_Pub              = n.advertise<sensor_msgs::PointCloud2>("accumulated_pointcloud", 100); // in world frame
-    ros::Subscriber current_pose_sub                  = n.subscribe("current_pose", 10, CurrentPoseCallback);
+    ros::Publisher original_cloud_pub                 = nh.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 1);
+    ros::Publisher current_view_converted_cloud_pub   = nh.advertise<sensor_msgs::PointCloud2>("pointcloud", 1); // subscribed from volumetric mapping pkg, converted means the point cloud are on the sensor frame
+    ros::Publisher current_view_cloud_pub             = nh.advertise<sensor_msgs::PointCloud2>("current_view_pointcloud", 40); // point cloud in the word frame used for visualization
+    ros::Publisher accumulated_cloud_Pub              = nh.advertise<sensor_msgs::PointCloud2>("accumulated_pointcloud", 100); // in world frame
+    ros::Subscriber current_pose_sub                  = nh.subscribe("current_pose", 10, CurrentPoseCallback);
 
     // PointCloud and sensor msgs defenitions
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr currentViewConvertedCloudOutPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr currentViewCloudOutPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr accomulatedCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB> tempCloud;
-    pcl::PointCloud<pcl::PointXYZRGB> tempCloudOut;
-    pcl::PointCloud<pcl::PointXYZRGB> tempCloudAdd;
-    sensor_msgs::PointCloud2 cloud1;
-    sensor_msgs::PointCloud2 cloud2;
-    sensor_msgs::PointCloud2 cloud3;
-    sensor_msgs::PointCloud2 cloud4;
+    PointCloud::Ptr originalCloud(new PointCloud);
+    PointCloud::Ptr currentViewConvertedCloudOutPtr(new PointCloud);
+    PointCloud::Ptr currentViewCloudOutPtr(new PointCloud);
+    PointCloud::Ptr accomulatedCloudPtr(new PointCloud);
+    
+    PointCloud tempCloud,tempCloudOut,tempCloudAdd;
+    sensor_msgs::PointCloud2 cloud1,cloud2,cloud3,cloud4;
 
+    double sensor_roll, sensor_pitch, sensor_yaw, sensor_x, sensor_y, sensor_z;
+    std::string pcdFileName;
+    // Load Params
+    nh.param<std::string>("pcd_input_file", pcdFileName, std::string("env2.pcd"));
     // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
-    ROS_INFO("Loading File");
-    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/env2.pcd", *originalCloud); // for visualization
-    ROS_INFO("Done"); 
-    OcclusionCulling occlusionCulling(n,"env2.pcd");
+
+    std::string pcdFilePath = path + "/resources/pcd/" + pcdFileName;
+
+    
+    ROS_INFO("Loading File%s",pcdFilePath.c_str());
+    pcl::io::loadPCDFile<pointType> (pcdFilePath, *originalCloud); // for visualization
+    ROS_INFO("Done, size:%d",originalCloud->points.size()); 
 
     //Publish the original map once
     pcl::toROSMsg(*originalCloud, cloud1); //cloud of original
     cloud1.header.stamp = ros::Time::now();
     cloud1.header.frame_id = "world";
+
+    ROS_INFO("SIZE %d" , cloud1.width);
+    ROS_INFO("SIZE %d" , cloud1.height);
+    ROS_INFO("SIZE2 %d" , originalCloud->points.size());
+
     original_cloud_pub.publish(cloud1);
-    //ROS_INFO("SIZE %f" , cloud1.width);
-    //ROS_INFO("SIZE %f" , cloud1.height);
-    //ROS_INFO("SIZE2 %f" , originalCloud->points.size ());
+
+    OcclusionCulling<pointType> occlusionCulling(nh, pcdFilePath);
 
     // create listener for the sensor position
     tf::TransformListener listener;
@@ -121,7 +130,7 @@ int main(int argc, char **argv)
         {
             ROS_INFO ("view point position %f" , current_pose.pose.position.x ) ;
 
-            tempCloud = occlusionCulling.extractColoredVisibleSurface(current_pose.pose);  // point cloud in world frame
+            tempCloud = occlusionCulling.extractVisibleSurface(current_pose.pose);  // point cloud in world frame
 
             currentViewCloudOutPtr->points = tempCloud.points;
             pcl::toROSMsg(*currentViewCloudOutPtr, cloud2);
