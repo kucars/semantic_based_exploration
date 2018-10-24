@@ -18,7 +18,7 @@ $ git submodule update --init --recursive
 $ cd ~/catkin_ws/src/octomap/
 $ mkdir build 
 $ cd build 
-$ sudo cmake ..
+$ cmake ..
 $ sudo make install 
 ```
 
