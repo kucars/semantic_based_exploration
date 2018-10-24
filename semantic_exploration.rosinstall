@@ -1,0 +1,9 @@
+- git:
+    local-name: octomap_ros
+    uri: https://github.com/kucars/octomap_ros.git
+- git:
+    local-name: volumetric_mapping
+    uri: https://github.com/reem90/volumetric_mapping.git
+- git:
+    local-name: octomap
+    uri: https://github.com/reem90/octomap.git
