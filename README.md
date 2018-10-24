@@ -6,25 +6,28 @@ The repository aims to provide an exploration algorithm and relevant packages to
 create a new workspace and clone all the modules into that workspace.
 
 ```
-$ mkdir catkin_ws && cd catkin_ws && mkdir src && cd src 
-$ git clone https://github.com/kucars/semantic_based_exploration.git
-$ git clone https://github.com/reem90/volumetric_mapping.git
-$ git clone https://github.com/reem90/octomap.git
-$ cd semantic_based_exploration/
+$ mkdir -p ~/catkin_ws/src 
+$ cd ~/catkin_ws
+$ wstool init src
+$ wstool set -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
+$ wstool merge -t src https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall?token=AAR3chHe7p7e_GQmqZBvrNqbHrpATs7Sks5b2YtIwA%3D%3D
+$ wstool update -t src
+$ rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+$ cd ~/catkin_ws/src/semantic_based_exploration
 $ git submodule update --init --recursive
-$ cd .. 
-$ cd octomap/
+$ cd ~/catkin_ws/src/octomap/
 $ mkdir build 
 $ cd build 
 $ sudo cmake ..
 $ sudo make install 
 ```
 
-It is important to change the lib directory in volumetric_mapping/octomap_world/CMakeLists.txt
+It is important to add octomap lib location to your LD_LIBRARY_PATH to avoid conflict with previously installed octomap library (or the one that comes with ROS)
 ```
-from home/kuri/catkin_ws/src/octomap/lib to /Your/Diroctory
+echo "export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH" >> ~/.bashrc
 ```
-Then build all
+
+Then build all (use -DCATKIN_WHITELIST_PACKAGES and -DCATKIN_BLACKLIST_PACKAGES to control the order if needed)
 ```
 $ cd 
 $ cd catkin_ws/
