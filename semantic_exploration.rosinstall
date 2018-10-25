@@ -7,3 +7,6 @@
 - git:
     local-name: octomap
     uri: https://github.com/reem90/octomap.git
+- git:
+    local-name: culling
+    uri: https://github.com/kucars/culling
