@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
-        - /sensor_fov1
-        - /ray_cast1
       Splitter Ratio: 0.34838709235191345
     Tree Height: 468
   - Class: rviz/Selection
@@ -274,7 +272,7 @@ Visualization Manager:
       Marker Topic: /ray_casts
       Name: ray_cast
       Namespaces:
-        link_marker: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -332,25 +330,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.534954786300659
+      Distance: 9.805604934692383
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.7090161442756653
-        Y: 1.2572392225265503
-        Z: 3.1526145935058594
+        X: 1.6321743726730347
+        Y: 0.1853744238615036
+        Z: 2.2088630199432373
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0097962617874146
+      Pitch: 0.3447970449924469
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.12850797176361084
+      Yaw: 5.496665954589844
     Saved: ~
 Window Geometry:
   "&Displays":

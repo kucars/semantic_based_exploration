@@ -322,6 +322,7 @@ void ExplorationBase::RunStateMachine()
     int initial_map_generation = 1 ; 
     bool done = false;
     sleep(5);
+    //TODO: the call to the occlussion culling SHOULD be a service or action server/client, you can't control the timing
     while (ros::ok())
     {
         //Location X:4.000000 Y:2.000000 Z:1.000000 Yaw:-3.032297
@@ -343,13 +344,12 @@ void ExplorationBase::RunStateMachine()
         loc_.header.frame_id="world";
         loc_.header.stamp=ros::Time::now();
         
-        if (!done)
+        if(!done)
         {
             current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
             done = true;
         }
-
-        /*
+       
         for (int i = 0 ; i < 40 ; i++ )
         {
                 transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
@@ -372,7 +372,7 @@ void ExplorationBase::RunStateMachine()
                 ros::spinOnce();
                 sleep(5);
         }        
-        */
+        
         /*
         if (initial_map_generation ) 
         {

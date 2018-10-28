@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     nh.param<std::string>("tf_frame", worldFrame, std::string("/world"));
 
     ROS_INFO("PCD File %s, Robot Frame:%s, tf_frame:%s",pcdFileName.c_str(), robotFrame.c_str(), worldFrame.c_str());
-    
+
     // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
     std::string pcdFilePath = path + "/resources/pcd/" + pcdFileName;       
@@ -113,6 +113,7 @@ int main(int argc, char **argv)
     tf::TransformListener listener;
     tf::StampedTransform transform;
 
+    //TODO: occlusionCulling should store and pass fov, rays, and frustum cloud to be used here for visualization if needed
     while (ros::ok())
     {
         listener.waitForTransform(robotFrame, worldFrame, ros::Time(0), ros::Duration(0.1));
