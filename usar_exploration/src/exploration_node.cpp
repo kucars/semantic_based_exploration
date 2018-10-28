@@ -320,6 +320,7 @@ void ExplorationBase::RunStateMachine()
     tf::TransformBroadcaster br;
     tf::Transform transform;
     int initial_map_generation = 1 ; 
+    bool done = false;
     while (ros::ok())
     {
         
@@ -339,9 +340,13 @@ void ExplorationBase::RunStateMachine()
         loc_.pose.orientation.w = tf_q.getW();
         loc_.header.frame_id="world";
         loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+        if (!done)
+        {
+            current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+            done = true;
+        }
         
-
+        /*
         if (initial_map_generation ) 
         {
             initial_map_generation = 0 ; 
@@ -849,13 +854,13 @@ void ExplorationBase::RunStateMachine()
                             << yaw_                     << ","
                             << accumulative_gain <<   "\n";
 
-                //***********************************************************************************************************//
+                
             }
             iteration_flag++ ;
             pointcloud_recieved_sub_Flag = false ;
             sleep(1); // I change it according to the dense data
         } // Finished one iteration of exploration
-        
+        */
         ros::spinOnce();
         loop_rate.sleep();
     }
