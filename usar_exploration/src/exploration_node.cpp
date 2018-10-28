@@ -321,14 +321,16 @@ void ExplorationBase::RunStateMachine()
     tf::Transform transform;
     int initial_map_generation = 1 ; 
     bool done = false;
+    sleep(5);
     while (ros::ok())
     {
-        
+        //Location X:4.000000 Y:2.000000 Z:1.000000 Yaw:-3.032297
+
         exploration_area_pub_.publish(area_marker_);
         // Broadcast the TF of the camera location
         transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
         tf::Quaternion tf_q ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
+        tf_q = tf::createQuaternionFromYaw(-3.032297);
         transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
         br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
         loc_.pose.position.x = locationx_;
@@ -340,12 +342,37 @@ void ExplorationBase::RunStateMachine()
         loc_.pose.orientation.w = tf_q.getW();
         loc_.header.frame_id="world";
         loc_.header.stamp=ros::Time::now();
+        
         if (!done)
         {
             current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
             done = true;
         }
-        
+
+        /*
+        for (int i = 0 ; i < 40 ; i++ )
+        {
+                transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
+                tf::Quaternion tf_q ;
+                yaw_ = yaw_ + 0.15 ; 
+                tf_q = tf::createQuaternionFromYaw(yaw_);
+                transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
+                br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
+                loc_.pose.position.x = locationx_;
+                loc_.pose.position.y = locationy_;
+                loc_.pose.position.z = locationz_;
+                loc_.pose.orientation.x = tf_q.getX();
+                loc_.pose.orientation.y = tf_q.getY();
+                loc_.pose.orientation.z = tf_q.getZ();
+                loc_.pose.orientation.w = tf_q.getW();
+                loc_.header.frame_id="world";
+                loc_.header.stamp=ros::Time::now();
+                current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
+                ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
+                ros::spinOnce();
+                sleep(5);
+        }        
+        */
         /*
         if (initial_map_generation ) 
         {

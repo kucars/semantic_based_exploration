@@ -86,6 +86,8 @@ int main(int argc, char **argv)
     nh.param<std::string>("robot_frame", robotFrame, std::string("/base_point_cloud"));
     nh.param<std::string>("tf_frame", worldFrame, std::string("/world"));
 
+    ROS_INFO("PCD File %s, Robot Frame:%s, tf_frame:%s",pcdFileName.c_str(), robotFrame.c_str(), worldFrame.c_str());
+    
     // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
     std::string pcdFilePath = path + "/resources/pcd/" + pcdFileName;       
@@ -125,8 +127,11 @@ int main(int argc, char **argv)
         if(!current_pose_NOT_recieved_flag)
         {
             ROS_INFO ("view point position %f" , current_pose.pose.position.x ) ;
-
+            
+            ros::Time tic = ros::Time::now();
             tempCloud = occlusionCulling.extractVisibleSurface(current_pose.pose);  // point cloud in world frame
+            ros::Time toc = ros::Time::now();
+            ROS_INFO("Occlusion Culling took:%f", toc.toSec() - tic.toSec());
 
             currentViewCloudOutPtr->points = tempCloud.points;
             pcl::toROSMsg(*currentViewCloudOutPtr, currentViewCloudMsg);
