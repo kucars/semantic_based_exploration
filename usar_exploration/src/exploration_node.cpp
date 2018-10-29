@@ -349,7 +349,8 @@ void ExplorationBase::RunStateMachine()
             current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
             done = true;
         }
-       
+        
+        /*
         for (int i = 0 ; i < 40 ; i++ )
         {
                 transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
@@ -372,7 +373,7 @@ void ExplorationBase::RunStateMachine()
                 ros::spinOnce();
                 sleep(5);
         }        
-        
+        */
         /*
         if (initial_map_generation ) 
         {

@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /TF1/Frames1
+        - /frustum_cloud1
       Splitter Ratio: 0.34838709235191345
     Tree Height: 468
   - Class: rviz/Selection
@@ -305,6 +306,36 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: frustum_cloud
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /current_viewpoint_frustum_pointcloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -330,25 +361,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.805604934692383
+      Distance: 25.75330924987793
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.6321743726730347
-        Y: 0.1853744238615036
-        Z: 2.2088630199432373
+        X: 1.8090277910232544
+        Y: 1.3038495779037476
+        Z: 1.3457283973693848
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3447970449924469
+      Pitch: 1.0647971630096436
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.496665954589844
+      Yaw: 5.9766316413879395
     Saved: ~
 Window Geometry:
   "&Displays":
