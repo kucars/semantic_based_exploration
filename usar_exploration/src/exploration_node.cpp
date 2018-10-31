@@ -349,13 +349,12 @@ void ExplorationBase::RunStateMachine()
             current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
             done = true;
         }
-        
-        /*
+                
         for (int i = 0 ; i < 40 ; i++ )
         {
                 transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
                 tf::Quaternion tf_q ;
-                yaw_ = yaw_ + 0.15 ; 
+                yaw_ = yaw_ + 0.80 ; 
                 tf_q = tf::createQuaternionFromYaw(yaw_);
                 transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
                 br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
@@ -371,9 +370,9 @@ void ExplorationBase::RunStateMachine()
                 current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
                 ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
                 ros::spinOnce();
-                sleep(5);
+                sleep(15);
         }        
-        */
+        
         /*
         if (initial_map_generation ) 
         {

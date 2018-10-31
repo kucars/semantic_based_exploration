@@ -29,8 +29,6 @@
 #include <pcl/common/eigen.h>
 #include <pcl/common/transforms.h>
 #include <pcl/range_image/range_image.h>
-//#include <voxel_grid_occlusion_estimation.h>
-//#include "fcl_utility.h"
 #include <pcl/filters/voxel_grid.h>
 #include <culling/occlusion_culling.h>
 
@@ -109,19 +107,13 @@ int main(int argc, char **argv)
     originalCloudMsg.header.stamp = ros::Time::now();
     originalCloudMsg.header.frame_id = "world";
 
-    ROS_INFO("SIZE %d" , originalCloudMsg.width);
-    ROS_INFO("SIZE %d" , originalCloudMsg.height);
-    ROS_INFO("SIZE2 %d" , originalCloud->points.size());
-
     originalPointcloudPub.publish(originalCloudMsg);
-
     OcclusionCulling<pointType> occlusionCulling(nh, pcdFilePath);
 
     // create listener for the sensor position
     tf::TransformListener listener;
     tf::StampedTransform transform;
 
-    //TODO: occlusionCulling should store and pass fov, rays, and frustum cloud to be used here for visualization if needed
     while (ros::ok())
     {
         listener.waitForTransform(robotFrame, worldFrame, ros::Time(0), ros::Duration(0.1));
@@ -146,12 +138,15 @@ int main(int argc, char **argv)
             rayLines = occlusionCulling.getRays();
             occupancyGridCloud = occlusionCulling.getOccupancyGridCloud();
             sensorFOV = occlusionCulling.getFOV();
-            
+        
             receivedNewPose = false;
         }
-
         sensorFOVPub.publish(sensorFOV);
+
+        rayLines.header.frame_id = worldFrame;
+        rayLines.header.stamp = ros::Time::now();
         rayPub.publish(rayLines);
+
         occupancyGridPub.publish(occupancyGridCloud);
 
         currentViewCloudOutPtr->points = tempCloud.points;

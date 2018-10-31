@@ -1,9 +1,9 @@
 ####################
 ## Culling settings
 ####################
-pcd_input_file: env2.pcd
+pcd_input_file: "env2.pcd"
 voxel_res: 0.1
-frame_id: world
+frame_id: "world"
 debug_enabled: true
 
 ####################
