@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   mav_msgs
   cmake_modules
+  usar_exploration
 )
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
@@ -90,6 +91,6 @@ add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate
 #target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
 #add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
-add_executable(exploration_planner_node_old src/exploration_planner_node_old.cpp)
-target_link_libraries(exploration_planner_node_old ${catkin_LIBRARIES} )
-add_dependencies(exploration_planner_node_old ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+add_executable(exploration_planner_node src/exploration_planner_node.cpp)
+target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
+add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )

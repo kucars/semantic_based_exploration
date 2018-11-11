@@ -51,7 +51,7 @@ nh_private_(nh_private)
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+    //pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
     pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
     pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
     
@@ -228,6 +228,41 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
     // Iterate the tree construction method.
     int loopCount = 0;
     int k = 1 ; 
+
+    // Call the service
+    //ros::ServiceClient client = n.serviceClient<usar_exploration::extractView>("current_view");
+    
+    usar_exploration::extractView srv;
+    geometry_msgs::Pose currentPose ;
+    currentPose.position.x = rrtTree->getRootNode()[0];
+    currentPose.position.y = rrtTree->getRootNode()[1]  ;
+    currentPose.position.z = rrtTree->getRootNode()[2]  ;
+    tf::Quaternion tf_q ;
+        tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
+   currentPose.orientation.x =tf_q.getX() ;
+   currentPose.orientation.y =tf_q.getY() ;
+   currentPose.orientation.z =tf_q.getZ() ;
+   currentPose.orientation.w =tf_q.getW() ;
+
+    //sensor_msgs::PointCloud2::ConstPtr g  ;
+    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
+
+    srv.request.currentPose = currentPose  ;
+    ros::service::waitForService("current_view",ros::Duration(1.0));
+    if (ros::service::call("current_view", srv))
+    {
+        ROS_ERROR("call service viewpoint ");
+
+        *currentPosePtr = srv.response.currentViewPointcloud;
+
+        rrtTree->insertPointcloudWithTf(currentPosePtr);
+    }
+    else
+    {
+        ROS_ERROR("Failed to call service");
+        return 1; 
+    }
+
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
         ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );  
@@ -420,6 +455,8 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
 void rrtNBV::RRTPlanner::posCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
 {
     rrtTree->setStateFromPoseMsg(pose);
+// I think I should call the point cloud service here. 
+// call the manager with and insert point cloud with it OR We just call this function rrtTree->insertPointcloudWithTf(pointcloud); which will insert the point
     // Planner is now ready to plan.
     ready_ = true;
 }
@@ -431,18 +468,18 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
     ready_ = true;
 }
 
-void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-{
-    //std::cout<<"FAME IS:"<<pointcloud->header.frame_id<<"\n";
-    //ROS_INFO("Received PointCloud");
-    static double last = ros::Time::now().toSec();
-    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
-    {
-        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
-        rrtTree->insertPointcloudWithTf(pointcloud);
-        last += params_.pcl_throttle_;
-    }
-}
+//void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+//{
+//    std::cout<<"FAME IS:"<<pointcloud->header.frame_id<<"\n";
+//    //ROS_INFO("Received PointCloud");
+//    static double last = ros::Time::now().toSec();
+//    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
+//    {
+//        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+//        rrtTree->insertPointcloudWithTf(pointcloud);
+//        last += params_.pcl_throttle_;
+//    }
+//}
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {

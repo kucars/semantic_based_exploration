@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ using namespace std;
 
 int marker_counter = 0 ;
 rrtNBV::RrtTree::RrtTree()
-: rrtNBV::TreeBase::TreeBase()
+    : rrtNBV::TreeBase::TreeBase()
 {
     kdTree_ = kd_create(3);
     iterationCount_ = 0;
@@ -50,9 +50,9 @@ rrtNBV::RrtTree::RrtTree()
         time(&rawtime);
         ptm = gmtime(&rawtime);
         logFilePath_ = ros::package::getPath("rrt_explorer") + "/data/"
-        + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
-        + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
-        + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
+                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
+                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + logFilePath_).c_str());
         logFilePath_ += "/";
         fileResponse_.open((logFilePath_ + "response.txt").c_str(), std::ios::out);
@@ -80,9 +80,9 @@ rrtNBV::RrtTree::RrtTree(mesh::StlMesh * mesh, volumetric_mapping::OctomapManage
         time(&rawtime);
         ptm = gmtime(&rawtime);
         logFilePath_ = ros::package::getPath("rrt_explorer") + "/data/"
-        + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
-        + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
-        + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
+                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
+                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + logFilePath_).c_str());
         logFilePath_ += "/";
         fileResponse_.open((logFilePath_ + "response.txt").c_str(), std::ios::out);
@@ -189,8 +189,8 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     //ROS_INFO("pose callback");
     static tf::TransformListener listener;
     tf::StampedTransform transform;
-    std::cout<<"pose.header.frame_id  " << pose.header.frame_id << std::endl << std::flush; 
-    std::cout<<"navigationFrame_  " << params_.navigationFrame_ << std::endl << std::flush; 
+    std::cout<<"pose.header.frame_id  " << pose.header.frame_id << std::endl << std::flush;
+    std::cout<<"navigationFrame_  " << params_.navigationFrame_ << std::endl << std::flush;
     
     try {
         listener.lookupTransform(params_.navigationFrame_, pose.header.frame_id, pose.header.stamp,
@@ -211,7 +211,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     root_[2] = position.z();
     root_[3] = tf::getYaw(quat);
     
-    // debugiing 
+    // debugiing
     geometry_msgs::PoseStamped poseMsg;
     poseMsg.header.stamp       = ros::Time::now();
     poseMsg.header.frame_id    = params_.navigationFrame_;
@@ -370,9 +370,9 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     // center of the exploration space.
     
     double radius = sqrt(
-        SQ(params_.minX_ - params_.maxX_) + SQ(params_.minY_ - params_.maxY_)
-        + SQ(params_.minZ_ - params_.maxZ_));
-    //  ROS_INFO ("radius %f" , radius) ; 
+                SQ(params_.minX_ - params_.maxX_) + SQ(params_.minY_ - params_.maxY_)
+                + SQ(params_.minZ_ - params_.maxZ_));
+    //  ROS_INFO ("radius %f" , radius) ;
     
     bool solutionFound = false;
     
@@ -409,7 +409,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         solutionFound = true;
     }
     
-    //*********************** DEBUG ************************** // 
+    //*********************** DEBUG ************************** //
     // ROS_INFO("Sample Point genrated inside the exploration aera and NOT in collision with the bounding box -the bounding box is the robot dimensions");
     //ROS_INFO("New Sample: %f %f %f " ,  newState.x() , newState.y() ,  newState.z() );
     
@@ -426,13 +426,13 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     rrtNBV::Node * newParent = (rrtNBV::Node*) kd_res_item_data(nearest);
     kd_res_free(nearest);
     
-    // I added this line to make the depth of the tree only 1 
+    // I added this line to make the depth of the tree only 1
     if(newParent != rootNode_)
-        return false ; 
+        return false ;
     // Check for collision of new connection plus some overshoot distance.
-    Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);  
+    Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
     Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
-                              newState[2] - origin[2]);
+            newState[2] - origin[2]);
     
     if (direction.norm() > params_.extensionRange_)
     {
@@ -453,7 +453,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     
     //ROS_INFO("params_.boundingBox_ %f    %f    %f  ",params_.boundingBox_[0], params_.boundingBox_[1], params_.boundingBox_[2]);
     // ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
-    //std::cout << "direction + origin + direction.normalized() * params_.dOvershoot_" << direction + origin + direction.normalized() * params_.dOvershoot_ << std::endl ; 
+    //std::cout << "direction + origin + direction.normalized() * params_.dOvershoot_" << direction + origin + direction.normalized() * params_.dOvershoot_ << std::endl ;
     
     if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree) // || cellStatus == volumetric_mapping::OctomapManager::CellStatus::kUnknown)
     {
@@ -475,7 +475,11 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         newNode->distance_ = newParent->distance_ + direction.norm();
         newParent->children_.push_back(newNode);
         
-        newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+        // Count the rays that ends up with object of interest
+        //newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+        // #count number of unknonw * visible voxels in FOV
+         newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+
         //ROS_INFO("newParent->gain_:%f",newParent->gain_ );
         //ROS_INFO("Branch Gain IS:%f",newNode->gain_ );
         
@@ -571,7 +575,7 @@ void rrtNBV::RrtTree::initialize()
     kd_insert3(kdTree_, rootNode_->state_.x(), rootNode_->state_.y(), rootNode_->state_.z(),rootNode_);
     iterationCount_++;
     
-    //debug 
+    //debug
     geometry_msgs::PoseStamped poseMsg;
     poseMsg.header.stamp       = ros::Time::now();
     poseMsg.header.frame_id    = params_.navigationFrame_;
@@ -592,49 +596,49 @@ void rrtNBV::RrtTree::initialize()
     for (typename std::vector<StateVec>::reverse_iterator iter = bestBranchMemory_.rbegin();
          iter != bestBranchMemory_.rend(); ++iter) {
         StateVec newState = *iter;
-    kdres * nearest = kd_nearest3(kdTree_, newState.x(), newState.y(), newState.z());
-    if (kd_res_size(nearest) <= 0) {
-        kd_res_free(nearest);
-        continue;
-    }
-    rrtNBV::Node * newParent = (rrtNBV::Node *) kd_res_item_data(nearest);
-    kd_res_free(nearest);
-    
-    // Check for collision
-    Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
-    Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1], newState[2] - origin[2]);
-    //ROS_INFO("Params_extension Range %f", params_.extensionRange_);
-    
-    if (direction.norm() > params_.extensionRange_) {
-        direction = params_.extensionRange_ * direction.normalized();
-    }
-    
-    newState[0] = origin[0] + direction[0];
-    newState[1] = origin[1] + direction[1];
-    newState[2] = origin[2] + direction[2];
-    
-    if (volumetric_mapping::OctomapManager::CellStatus::kFree  == manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_, params_.boundingBox_)) {
-        // Create new node and insert into tree
-        rrtNBV::Node * newNode = new rrtNBV::Node;
-        newNode->state_ = newState;
-        newNode->parent_ = newParent;
-        newNode->distance_ = newParent->distance_ + direction.norm();
-        newParent->children_.push_back(newNode);
-        // gain with distance
-        newNode->gain_ = newParent->gain_+ gain(newNode->state_) ; // * exp(-params_.degressiveCoeff_ * newNode->distance_);
-        
-        kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
-        
-        // Display new node
-        publishNode(newNode);
-        // Update best IG and node if applicable
-        if (newNode->gain_ > bestGain_) {
-            bestGain_ = newNode->gain_;
-            bestNode_ = newNode;
+        kdres * nearest = kd_nearest3(kdTree_, newState.x(), newState.y(), newState.z());
+        if (kd_res_size(nearest) <= 0) {
+            kd_res_free(nearest);
+            continue;
         }
-        counter_++;
+        rrtNBV::Node * newParent = (rrtNBV::Node *) kd_res_item_data(nearest);
+        kd_res_free(nearest);
+
+        // Check for collision
+        Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
+        Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1], newState[2] - origin[2]);
+        //ROS_INFO("Params_extension Range %f", params_.extensionRange_);
+
+        if (direction.norm() > params_.extensionRange_) {
+            direction = params_.extensionRange_ * direction.normalized();
+        }
+
+        newState[0] = origin[0] + direction[0];
+        newState[1] = origin[1] + direction[1];
+        newState[2] = origin[2] + direction[2];
+
+        if (volumetric_mapping::OctomapManager::CellStatus::kFree  == manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_, params_.boundingBox_)) {
+            // Create new node and insert into tree
+            rrtNBV::Node * newNode = new rrtNBV::Node;
+            newNode->state_ = newState;
+            newNode->parent_ = newParent;
+            newNode->distance_ = newParent->distance_ + direction.norm();
+            newParent->children_.push_back(newNode);
+            // gain with distance
+            newNode->gain_ = newParent->gain_+ gain(newNode->state_) ; // * exp(-params_.degressiveCoeff_ * newNode->distance_);
+
+            kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
+
+            // Display new node
+            publishNode(newNode);
+            // Update best IG and node if applicable
+            if (newNode->gain_ > bestGain_) {
+                bestGain_ = newNode->gain_;
+                bestNode_ = newNode;
+            }
+            counter_++;
+        }
     }
-         }
 }
 
 std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string targetFrame)
@@ -678,7 +682,7 @@ return ret ;
         history_.push(current->parent_->state_);
         exact_root_ = current->state_;
     }
-    return ret ; 
+    return ret ;
     
 }
 
@@ -686,6 +690,14 @@ double rrtNBV::RrtTree::getBestGain()
 {
     return bestGain_;
 }
+
+Eigen::Vector4d rrtNBV::RrtTree::getRootNode()
+
+{
+    return rootNode_->state_ ;
+}
+
+
 
 geometry_msgs::Pose rrtNBV::RrtTree::getBestEdgeDeep(std::string targetFrame)
 {
@@ -705,6 +717,87 @@ geometry_msgs::Pose rrtNBV::RrtTree::getBestEdgeDeep(std::string targetFrame)
     return ret;
 }
 
+/*
+double rrtNBV::RrtTree::gainSemantic(StateVec state)
+{
+    //ROS_INFO("GAIN");
+
+    // This function computes the gain
+    double gain = 0.0;
+    const double disc = manager_->getResolution();
+    Eigen::Vector3d origin(state[0], state[1], state[2]);
+    Eigen::Vector3d vec;
+    double rangeSq = pow(params_.gainRange_, 2.0);
+    int i = 0 ;
+    // Iterate over all nodes within the allowed distance
+    for (vec[0] = std::max(state[0] - params_.gainRange_, params_.minX_);
+         vec[0] < std::min(state[0] + params_.gainRange_, params_.maxX_); vec[0] += disc) {
+        for (vec[1] = std::max(state[1] - params_.gainRange_, params_.minY_);
+             vec[1] < std::min(state[1] + params_.gainRange_, params_.maxY_); vec[1] += disc) {
+            for (vec[2] = std::max(state[2] - params_.gainRange_, params_.minZ_);
+                 vec[2] < std::min(state[2] + params_.gainRange_, params_.maxZ_); vec[2] += disc) {
+
+                Eigen::Vector3d dir = vec - origin;
+                // Skip if distance is too large
+                if (dir.transpose().dot(dir) > rangeSq) {
+                    continue;
+                }
+                bool insideAFieldOfView = false;
+                // Check that voxel center is inside one of the fields of view.
+                for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_
+                     .camBoundNormals_.begin(); itCBN != params_.camBoundNormals_.end(); itCBN++) {
+                    bool inThisFieldOfView = true;
+                    for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
+                         itSingleCBN != itCBN->end(); itSingleCBN++) {
+                        Eigen::Vector3d normal = Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ())
+                                * (*itSingleCBN);
+                        double val = dir.dot(normal.normalized());
+
+                        if (val < SQRT2 * disc) {
+                            inThisFieldOfView = false;
+                            break;
+                        }
+                    }
+
+                    if (inThisFieldOfView) {
+                        insideAFieldOfView = true;
+                        break;
+                    }
+                }
+                if (!insideAFieldOfView) {
+                    continue;
+                }
+
+                // Check cell status and add to the gain considering the corresponding factor.
+                double probability;
+                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                            vec, &probability);
+
+                if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+
+                        double s_gain = manager_->getCellIneterestGain(vec);
+                        if(s_gain == 0.5)
+                            gain += 1;
+                    }
+                }
+
+
+
+            }
+        }
+    }
+
+    // Scale with volume
+    // gain *= pow(disc, 3.0);
+
+    ROS_INFO("GAIN ",gain);
+    return gain;
+}
+
+*/
 double rrtNBV::RrtTree::gain(StateVec state)
 {
     //ROS_INFO("GAIN");
@@ -715,7 +808,7 @@ double rrtNBV::RrtTree::gain(StateVec state)
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
-    int i = 0 ; 
+    int i = 0 ;
     // Iterate over all nodes within the allowed distance
     for (vec[0] = std::max(state[0] - params_.gainRange_, params_.minX_);
          vec[0] < std::min(state[0] + params_.gainRange_, params_.maxX_); vec[0] += disc) {
@@ -725,125 +818,125 @@ double rrtNBV::RrtTree::gain(StateVec state)
                  vec[2] < std::min(state[2] + params_.gainRange_, params_.maxZ_); vec[2] += disc) {
                 
                 Eigen::Vector3d dir = vec - origin;
-            // Skip if distance is too large
-            if (dir.transpose().dot(dir) > rangeSq) {
-                continue;
-            }
-            bool insideAFieldOfView = false;
-        // Check that voxel center is inside one of the fields of view.
-        for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_
-            .camBoundNormals_.begin(); itCBN != params_.camBoundNormals_.end(); itCBN++) {
-            bool inThisFieldOfView = true;
-        for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
-             itSingleCBN != itCBN->end(); itSingleCBN++) {
-            Eigen::Vector3d normal = Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ())
-            * (*itSingleCBN);
-        double val = dir.dot(normal.normalized());
-        
-        if (val < SQRT2 * disc) {
-            inThisFieldOfView = false;
-            break;
-        }
-             }
-             
-             if (inThisFieldOfView) {
-                 insideAFieldOfView = true;
-                 break;
-             }
-            }
-            if (!insideAFieldOfView) {
-                continue;
-            }
-            
-            // Check cell status and add to the gain considering the corresponding factor.
-            double probability;
-            volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
-                vec, &probability);
-            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
-                // Rayshooting to evaluate inspectability of cell
-                if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-                    != this->manager_->getVisibility(origin, vec, false)) {
-                    gain += params_.igUnmapped_;
-                // TODO: Add probabilistic gain
-                // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                // Skip if distance is too large
+                if (dir.transpose().dot(dir) > rangeSq) {
+                    continue;
+                }
+                bool insideAFieldOfView = false;
+                // Check that voxel center is inside one of the fields of view.
+                for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_
+                     .camBoundNormals_.begin(); itCBN != params_.camBoundNormals_.end(); itCBN++) {
+                    bool inThisFieldOfView = true;
+                    for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
+                         itSingleCBN != itCBN->end(); itSingleCBN++) {
+                        Eigen::Vector3d normal = Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ())
+                                * (*itSingleCBN);
+                        double val = dir.dot(normal.normalized());
+
+                        if (val < SQRT2 * disc) {
+                            inThisFieldOfView = false;
+                            break;
+                        }
                     }
-            } 
-            else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
-                // Rayshooting to evaluate inspectability of cell
-                if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-                    != this->manager_->getVisibility(origin, vec, false)) {
-                    gain += params_.igOccupied_;
-                    double s_gain = manager_->getCellIneterestGain(vec);
-                    if(s_gain == 0.5) 
-                        gain += 1;
-                    else
+
+                    if (inThisFieldOfView) {
+                        insideAFieldOfView = true;
+                        break;
+                    }
+                }
+                if (!insideAFieldOfView) {
+                    continue;
+                }
+
+                // Check cell status and add to the gain considering the corresponding factor.
+                double probability;
+                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                            vec, &probability);
+                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                        gain += params_.igUnmapped_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                    }
+                }
+                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
                         gain += params_.igOccupied_;
-                // TODO: Add probabilistic gain
-                // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                      //  double s_gain = manager_->getCellIneterestGain(vec);
+                     //   if(s_gain == 0.5)
+                      //      gain += 1;
+                     //   else
+                      //      gain += params_.igOccupied_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-            } 
-            else {
-                // Rayshooting to evaluate inspectability of cell
-                if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-                    != this->manager_->getVisibility(origin, vec, false)) {
-                    gain += params_.igFree_;
-                // TODO: Add probabilistic gain
-                // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                }
+                else {
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                        gain += params_.igFree_;
+                        // TODO: Add probabilistic gain
+                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-            }
-           
-            
-             //   double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
-            
-            //*************** Pure Entropy ***************************** //
-             //double p = 0.5 ;
-              //                  if (probability != -1)
+                }
+
+
+                //   double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
+
+                //*************** Pure Entropy ***************************** //
+                //double p = 0.5 ;
+                //                  if (probability != -1)
                 //                  {
-              //                        p = probability;
-                                      // ROS_INFO("probability %f \n", p);
+                //                        p = probability;
+                // ROS_INFO("probability %f \n", p);
 
                 // }
-                 
-               //  double entropy;
-               //  entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
-               //  entropy= entropy/maxThreshold ; 
+
+                //  double entropy;
+                //  entropy= -p * std::log(p) - ((1-p) * std::log(1-p));
+                //  entropy= entropy/maxThreshold ;
                 // gain +=  entropy;
-                 
-                 // ************** Semantic gain ************************* // 
-                 
-                 // Semantic gain    
+
+                // ************** Semantic gain ************************* //
+
+                // Semantic gain
                 // double s_gain = manager_->getCellIneterestGain(vec);
-                 //double semantic_entropy ;
-                 //semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
-                 //semantic_entropy = semantic_entropy/maxThreshold ; 
-                 //gain+=semantic_entropy ;
-                 
+                //double semantic_entropy ;
+                //semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
+                //semantic_entropy = semantic_entropy/maxThreshold ;
+                //gain+=semantic_entropy ;
+
                 // gain = gain + entropy + semantic_entropy ;
                 
-            //std::cout << "entropy" << entropy <<  std::endl ;
-            //std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
-                 }
-             }
-         }
-         
-         // Scale with volume
-         gain *= pow(disc, 3.0);
-         // Check the gain added by inspectable surface
-         if (mesh_) {
-             // ROS_INFO("****gain added by inspectable surface*****");
-             tf::Transform transform;
-             transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-             tf::Quaternion quaternion;
-             quaternion.setEuler(0.0, 0.0, state[3]);
-             transform.setRotation(quaternion);
-             gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-         }
-         ROS_INFO("GAIN ",gain);
-         return gain;
+                //std::cout << "entropy" << entropy <<  std::endl ;
+                //std::cout << "semantic_entropy" << semantic_entropy <<  std::endl ;
+            }
+        }
+    }
+
+    // Scale with volume
+    gain *= pow(disc, 3.0);
+    // Check the gain added by inspectable surface
+    if (mesh_) {
+        // ROS_INFO("****gain added by inspectable surface*****");
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
+        tf::Quaternion quaternion;
+        quaternion.setEuler(0.0, 0.0, state[3]);
+        transform.setRotation(quaternion);
+        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
+    }
+    ROS_INFO("GAIN ",gain);
+    return gain;
 }
 
 std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getPathBackToPrevious(
-    std::string targetFrame)
+        std::string targetFrame)
 {
     std::vector<geometry_msgs::Pose> ret;
     if (history_.empty()) {
@@ -935,8 +1028,8 @@ void rrtNBV::RrtTree::publishNode(Node * node)
     Eigen::Quaternion<float> q;
     Eigen::Vector3f init(1.0, 0.0, 0.0);
     Eigen::Vector3f dir(node->state_[0] - node->parent_->state_[0],
-                        node->state_[1] - node->parent_->state_[1],
-                        node->state_[2] - node->parent_->state_[2]);
+            node->state_[1] - node->parent_->state_[1],
+            node->state_[2] - node->parent_->state_[2]);
     q.setFromTwoVectors(init, dir);
     q.normalize();
     p.pose.orientation.x = q.x();
@@ -954,25 +1047,25 @@ void rrtNBV::RrtTree::publishNode(Node * node)
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
     
-//     p.id = g_ID_;
-//     g_ID_++;
-//     p.ns = "branch_test";
-//     p.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-//     p.action = visualization_msgs::Marker::ADD;
-//     p.pose.position.x = node->parent_->state_[0];
-//     p.pose.position.y = node->parent_->state_[1];
-//     p.pose.position.z = node->parent_->state_[2]+1;
-//     p.scale.x = 1;
-//     p.scale.y = 1;
-//     p.scale.z = 1;
-//     p.color.r = 1; // red
-//     p.color.g = 1;
-//     p.color.b = 1;
-//     p.color.a = 1.0;
-//     p.text = g_ID_;
-//     p.lifetime = ros::Duration(2);
-//     p.frame_locked = false;
-//     params_.inspectionPath_.publish(p);
+    //     p.id = g_ID_;
+    //     g_ID_++;
+    //     p.ns = "branch_test";
+    //     p.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    //     p.action = visualization_msgs::Marker::ADD;
+    //     p.pose.position.x = node->parent_->state_[0];
+    //     p.pose.position.y = node->parent_->state_[1];
+    //     p.pose.position.z = node->parent_->state_[2]+1;
+    //     p.scale.x = 1;
+    //     p.scale.y = 1;
+    //     p.scale.z = 1;
+    //     p.color.r = 1; // red
+    //     p.color.g = 1;
+    //     p.color.b = 1;
+    //     p.color.a = 1.0;
+    //     p.text = g_ID_;
+    //     p.lifetime = ros::Duration(2);
+    //     p.frame_locked = false;
+    //     params_.inspectionPath_.publish(p);
     
     if (params_.log_) {
         for (int i = 0; i < node->state_.size(); i++) {
@@ -1009,7 +1102,7 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::samplePath(StateVec start, Sta
     }
     double disc = std::min(params_.dt_ * params_.v_max_ / distance.norm(),
                            params_.dt_ * params_.dyaw_max_ / abs(yaw_direction));
-    std::cout << "STEP SIZE" << disc << std::endl  << std::flush ; 
+    std::cout << "STEP SIZE" << disc << std::endl  << std::flush ;
     assert(disc > 0.0);
     
     for (double it = 0.0; it <= 1.0; it += disc) {

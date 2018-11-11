@@ -22,7 +22,8 @@
   <build_depend>visualization_msgs</build_depend>
   <build_depend>octomap_world</build_depend>
   <build_depend>octomap</build_depend>
-
+  <build_depend>message_generation</build_depend>
+  <build_depend>genmsg</build_depend>
 
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
@@ -37,7 +38,8 @@
   <build_export_depend>visualization_msgs</build_export_depend>
   <build_export_depend>octomap_world</build_export_depend>
   <build_export_depend>octomap</build_export_depend>
-
+  <build_export_depend>message_generation</build_export_depend>
+  <build_depend>genmsg</build_depend>
 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
@@ -52,7 +54,8 @@
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>octomap_world</exec_depend>
   <exec_depend>octomap</exec_depend>
-
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>genmsg</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

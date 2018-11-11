@@ -16,7 +16,7 @@
    <arg name="threshold_max" default="0.97" />
    <arg name="threshold_occupancy" default="0.7" />
    
-  <arg name="pcl_topic" default="/pointcloud_throttled" />
+  <arg name="pcl_topic" default="/current_viewpoint_pointcloud_transfered" />
   <arg name="stl_file_path" default="" />
   <arg name="mesh_resolution" default="1.0" />
  <arg name="treat_unknown_as_occupied" default="false" />

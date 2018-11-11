@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="param_file" default="$(find rrt_explorer)/resource/exploration_nav.yaml" />
-      <node name="exploration_planner_node_old" pkg="rrt_explorer" type="exploration_planner_node_old" output="screen" >
+      <node name="exploration_planner_node" pkg="rrt_explorer" type="exploration_planner_node" output="screen" >
         <rosparam command="load" file="$(arg param_file)"/>
       </node>
 

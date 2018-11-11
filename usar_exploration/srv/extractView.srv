@@ -1,0 +1,3 @@
+geometry_msgs/Pose currentPose
+---
+sensor_msgs/PointCloud2 currentViewPointcloud

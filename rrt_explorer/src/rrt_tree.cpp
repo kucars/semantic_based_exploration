@@ -79,3 +79,10 @@ void rrtNBV::TreeBase::insertPointcloudWithTf(
 }
 
 
+
+Eigen::Vector4d rrtNBV::TreeBase::getRootNode()
+
+{
+    return rootNode_->state_ ;
+}
+

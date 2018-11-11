@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <std_msgs/Float32.h>
+#include "usar_exploration/extractView.h"
 
 namespace rrtNBV {
 class RRTPlanner{

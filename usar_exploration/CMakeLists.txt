@@ -23,16 +23,31 @@ find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
   octomap_world
   culling
+  message_generation
+)
+
+add_service_files(
+
+  DIRECTORY srv
+  FILES
+  extractView.srv
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
+
 find_package(octomap REQUIRED)
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+   sensor_msgs
+   geometry_msgs
+)
 catkin_package(
   INCLUDE_DIRS include
   ${OCTOMAP_INCLUDE_DIRS}
   LIBRARIES ${OCTOMAP_LIBRARIES} ${OCTOMAP_LIBRARIES_DIR}
   #LIBRARIES usar_exploration occlusion_culling
-  CATKIN_DEPENDS roscpp rospy std_msgs pcl_ros octomap_world
+  CATKIN_DEPENDS roscpp rospy std_msgs pcl_ros octomap_world message_runtime  genmsg
 )
 
 include_directories(include
@@ -70,6 +85,8 @@ target_link_libraries(current_view_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIE
 #target_link_libraries(tfbr ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
 
-
+add_executable(current_view_srv_call src/current_view_srv_call.cpp)
+target_link_libraries(current_view_srv_call ${catkin_LIBRARIES})
+add_dependencies(current_view_srv_call ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
 
 

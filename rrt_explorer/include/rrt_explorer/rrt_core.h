@@ -60,6 +60,7 @@ class RrtTree : public TreeBase
   double gainPureEntropy(StateVec state);
   double gainDinsity(StateVec state, int &dinsity);
   virtual double getBestGain() ;
+  virtual Eigen::Vector4d getRootNode();
 
  protected:
   kdtree * kdTree_;
