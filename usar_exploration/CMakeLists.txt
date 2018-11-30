@@ -66,9 +66,9 @@ include_directories(include
 #target_link_libraries(occlusion_culling_test ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
 
-#add_executable(occlusion_culling_test_with_rrt src/occlusion_culling_test_with_rrt.cpp src/occlusion_culling.cpp src/voxel_grid_occlusion_estimation.cpp src/frustum_culling.cpp)
-#add_dependencies(occlusion_culling_test_with_rrt ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(occlusion_culling_test_with_rrt ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
+add_executable(occlusion_culling_test_with_rrt src/occlusion_culling_test_with_rrt.cpp )
+add_dependencies(occlusion_culling_test_with_rrt ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(occlusion_culling_test_with_rrt ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
 add_executable(exploration_node src/exploration_node.cpp)
 add_dependencies(exploration_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -85,8 +85,14 @@ target_link_libraries(current_view_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIE
 #target_link_libraries(tfbr ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
 
-add_executable(current_view_srv_call src/current_view_srv_call.cpp)
-target_link_libraries(current_view_srv_call ${catkin_LIBRARIES})
-add_dependencies(current_view_srv_call ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
+#add_executable(current_view_srv_call src/current_view_srv_call.cpp)
+#target_link_libraries(current_view_srv_call ${catkin_LIBRARIES})
+#add_dependencies(current_view_srv_call ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
+
+#add_executable(exploration_node_client src/exploration_node_client.cpp)
+#target_link_libraries(exploration_node_client ${catkin_LIBRARIES})
+#add_dependencies(exploration_node_client ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
+
+
 
 

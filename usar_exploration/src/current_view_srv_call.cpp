@@ -50,14 +50,13 @@ typedef pcl::PointXYZRGB pointType;
 bool receivedNewPose = false ;
 
 typedef pcl::PointCloud<pointType> PointCloud;
-geometry_msgs::PoseStamped current_pose ;
-
-
+geometry_msgs::PoseStamped current_pose;
 
 class ExtractViewPoints {
 public:
     ExtractViewPoints(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private) ;
     bool extractCurrentViewFunction(usar_exploration::extractView::Request  &req, usar_exploration::extractView::Response &res) ;
+
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
@@ -79,16 +78,14 @@ private:
     ros::Publisher rayPub    ;
     ros::Publisher occupancyGridPub  ;
     ros::Subscriber current_pose_sub ;
-
-
-
 };
+
 ExtractViewPoints::ExtractViewPoints(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private): nh_(nh),
     nh_private_(nh_private){
     ROS_INFO("Call Base Class constructor");
 
     // Publishers and subscribers
-    originalPointcloudPub            = nh_.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 10);
+    originalPointcloudPub            = nh_.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 1);
     currentPointcloudTransferedPub   = nh_.advertise<sensor_msgs::PointCloud2>("current_viewpoint_pointcloud_transfered", 10);
     currentPointcloudFrustumPub      = nh_.advertise<sensor_msgs::PointCloud2>("current_viewpoint_frustum_pointcloud", 10);
     currentPointcloudPub             = nh_.advertise<sensor_msgs::PointCloud2>("current_viewpoint_pointcloud", 10);
@@ -111,7 +108,6 @@ ExtractViewPoints::ExtractViewPoints(const ros::NodeHandle &nh, const ros::NodeH
     path = ros::package::getPath("usar_exploration");
     pcdFilePath = path + "/resources/pcd/" + pcdFileName;
 
-
     ROS_INFO("Loading File%s",pcdFilePath.c_str());
     pcl::io::loadPCDFile<pointType> (pcdFilePath, *originalCloud);
     ROS_INFO("Done, size:%d",originalCloud->points.size());
@@ -121,11 +117,11 @@ ExtractViewPoints::ExtractViewPoints(const ros::NodeHandle &nh, const ros::NodeH
     originalCloudMsg.header.stamp = ros::Time::now();
     originalCloudMsg.header.frame_id = "world";
     originalPointcloudPub.publish(originalCloudMsg);
-
 }
 
 bool ExtractViewPoints::extractCurrentViewFunction(usar_exploration::extractView::Request  &req, usar_exploration::extractView::Response &res)
 {
+    ROS_INFO("Extract Current View Service Call");
 
     PointCloud::Ptr currentViewConvertedCloudOutPtr(new PointCloud);
     PointCloud::Ptr currentViewCloudOutPtr(new PointCloud);
@@ -137,18 +133,22 @@ bool ExtractViewPoints::extractCurrentViewFunction(usar_exploration::extractView
     // create listener for the sensor position
     tf::TransformListener listener;
     tf::StampedTransform transform;
+    ROS_INFO("1");
 
-    listener.waitForTransform(robotFrame, worldFrame, ros::Time(0), ros::Duration(0.1));
+    listener.waitForTransform(robotFrame, worldFrame, ros::Time(0), ros::Duration(3));
     try{
         listener.lookupTransform(robotFrame, worldFrame,ros::Time(0), transform);
     }
     catch (tf::TransformException ex){
+        ROS_INFO("1.5");
         ROS_ERROR("%s",ex.what());
         ros::Duration(1.0).sleep();
     }
+    ROS_INFO("2");
+
     current_pose.pose = req.currentPose ;
     // change the pose to request msg not the resutls
-    ROS_INFO ("view point position %f" , current_pose.pose.position.x ) ;
+    ROS_INFO ("view point position %f" , current_pose.pose.position.x , current_pose.pose.position.y,  current_pose.pose.position.z  ) ;
 
     ros::Time tic = ros::Time::now();    // change the pose to request msg not the resutls
 
@@ -180,9 +180,6 @@ bool ExtractViewPoints::extractCurrentViewFunction(usar_exploration::extractView
     currentViewConvertedCloudOutPtr->points = tempCloudOut.points;
     pcl::toROSMsg(*currentViewConvertedCloudOutPtr, currentTransferedViewCloudMsg);
 
-    res.currentViewPointcloud = currentTransferedViewCloudMsg ;
-    //res.currentViewPointcloud.header.frame_id = robotFrame;
-
 
     tempCloudAdd += tempCloud;
     accomulatedCloudPtr->points = tempCloudAdd.points;
@@ -191,22 +188,26 @@ bool ExtractViewPoints::extractCurrentViewFunction(usar_exploration::extractView
 
     currentCloudFrustumMsg.header.stamp = ros::Time::now();
     currentCloudFrustumMsg.header.frame_id = worldFrame;
-    // currentPointcloudFrustumPub.publish(currentCloudFrustumMsg);
+    currentPointcloudFrustumPub.publish(currentCloudFrustumMsg);
 
     currentViewCloudMsg.header.stamp = ros::Time::now();
     currentViewCloudMsg.header.frame_id = worldFrame;
-    //currentPointcloudPub.publish(currentViewCloudMsg);
+    res.currentViewPointcloud = currentViewCloudMsg ;
+
+    currentPointcloudPub.publish(currentViewCloudMsg);
 
     accomulatedCloudMsg.header.stamp = ros::Time::now();
     accomulatedCloudMsg.header.frame_id = worldFrame;
-    // accumulatedPointcloudPub.publish(accomulatedCloudMsg);
-
-    currentTransferedViewCloudMsg.header.stamp = ros::Time::now();
-    currentTransferedViewCloudMsg.header.frame_id = robotFrame;
-res.currentViewPointcloud = currentTransferedViewCloudMsg ;
+    accumulatedPointcloudPub.publish(accomulatedCloudMsg);
 
 
     // send this one as the service results
+    currentTransferedViewCloudMsg.header.stamp = ros::Time::now();
+    currentTransferedViewCloudMsg.header.frame_id = robotFrame;
+    //res.currentViewPointcloud = currentTransferedViewCloudMsg ;
+    currentPointcloudTransferedPub.publish(currentTransferedViewCloudMsg);
+
+    ROS_INFO("3");
 
     return true;
 

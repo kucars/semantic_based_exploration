@@ -29,7 +29,7 @@ resolution: 0.1
 mesh_resolution: 1.0
 visualize_max_z: 5.0
 sensor_max_range: 5.0
-map_publish_frequency: 0.08 # it was 100
+map_publish_frequency: 0.08
 probability_hit: 0.7
 probability_miss: 0.4
 threshold_min: 0.12
@@ -65,7 +65,7 @@ change_detection_enabled: false
 /exploration_node/init/pose/x: 4
 /exploration_node/init/pose/y: 2
 /exploration_node/init/pose/z: 1
-/exploration_node/init/pose/yaw: 0
+/exploration_node/init/pose/yaw: -3.032297
 
 #4 2 2 0 
 # Camera Params

@@ -34,7 +34,7 @@
 //#include <voxel_grid_occlusion_estimation.h>
 //#include "fcl_utility.h"
 #include <pcl/filters/voxel_grid.h>
-#include <usar_exploration/occlusion_culling.h>
+#include <culling/occlusion_culling.h>
 
 // octomap
 #include <octomap_msgs/Octomap.h>
@@ -57,6 +57,7 @@
 using namespace std;
 using namespace octomap;
 //using namespace fcl;
+typedef pcl::PointXYZRGB pointType;
 
 visualization_msgs::Marker drawLines(std::vector<geometry_msgs::Point> links, int c_color, float scale);
 geometry_msgs::Pose uav2camTransformation(geometry_msgs::Pose pose, std::vector<float> rpy, std::vector<float> xyz);
@@ -64,58 +65,61 @@ geometry_msgs::Pose uav2camTransformation(geometry_msgs::Pose pose, std::vector<
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "coverge_quantification");
+    ros::init(argc, argv, "testing");
     ros::NodeHandle n;
 
-    ros::Publisher originalCloudPub             = n.advertise<sensor_msgs::PointCloud2>("originalpointcloud", 100);
-    ros::Publisher predictedCloudPub            = n.advertise<sensor_msgs::PointCloud2>("pointcloud_1", 100);
-    ros::Publisher currentPosePub               = n.advertise<geometry_msgs::PoseStamped>("currentPose", 100);
-    ros::Publisher FrustumCloudPub              = n.advertise<sensor_msgs::PointCloud2>("frustum_cloud", 100);
-    ros::Publisher sensorPosePub                = n.advertise<geometry_msgs::PoseArray>("sensor_pose", 10);
+    //ros::Publisher originalPointcloudPub             = n.advertise<sensor_msgs::PointCloud2>("originalpointcloud", 100);
+    //ros::Publisher predictedCloudPub            = n.advertise<sensor_msgs::PointCloud2>("pointcloud_1", 100);
+    ros::Publisher currentPosePub               = n.advertise<geometry_msgs::PoseStamped>("current_pose", 10);
+    //ros::Publisher FrustumCloudPub              = n.advertise<sensor_msgs::PointCloud2>("frustum_cloud", 100);
+    //ros::Publisher sensorPosePub                = n.advertise<geometry_msgs::PoseArray>("sensor_pose", 10);
     //ros::Publisher generagedPathPub             = n.advertise<visualization_msgs::Marker>("generated_path", 10);
-    ros::Publisher currentViewPointcloud        = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 10);
+   // ros::Publisher currentViewPointcloud        = n.advertise<sensor_msgs::PointCloud2>("pointcloud", 10);
 
-    pcl::PointCloud<pcl::PointXYZRGB> predictedCloud;
-    pcl::PointCloud<pcl::PointXYZRGB> FRCloud;
+    //pcl::PointCloud<pcl::PointXYZRGB> predictedCloud;
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr predictedCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr FrustumCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr FrustumCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
+   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr predictedCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
+   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr FrustumCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+   // pcl::PointCloud<pcl::PointXYZRGB>::Ptr FrustumCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>);
+   // sensor_msgs::PointCloud2 originalCloudMsg,currentViewCloudMsg,accomulatedCloudMsg;//,currentCloudFrustumMsg;
 
+   // std::string pcdFileName;
+   // n.param<std::string>("pcd_input_file", pcdFileName, std::string("env2.pcd")); //house_colored4 // semantic_area6
 
+    // Load the original map
     std::string path = ros::package::getPath("usar_exploration");
+  //  std::string pcdFilePath = path + "/resources/pcd/" + pcdFileName;
+   // ROS_INFO("Loading File%s",pcdFilePath.c_str());
 
-    //pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/semantic_area6.pcd", *originalCloud); // for visualization
-    pcl::io::loadPCDFile<pcl::PointXYZRGB> (path+"/resources/pcd/house_colored4.pcd", *originalCloud); // for visualization
+  //  pcl::io::loadPCDFile<pointType> (pcdFilePath, *originalCloud);
+   // ROS_INFO("Done, size:%d",originalCloud->points.size());
 
-   // OcclusionCulling occlusionCulling(n,"semantic_area6.pcd");
-    OcclusionCulling occlusionCulling(n,"house_colored4.pcd");
+    //Publish the original map once
+   // pcl::toROSMsg(*originalCloud, originalCloudMsg); //cloud of original
+  //  originalCloudMsg.header.stamp = ros::Time::now();
+  //  originalCloudMsg.header.frame_id = "world";
 
-    // read positiongs from txt file
-    // only add the start position
-    //std::string str1 = path+"/resources/txt/occlusionTestPoints.txt";
-    std::string str1 = path+"/resources/txt/occlusionTestIndoorScene2_high.txt";
+    //originalPointcloudPub.publish(originalCloudMsg);
+ //   OcclusionCulling<pointType> occlusionCulling(n, pcdFilePath);
+
+    // read positiongs from txt file // only add the start position
+    //std::string txtFileName;
+    //n.param<std::string>("txt_input_file", txtFileName, std::string("occlusionTestIndoorScene2_high.txt")); //occlusionTestPoints
+    std::string txtFilePath = path + "/resources/txt/occlusionTestIndoorScene2_high.txt";
+    ROS_INFO("Loading File%s",txtFilePath.c_str());
 
     double locationx,locationy,locationz,yaw; // file variables
     geometry_msgs::PoseArray viewpoints;
     geometry_msgs::PoseStamped loc; // exploration positions
     double viewPointCount=0;
     double timeSum=0;
-    sensor_msgs::PointCloud2 cloud3;
+
     ros::Rate loop_rate(10);
-
-
-    
-    
-    
     tf::TransformBroadcaster br;
     tf::Transform transform;
 
-   
-    
-
-    const char * filename1 = str1.c_str();
+    const char * filename1 = txtFilePath.c_str();
     assert(filename1 != NULL);
     filename1 = strdup(filename1);
     FILE *file1 = fopen(filename1, "r");
@@ -125,7 +129,8 @@ int main(int argc, char **argv)
         fclose(file1);
     }
     
-    while (!feof(file1))
+
+    while (!feof(file1) && ros::ok() )
     {
         fscanf(file1,"%lf %lf %lf %lf\n",&locationx,&locationy,&locationz,&yaw);
         std::cout << "location in test: " << locationx << " " << locationy << " " << locationz <<  "  " << yaw << std::endl ;
@@ -149,129 +154,105 @@ int main(int argc, char **argv)
         currentPosePub.publish(loc); // Step 1 
         viewpoints.poses.push_back(loc.pose);
 
-        ////////////////////////////// Frustum culling - visiualization only //////////////////////////////////////////////////////
-        pcl::FrustumCullingTT fc(true);
-        fc.setInputCloud (originalCloud);
-        fc.setVerticalFOV (45);
-        fc.setHorizontalFOV (58);
-        fc.setNearPlaneDistance (0.3);
-        fc.setFarPlaneDistance (3.0);
-        Eigen::Matrix4f camera_pose;
-        Eigen::Matrix3d Rd;
-        Eigen::Matrix3f Rf;
-        camera_pose.setZero();
-        tf::Quaternion qt;
-        qt.setX(loc.pose.orientation.x);
-        qt.setY(loc.pose.orientation.y);
-        qt.setZ(loc.pose.orientation.z);
-        qt.setW(loc.pose.orientation.w);
-        tf::Matrix3x3 R_tf(qt);
-        tf::matrixTFToEigen(R_tf,Rd);
-        Rf = Rd.cast<float>();
-        camera_pose.block (0, 0, 3, 3) = Rf;
-        Eigen::Vector3f T;
-        T (0) = loc.pose.position.x; T (1) = loc.pose.position.y; T (2) = loc.pose.position.z;
-        camera_pose.block (0, 3, 3, 1) = T;
-        camera_pose (3, 3) = 1;
-        fc.setCameraPose (camera_pose);
-        fc.filter (*FrustumCloud);
 
-        ///////////////////////////////////////////////////////////////////////////
-        // 2 *****Occlusion Culling*******
 
-         std::vector<float> rpy;
-         rpy.push_back(0) ;
-         rpy.push_back(0.093) ;
-         rpy.push_back(0) ;
-         //(0,0.093,0);
-         //std::cout << "2.5 " << std::endl ;
+//        ////////////////////////////// Frustum culling - visiualization only //////////////////////////////////////////////////////
+//        pcl::FrustumCullingTT fc(true);
+//        fc.setInputCloud (originalCloud);
+//        fc.setVerticalFOV (45);
+//        fc.setHorizontalFOV (58);
+//        fc.setNearPlaneDistance (0.3);
+//        fc.setFarPlaneDistance (3.0);
+//        Eigen::Matrix4f camera_pose;
+//        Eigen::Matrix3d Rd;
+//        Eigen::Matrix3f Rf;
+//        camera_pose.setZero();
+//        tf::Quaternion qt;
+//        qt.setX(loc.pose.orientation.x);
+//        qt.setY(loc.pose.orientation.y);
+//        qt.setZ(loc.pose.orientation.z);
+//        qt.setW(loc.pose.orientation.w);
+//        tf::Matrix3x3 R_tf(qt);
+//        tf::matrixTFToEigen(R_tf,Rd);
+//        Rf = Rd.cast<float>();
+//        camera_pose.block (0, 0, 3, 3) = Rf;
+//        Eigen::Vector3f T;
+//        T (0) = loc.pose.position.x; T (1) = loc.pose.position.y; T (2) = loc.pose.position.z;
+//        camera_pose.block (0, 3, 3, 1) = T;
+//        camera_pose (3, 3) = 1;
+//        fc.setCameraPose (camera_pose);
+//        fc.filter (*FrustumCloud);
 
-         std::vector<float> xyz;//(0,0.0,-0.055);
-         xyz.push_back(0) ;
-         xyz.push_back(0) ;
-         xyz.push_back(-0.055) ;
+//        ///////////////////////////////////////////////////////////////////////////
+//        // 2 *****Occlusion Culling*******
 
-         //xyz[2] = -0.055 ;
+//         std::vector<float> rpy;
+//         rpy.push_back(0) ;
+//         rpy.push_back(0.093) ;
+//         rpy.push_back(0) ;
+//         //(0,0.093,0);
+//         //std::cout << "2.5 " << std::endl ;
 
-        geometry_msgs::Pose pt;
-        pt.position.x = locationx; pt.position.y = locationy; pt.position.z = locationz;
-        tf::Quaternion tf_q2 ;
-        tf_q2 = tf::createQuaternionFromYaw(yaw);
-        pt.orientation.x = tf_q2.getX();
-        pt.orientation.y = tf_q2.getY();
-        pt.orientation.z = tf_q2.getZ();
-        pt.orientation.w = tf_q2.getW();
-        geometry_msgs::Pose c = uav2camTransformation( pt,  rpy,  xyz);
+//         std::vector<float> xyz;//(0,0.0,-0.055);
+//         xyz.push_back(0) ;
+//         xyz.push_back(0) ;
+//         xyz.push_back(-0.055) ;
+
+//         //xyz[2] = -0.055 ;
+
+//        geometry_msgs::Pose pt;
+//        pt.position.x = locationx; pt.position.y = locationy; pt.position.z = locationz;
+//        tf::Quaternion tf_q2 ;
+//        tf_q2 = tf::createQuaternionFromYaw(yaw);
+//        pt.orientation.x = tf_q2.getX();
+//        pt.orientation.y = tf_q2.getY();
+//        pt.orientation.z = tf_q2.getZ();
+//        pt.orientation.w = tf_q2.getW();
+//        geometry_msgs::Pose c = uav2camTransformation( pt,  rpy,  xyz);
+
+
+/*
         pcl::PointCloud<pcl::PointXYZRGB> tempCloud;
-        
+
         ros::Time tic = ros::Time::now();
-        ///////////////////////////////////////////////////////////////
-        tempCloud = occlusionCulling.extractColoredVisibleSurface(c); //
-        ////////////////////////////////////////////////////////////////
+        tempCloud = occlusionCulling.extractVisibleSurface(loc.pose);  // point cloud in world frame
+        ROS_INFO("DONE");
+
         ros::Time toc = ros::Time::now();
         double elapsed =  toc.toSec() - tic.toSec();
+        ROS_INFO("Occlusion Culling took in (s) :%f",elapsed );
+
         timeSum +=elapsed;
-        std::cout<<"\nOcculision Culling duration (s) = "<<elapsed<<"\n";
         viewPointCount++;
 
         predictedCloud += tempCloud;
-        FRCloud += *FrustumCloud;
-        
-        pcl::toROSMsg(tempCloud, cloud3); //cloud of original
-        cloud3.header.stamp = ros::Time::now();
-        cloud3.header.frame_id = "base_point_cloud";
-        currentViewPointcloud.publish(cloud3);
-        ros::spinOnce();
-        loop_rate.sleep();
-        sleep(2);
-    }
-    std::cout<<"On Average Occulision Culling takes (s) = "<<timeSum/viewPointCount<<"\n";
-    predictedCloudPtr->points = predictedCloud.points; // accumalated 
-    FrustumCloudPtr->points = FRCloud.points ; // accumalated
+        predictedCloudPtr->points = predictedCloud.points; // accumalated
+        pcl::toROSMsg(tempCloud, currentViewCloudMsg); //cloud of original
+        currentViewCloudMsg.header.stamp = ros::Time::now();
+        currentViewCloudMsg.header.frame_id = "base_point_cloud";
+        currentViewPointcloud.publish(currentViewCloudMsg);
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-
-
-    // *****************Rviz Visualization ************
-    sensor_msgs::PointCloud2 cloud1;
-    sensor_msgs::PointCloud2 cloud2;
-    sensor_msgs::PointCloud2 cloud5;
-
-    while (ros::ok())
-    {
-        loc.header.frame_id="world";
-        loc.header.stamp = ros::Time::now();
-        currentPosePub.publish(loc); // Step 1 
-        cloud3.header.stamp = ros::Time::now();
-        cloud3.header.frame_id = "base_point_cloud";
-        currentViewPointcloud.publish(cloud3);
-        //occlusionCulling.visualizeOriginalPointcloud() ;
-        //***original cloud & occlusion cull publish***
-        pcl::toROSMsg(*originalCloud, cloud1); //cloud of original
-        pcl::toROSMsg(*predictedCloudPtr, cloud2); //cloud of the not occluded voxels (blue) using occlusion culling
-        pcl::toROSMsg(*FrustumCloudPtr, cloud5); //cloud of the not occluded voxels (blue) using occlusion culling
-
-        cloud1.header.stamp = ros::Time::now();
-        cloud2.header.stamp = ros::Time::now();
-        cloud5.header.stamp = ros::Time::now();
-
-        cloud1.header.frame_id = "world";
-        cloud2.header.frame_id = "world";
-        cloud5.header.frame_id = "world";
-
-        originalCloudPub.publish(cloud1);
-        predictedCloudPub.publish(cloud2);
-        FrustumCloudPub.publish(cloud5);
+        pcl::toROSMsg(*predictedCloudPtr, accomulatedCloudMsg); //cloud of the not occluded voxels (blue) using occlusion culling
+        accomulatedCloudMsg.header.stamp = ros::Time::now();
+        accomulatedCloudMsg.header.frame_id = "world";
+        predictedCloudPub.publish(accomulatedCloudMsg);
 
         viewpoints.header.frame_id= "world";
         viewpoints.header.stamp = ros::Time::now();
         sensorPosePub.publish(viewpoints);
-       // generagedPathPub.publish(linesList);
+
+        loc.header.frame_id="world";
+        loc.header.stamp = ros::Time::now();
+        currentPosePub.publish(loc); // Step 1
+*/
+        sleep(5);
+
         ros::spinOnce();
         loop_rate.sleep();
-        sleep(2);
+        sleep(5);
     }
+   // std::cout<<"On Average Occulision Culling takes (s) = "<<timeSum/viewPointCount<<"\n";
+
     return 0;
 }
 

@@ -478,7 +478,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         // Count the rays that ends up with object of interest
         //newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
         // #count number of unknonw * visible voxels in FOV
-         newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+        newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
 
         //ROS_INFO("newParent->gain_:%f",newParent->gain_ );
         //ROS_INFO("Branch Gain IS:%f",newNode->gain_ );
@@ -804,6 +804,8 @@ double rrtNBV::RrtTree::gain(StateVec state)
     
     // This function computes the gain
     double gain = 0.0;
+    double gainUnknown = 0.0;
+    double gainObjOfInt = 0.0;
     const double disc = manager_->getResolution();
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
@@ -857,6 +859,7 @@ double rrtNBV::RrtTree::gain(StateVec state)
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gain += params_.igUnmapped_;
+                       // gainUnknown = gainUnknown +1 ;
                         // TODO: Add probabilistic gain
                         // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
@@ -865,14 +868,12 @@ double rrtNBV::RrtTree::gain(StateVec state)
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gain += params_.igOccupied_;
-                      //  double s_gain = manager_->getCellIneterestGain(vec);
-                     //   if(s_gain == 0.5)
-                      //      gain += 1;
-                     //   else
-                      //      gain += params_.igOccupied_;
-                        // TODO: Add probabilistic gain
-                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
+                         gain += params_.igOccupied_;
+//                        double s_gain = manager_->getCellIneterestGain(vec);
+//                        if(s_gain == 0.5)
+//                           gainObjOfInt = gainObjOfInt + 1 ;
+                            // TODO: Add probabilistic gain
+                            //    gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
                 }
                 else {
@@ -885,7 +886,10 @@ double rrtNBV::RrtTree::gain(StateVec state)
                     }
                 }
 
-
+//                if (gainObjOfInt == 0 )
+//                    gain = gainUnknown ;
+//                else
+//                    gain = gainObjOfInt;
                 //   double maxThreshold = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
 
                 //*************** Pure Entropy ***************************** //

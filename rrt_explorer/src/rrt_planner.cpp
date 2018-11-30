@@ -32,12 +32,12 @@ double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
 }
 
 rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private)
-: nh_(nh),
-nh_private_(nh_private)
+    : nh_(nh),
+      nh_private_(nh_private)
 {
     manager_ = new volumetric_mapping::OctomapManager(nh, nh_private);
     
-    // Set up the topics and services 
+    // Set up the topics and services
     params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_     = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
     params_.transfromedPoseDebug = nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
@@ -51,7 +51,7 @@ nh_private_(nh_private)
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    //pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+    pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
     pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
     pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
     
@@ -99,37 +99,37 @@ nh_private_(nh_private)
         time(&rawtime);
         ptm = gmtime(&rawtime);
         logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/"
-        + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
-        + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
-        + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
+                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
+                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         int x = system(("mkdir -p " + logFilePathName_).c_str());
         logFilePathName_ += "/";
         file_path_.open((logFilePathName_ + params_.output_file_name_).c_str(), std::ios::out);
         file_path_ <<  "iteration_num"              << "," <<
-        "volumetric_coverage"        << "," << 
-        "information_gain_entropy"   << "," <<
-        "semantic_gain_entropy"      << "," << 
-        "total_gain"                 << "," << 
-        "free_cells_counter"         << "," << 
-        "occupied_cells_counter"     << "," <<
-        "unknown_cells_counter"      << "," <<
-        "known_cells_counter"        << "," <<
-        "all_cells_counter"          << "," <<
-        "traveled_distance"          << "," <<
-        "free_type_counter"          << "," <<
-        "unknown_type_count"         << "," <<
-        "occ_intr_not_vis_type_count"<< "," <<
-        "occ_intr_vis_type_count"    << "," <<
-        "occ_not_intr_type_count"    << "," <<
-        "position.x"                 << "," << 
-        "position.y"                 << "," << 
-        "position.z"                 << "," <<
-        "orientation.x"              << "," <<
-        "orientation.y"              << "," <<
-        "orientation.z"              << "," <<
-        "orientation.w"              << "," << 
-        "accumulativeGain"           << "," << 
-        "rrt_gain"                   << "\n"; 
+                       "volumetric_coverage"        << "," <<
+                       "information_gain_entropy"   << "," <<
+                       "semantic_gain_entropy"      << "," <<
+                       "total_gain"                 << "," <<
+                       "free_cells_counter"         << "," <<
+                       "occupied_cells_counter"     << "," <<
+                       "unknown_cells_counter"      << "," <<
+                       "known_cells_counter"        << "," <<
+                       "all_cells_counter"          << "," <<
+                       "traveled_distance"          << "," <<
+                       "free_type_counter"          << "," <<
+                       "unknown_type_count"         << "," <<
+                       "occ_intr_not_vis_type_count"<< "," <<
+                       "occ_intr_vis_type_count"    << "," <<
+                       "occ_not_intr_type_count"    << "," <<
+                       "position.x"                 << "," <<
+                       "position.y"                 << "," <<
+                       "position.z"                 << "," <<
+                       "orientation.x"              << "," <<
+                       "orientation.y"              << "," <<
+                       "orientation.z"              << "," <<
+                       "orientation.w"              << "," <<
+                       "accumulativeGain"           << "," <<
+                       "rrt_gain"                   << "\n";
     }
     
     //debug
@@ -174,7 +174,7 @@ nh_private_(nh_private)
     ROS_INFO("*************************** rrt generated ******************************");
     rrtTree = new rrtNBV::RrtTree(mesh_, manager_);
     rrtTree->setParams(params_);
-    // Not yet ready. need a position msg first. 
+    // Not yet ready. need a position msg first.
     ready_ = false;
 }
 
@@ -193,9 +193,44 @@ rrtNBV::RRTPlanner::~RRTPlanner()
 
 bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rrt_explorer::rrt_srv::Response& res)
 {
+    ROS_INFO("called the planner ");
+
     //ros::Time computationTime = ros::Time(0);
     ros::Time computationTime = ros::Time::now();
-    
+
+//    ROS_INFO("cretaed a service ");
+
+//    geometry_msgs::Pose currentPose ;
+//    currentPose.position.x = rrtTree->getRootNode()[0];
+//    currentPose.position.y = rrtTree->getRootNode()[1]  ;
+//    currentPose.position.z = rrtTree->getRootNode()[2]  ;
+//    ROS_INFO("Fill a service ");
+
+//    tf::Quaternion tf_q ;
+//    tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
+//    currentPose.orientation.x =tf_q.getX() ;
+//    currentPose.orientation.y =tf_q.getY() ;
+//    currentPose.orientation.z =tf_q.getZ() ;
+//    currentPose.orientation.w =tf_q.getW() ;
+//    ROS_ERROR("1");
+
+//    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
+//    srv.request.currentPose = currentPose  ;
+
+//    ros::service::waitForService("current_view",ros::Duration(1.0));
+//    if (ros::service::call("current_view", srv))
+//    {
+//        ROS_INFO("call service viewpoint ");
+//        *currentPosePtr = srv.response.currentViewPointcloud;
+//        manager_->insertPointcloudWithTf(currentPosePtr);
+//    }
+//    else
+//    {
+//        ROS_ERROR("Failed to call service");
+//       // return 1;
+//    }
+
+
     // Check that planner is ready to compute path.
     if (!ros::ok()) {
         ROS_INFO_THROTTLE(1, "Exploration finished. Not planning any further moves.");
@@ -227,45 +262,13 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
     ROS_INFO("Tree Initilization called");
     // Iterate the tree construction method.
     int loopCount = 0;
-    int k = 1 ; 
+    int k = 1 ;
 
-    // Call the service
-    //ros::ServiceClient client = n.serviceClient<usar_exploration::extractView>("current_view");
-    
-    usar_exploration::extractView srv;
-    geometry_msgs::Pose currentPose ;
-    currentPose.position.x = rrtTree->getRootNode()[0];
-    currentPose.position.y = rrtTree->getRootNode()[1]  ;
-    currentPose.position.z = rrtTree->getRootNode()[2]  ;
-    tf::Quaternion tf_q ;
-        tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
-   currentPose.orientation.x =tf_q.getX() ;
-   currentPose.orientation.y =tf_q.getY() ;
-   currentPose.orientation.z =tf_q.getZ() ;
-   currentPose.orientation.w =tf_q.getW() ;
 
-    //sensor_msgs::PointCloud2::ConstPtr g  ;
-    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
-
-    srv.request.currentPose = currentPose  ;
-    ros::service::waitForService("current_view",ros::Duration(1.0));
-    if (ros::service::call("current_view", srv))
-    {
-        ROS_ERROR("call service viewpoint ");
-
-        *currentPosePtr = srv.response.currentViewPointcloud;
-
-        rrtTree->insertPointcloudWithTf(currentPosePtr);
-    }
-    else
-    {
-        ROS_ERROR("Failed to call service");
-        return 1; 
-    }
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
-        ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );  
+        ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
             
@@ -284,16 +287,16 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
         
         loopCount++;
         k++ ;
-        std::cout << "Candidate Number : " << k << std::endl ; 
-        std::cout << "Candidate Gain : " << rrtTree->getBestGain() ; 
+        std::cout << "Candidate Number : " << k << std::endl ;
+        std::cout << "Candidate Gain : " << rrtTree->getBestGain() ;
     }
     /*
      *       ROS_ERROR("%d %d", rrtTree->getCounter() , params_.initIterations_);
-     * 
+     *
      *       while(rrtTree->getCounter() < params_.initIterations_)
      *        {
      *         //ROS_WARN("%d %d", rrtTree->getCounter() , params_.initIterations_);
-     * 
+     *
      *         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
      *         {
      *           ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
@@ -309,7 +312,7 @@ loopCount++;
     
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
-    accumulativeGain += rrtTree->getBestGain() ; 
+    accumulativeGain += rrtTree->getBestGain() ;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  ;
     rrtTree->memorizeBestBranch();
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
@@ -322,37 +325,37 @@ loopCount++;
     Eigen::Vector3d vec;
     double x , y , z ;
     double  all_cells_counter =0 , free_cells_counter =0 ,unknown_cells_counter = 0 ,occupied_cells_counter =0 ;
-    int free_type_counter=0,unknown_type_count = 0, occ_intr_not_vis_type_count =0 ,occ_intr_vis_type_count=0, occ_not_intr_type_count=0; 
+    int free_type_counter=0,unknown_type_count = 0, occ_intr_not_vis_type_count =0 ,occ_intr_vis_type_count=0, occ_not_intr_type_count=0;
     double information_gain_entropy = 0 ,occupancy_entropy =0 ;
     double semantic_gain_entropy = 0 , semantic_entropy =0 ;
     double total_gain = 0 ;
-    double probability ; 
+    double probability ;
     double maxThreshold = - 0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
-    double rrt_gain = 0 ; 
+    double rrt_gain = 0 ;
     for (x = params_.minX_; x <= params_.maxX_- res_map; x += res_map) {
         for (y = params_.minY_; y <= params_.maxY_- res_map ; y += res_map) {
             // TODO: Check the boundries
             for (z = params_.minZ_; z<= params_.maxZ_ - res_map; z += res_map) {
                 vec[0] = x; vec[1] = y ; vec[2] = z ;
                 
-                // Counting Cell Types 
+                // Counting Cell Types
                 int cellType= manager_->getCellIneterestCellType(x,y,z) ;
                 switch(cellType){
-                    case 0:
-                        free_type_counter++;
-                        break; 
-                    case 1: 
-                        unknown_type_count++;
-                        break; 
-                    case 2 : 
-                        occ_intr_not_vis_type_count++;
-                        break; 
-                    case 3: 
-                        occ_intr_vis_type_count++;
-                        break ; 
-                    case 4: 
-                        occ_not_intr_type_count++;
-                        break ; 
+                case 0:
+                    free_type_counter++;
+                    break;
+                case 1:
+                    unknown_type_count++;
+                    break;
+                case 2 :
+                    occ_intr_not_vis_type_count++;
+                    break;
+                case 3:
+                    occ_intr_vis_type_count++;
+                    break ;
+                case 4:
+                    occ_not_intr_type_count++;
+                    break ;
                 }
                 
                 all_cells_counter++;
@@ -369,13 +372,13 @@ loopCount++;
                 
                 // TODO: Revise the equation
                 occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                occupancy_entropy = occupancy_entropy / maxThreshold ; 
+                occupancy_entropy = occupancy_entropy / maxThreshold ;
                 information_gain_entropy += occupancy_entropy ;
                 
                 // Calculate semantic_gain
                 double semantic_gain  = manager_->getCellIneterestGain(vec);
                 semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-                semantic_entropy = semantic_entropy /maxThreshold ; 
+                semantic_entropy = semantic_entropy /maxThreshold ;
                 semantic_gain_entropy += semantic_entropy ;
                 
                 total_gain += (information_gain_entropy + semantic_gain_entropy) ;
@@ -384,7 +387,7 @@ loopCount++;
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
                 
-                // *************** RRT IG *********************************** //        
+                // *************** RRT IG *********************************** //
                 
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {rrt_gain += params_.igUnmapped_;}
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {rrt_gain += params_.igOccupied_;}
@@ -400,21 +403,21 @@ loopCount++;
     double volumetric_coverage = ((free_cells_counter+occupied_cells_counter) / all_cells_counter)*100.0 ;
     iteration_num++;
     file_path_ <<  iteration_num << "," <<
-    volumetric_coverage << "," << 
-    information_gain_entropy << "," <<
-    semantic_gain_entropy << "," << 
-    total_gain << "," << 
-    free_cells_counter << "," << 
-    occupied_cells_counter <<"," <<
-    unknown_cells_counter  << "," <<
-    known_cells_counter << "," <<
-    all_cells_counter << "," <<
-    traveled_distance<< "," <<
-    free_type_counter << "," <<
-    unknown_type_count << "," <<
-    occ_intr_not_vis_type_count << ","<<
-    occ_intr_vis_type_count << "," <<
-    occ_not_intr_type_count << ",";
+                   volumetric_coverage << "," <<
+                   information_gain_entropy << "," <<
+                   semantic_gain_entropy << "," <<
+                   total_gain << "," <<
+                   free_cells_counter << "," <<
+                   occupied_cells_counter <<"," <<
+                   unknown_cells_counter  << "," <<
+                   known_cells_counter << "," <<
+                   all_cells_counter << "," <<
+                   traveled_distance<< "," <<
+                   free_type_counter << "," <<
+                   unknown_type_count << "," <<
+                   occ_intr_not_vis_type_count << ","<<
+                   occ_intr_vis_type_count << "," <<
+                   occ_not_intr_type_count << ",";
     file_path_ << res.path[0].position.x << ",";
     file_path_ << res.path[0].position.y << ",";
     file_path_ << res.path[0].position.z<< ",";
@@ -436,14 +439,14 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
     
     if (FirstPoseCalled)
     {
-        FirstPoseCalled = false ; 
-        prePose = pose.pose ; 
-        return ; 
+        FirstPoseCalled = false ;
+        prePose = pose.pose ;
+        return ;
     }
     else
     {
         traveled_distance+=calculateDistance(prePose,pose.pose);
-        prePose = pose.pose ; 
+        prePose = pose.pose ;
         //ROS_INFO ("Traveled Distance %f" , traveled_distance) ;
     }
     //std::cout<<"FRAME IS:"<<pose.header.frame_id<<"\n";
@@ -455,8 +458,8 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
 void rrtNBV::RRTPlanner::posCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
 {
     rrtTree->setStateFromPoseMsg(pose);
-// I think I should call the point cloud service here. 
-// call the manager with and insert point cloud with it OR We just call this function rrtTree->insertPointcloudWithTf(pointcloud); which will insert the point
+    // I think I should call the point cloud service here.
+    // call the manager with and insert point cloud with it OR We just call this function rrtTree->insertPointcloudWithTf(pointcloud); which will insert the point
     // Planner is now ready to plan.
     ready_ = true;
 }
@@ -468,22 +471,21 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
     ready_ = true;
 }
 
-//void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-//{
-//    std::cout<<"FAME IS:"<<pointcloud->header.frame_id<<"\n";
-//    //ROS_INFO("Received PointCloud");
-//    static double last = ros::Time::now().toSec();
-//    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
-//    {
-//        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
-//        rrtTree->insertPointcloudWithTf(pointcloud);
-//        last += params_.pcl_throttle_;
-//    }
-//}
+void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
+{
+    std::cout<<"Frame Name:"<<pointcloud->header.frame_id<<"\n";
+    ROS_INFO("Received PointCloud");
+    static double last = ros::Time::now().toSec();
+    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
+    {
+        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+        rrtTree->insertPointcloudWithTf(pointcloud);
+        last += params_.pcl_throttle_;
+    }
+}
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
-    
     static double last = ros::Time::now().toSec();
     if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
         rrtTree->insertPointcloudWithTf(pointcloud);
@@ -552,8 +554,8 @@ bool rrtNBV::RRTPlanner::setParams()
     params_.igProbabilistic_ = 0.0;
     if (!ros::param::get(ns + "/nbvp/gain/probabilistic", params_.igProbabilistic_)) {
         ROS_WARN(
-            "No gain coefficient for probability of cells specified. Looking for %s. Default is 0.0.",
-            (ns + "/nbvp/gain/probabilistic").c_str());
+                    "No gain coefficient for probability of cells specified. Looking for %s. Default is 0.0.",
+                    (ns + "/nbvp/gain/probabilistic").c_str());
     }
     params_.igFree_ = 0.0;
     if (!ros::param::get(ns + "/nbvp/gain/free", params_.igFree_)) {
@@ -578,8 +580,8 @@ bool rrtNBV::RRTPlanner::setParams()
     params_.degressiveCoeff_ = 0.25;
     if (!ros::param::get(ns + "/nbvp/gain/degressive_coeff", params_.degressiveCoeff_)) {
         ROS_WARN(
-            "No degressive factor for gain accumulation specified. Looking for %s. Default is 0.25.",
-            (ns + "/nbvp/gain/degressive_coeff").c_str());
+                    "No degressive factor for gain accumulation specified. Looking for %s. Default is 0.25.",
+                    (ns + "/nbvp/gain/degressive_coeff").c_str());
     }
     params_.extensionRange_ = 1.0;
     if (!ros::param::get(ns + "/nbvp/tree/extension_range", params_.extensionRange_)) {
@@ -628,8 +630,8 @@ bool rrtNBV::RRTPlanner::setParams()
     params_.softBounds_ = false;
     if (!ros::param::get(ns + "/bbx/softBounds", params_.softBounds_)) {
         ROS_WARN(
-            "Not specified whether scenario bounds are soft or hard. Looking for %s. Default is false",
-            (ns + "/bbx/softBounds").c_str());
+                    "Not specified whether scenario bounds are soft or hard. Looking for %s. Default is false",
+                    (ns + "/bbx/softBounds").c_str());
     }
     params_.boundingBox_[0] = 0.5;
     if (!ros::param::get(ns + "/system/bbx/x", params_.boundingBox_[0])) {
@@ -659,8 +661,8 @@ bool rrtNBV::RRTPlanner::setParams()
     params_.dOvershoot_ = 0.5;
     if (!ros::param::get(ns + "/system/bbx/overshoot", params_.dOvershoot_)) {
         ROS_WARN(
-            "No estimated overshoot value for collision avoidance specified. Looking for %s. Default is 0.5m.",
-            (ns + "/system/bbx/overshoot").c_str());
+                    "No estimated overshoot value for collision avoidance specified. Looking for %s. Default is 0.5m.",
+                    (ns + "/system/bbx/overshoot").c_str());
     }
     params_.log_ = false;
     if (!ros::param::get(ns + "/nbvp/log/on", params_.log_)) {
@@ -679,14 +681,14 @@ bool rrtNBV::RRTPlanner::setParams()
     params_.pcl_throttle_ = 0.333;
     if (!ros::param::get(ns + "/pcl_throttle", params_.pcl_throttle_)) {
         ROS_WARN(
-            "No throttle time constant for the point cloud insertion specified. Looking for %s. Default is 0.333.",
-            (ns + "/pcl_throttle").c_str());
+                    "No throttle time constant for the point cloud insertion specified. Looking for %s. Default is 0.333.",
+                    (ns + "/pcl_throttle").c_str());
     }
     params_.inspection_throttle_ = 0.25;
     if (!ros::param::get(ns + "/inspection_throttle", params_.inspection_throttle_)) {
         ROS_WARN(
-            "No throttle time constant for the inspection view insertion specified. Looking for %s. Default is 0.1.",
-            (ns + "/inspection_throttle").c_str());
+                    "No throttle time constant for the inspection view insertion specified. Looking for %s. Default is 0.1.",
+                    (ns + "/inspection_throttle").c_str());
     }
     params_.exact_root_ = true;
     if (!ros::param::get(ns + "/nbvp/tree/exact_root", params_.exact_root_)) {

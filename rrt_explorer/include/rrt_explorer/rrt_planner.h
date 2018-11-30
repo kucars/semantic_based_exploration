@@ -52,6 +52,8 @@ protected:
   std::ofstream file_path_;
   visualization_msgs::Marker line_strip ;
   ros::Publisher marker_pub_;
+  //usar_exploration::extractView srv;
+
     };
 }
 #endif // RRT_PLANNER_H

@@ -65,10 +65,10 @@ int main(int argc, char **argv)
 
     // Publishers and subscribers
     ros::Publisher originalPointcloudPub            = nh.advertise<sensor_msgs::PointCloud2>("original_pointcloud", 10);
-    ros::Publisher currentPointcloudTransferedPub   = nh.advertise<sensor_msgs::PointCloud2>("current_viewpoint_pointcloud_transfered", 10);
+    ros::Publisher currentPointcloudTransferedPub   = nh.advertise<sensor_msgs::PointCloud2>("current_viewpoint_pointcloud_transfered", 10);//current_viewpoint_pointcloud_transfered
     ros::Publisher currentPointcloudFrustumPub      = nh.advertise<sensor_msgs::PointCloud2>("current_viewpoint_frustum_pointcloud", 10);
     ros::Publisher currentPointcloudPub             = nh.advertise<sensor_msgs::PointCloud2>("current_viewpoint_pointcloud", 10);
-    ros::Publisher accumulatedPointcloudPub         = nh.advertise<sensor_msgs::PointCloud2>("accumulated_pointclouds", 10);
+   // ros::Publisher accumulatedPointcloudPub         = nh.advertise<sensor_msgs::PointCloud2>("accumulated_pointclouds", 10);
     ros::Publisher sensorFOVPub                     = nh.advertise<visualization_msgs::MarkerArray>("sensor_fov", 100);
     ros::Publisher rayPub                           = nh.advertise<visualization_msgs::Marker>("ray_casts", 10);
     ros::Publisher occupancyGridPub                 = nh.advertise<sensor_msgs::PointCloud2>("occupancy_grid_cloud", 10);
@@ -141,6 +141,7 @@ int main(int argc, char **argv)
         
             receivedNewPose = false;
         }
+
         sensorFOVPub.publish(sensorFOV);
 
         rayLines.header.frame_id = worldFrame;
@@ -159,9 +160,9 @@ int main(int argc, char **argv)
         currentViewConvertedCloudOutPtr->points = tempCloudOut.points;
         pcl::toROSMsg(*currentViewConvertedCloudOutPtr, currentTransferedViewCloudMsg);
 
-        tempCloudAdd += tempCloud;
-        accomulatedCloudPtr->points = tempCloudAdd.points;
-        pcl::toROSMsg(*accomulatedCloudPtr, accomulatedCloudMsg);
+        //tempCloudAdd += tempCloud;
+        //accomulatedCloudPtr->points = tempCloudAdd.points;
+        //pcl::toROSMsg(*accomulatedCloudPtr, accomulatedCloudMsg);
         // Publishing Point Cloud msgs
 
         currentCloudFrustumMsg.header.stamp = ros::Time::now();
@@ -172,9 +173,9 @@ int main(int argc, char **argv)
         currentViewCloudMsg.header.frame_id = worldFrame;
         currentPointcloudPub.publish(currentViewCloudMsg);
 
-        accomulatedCloudMsg.header.stamp = ros::Time::now();
-        accomulatedCloudMsg.header.frame_id = worldFrame;
-        accumulatedPointcloudPub.publish(accomulatedCloudMsg);
+        //accomulatedCloudMsg.header.stamp = ros::Time::now();
+        //accomulatedCloudMsg.header.frame_id = worldFrame;
+        //accumulatedPointcloudPub.publish(accomulatedCloudMsg);
 
         currentTransferedViewCloudMsg.header.stamp = ros::Time::now();
         currentTransferedViewCloudMsg.header.frame_id = robotFrame;

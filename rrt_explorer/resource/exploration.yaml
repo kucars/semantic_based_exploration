@@ -1,13 +1,15 @@
+#####################
 # System Related Parameters
+#####################
 system/v_max: 1#0.5 ##0.5
 system/dyaw_max: 0.5
-system/camera/pitch: [15.0]
-system/camera/horizontal: [58.0]
-system/camera/vertical: [45.0]
-system/bbx/x: 0.3
-system/bbx/y: 0.3
-system/bbx/z: 0.3
-system/bbx/overshoot: 0.1
+system/camera/pitch: [15.0] #sensor_pitch: 0.093
+system/camera/horizontal: [58.0] #sensor_hor_fov: 60
+system/camera/vertical: [45.0] #sensor_ver_fov: 45
+system/bbx/x: 0.1
+system/bbx/y: 0.1
+system/bbx/z: 0.1
+system/bbx/overshoot: 0.5
 
 # Gain Computation Parameters
 nbvp/gain/free: 0.0
@@ -53,24 +55,28 @@ bbx/softBounds: false
 
 
 
-#Occupancy Map Parameters
+############
+## Octomap Manager settings
+############
 tf_frame: "world"
 robot_frame: "base_point_cloud"
-resolution: 0.15
-visualize_max_z: 3.0
-sensor_max_range: 3.0
-map_publish_frequency: 0.08 # it was 100
+resolution: 0.1
+mesh_resolution: 1.0
+visualize_max_z: 5.0
+sensor_max_range: 5.0
+map_publish_frequency: 0.08
 probability_hit: 0.7
 probability_miss: 0.4
 threshold_min: 0.12
 threshold_max: 0.97
 threshold_occupancy: 0.7
 treat_unknown_as_occupied: false
-filter_speckles: true
 latch_topics: false
-pcl_throttle: 0.5 # when to accept the next topic 
-
-
+max_free_space: 0
+min_height_free_space: 0
+map_publish_frequency: 1
+treat_unknown_as_occupied: true
+change_detection_enabled: false
 
 #Mavros related settings
 /uav_1/mavros/local_position/frame_id: world           #(string, default: fcu) frame_id for message.
