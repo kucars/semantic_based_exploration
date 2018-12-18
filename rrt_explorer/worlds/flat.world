@@ -1,8 +1,8 @@
-<sdf version='1.4'>
+<sdf version='1.6'>
   <world name='default'>
     <light name='sun' type='directional'>
       <cast_shadows>1</cast_shadows>
-      <pose>0 0 10 0 -0 0</pose>
+      <pose frame=''>0 0 10 0 -0 0</pose>
       <diffuse>0.8 0.8 0.8 1</diffuse>
       <specular>0.2 0.2 0.2 1</specular>
       <attenuation>
@@ -13,12 +13,13 @@
       </attenuation>
       <direction>-0.5 0.1 -0.9</direction>
     </light>
-    <physics type='ode'>
+    <physics name='default_physics' default='0' type='ode'>
       <ode>
         <solver>
           <type>quick</type>
           <iters>1000</iters>
           <sor>1.3</sor>
+          <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
         </solver>
         <constraints>
           <cfm>0</cfm>
@@ -30,7 +31,6 @@
       <max_step_size>0.01</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>100</real_time_update_rate>
-      <gravity>0 0 -9.8</gravity>
     </physics>
     <scene>
       <ambient>0.4 0.4 0.4 1</ambient>
@@ -45,248 +45,309 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <state world_name='default'>
-      <sim_time>0 0</sim_time>
-      <real_time>0 0</real_time>
-      <wall_time>0 0</wall_time>
+      <sim_time>25 700000000</sim_time>
+      <real_time>25 800109953</real_time>
+      <wall_time>1545116159 831073645</wall_time>
+      <iterations>2570</iterations>
       <model name='asphalt_plane'>
-        <pose>0 0 0 0 0 0</pose>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='link'>
-          <pose>0 0 0 0 0 0</pose>
-          <velocity>0 0 0 0 0 0</velocity>
-          <acceleration>0 0 0 0 0 0</acceleration>
-          <wrench>0 0 0 0 0 0</wrench>
-        </link>
-      </model>
-      <model name='asphalt_plane_0'>
-        <pose>0 0 3 0 -0 0</pose>
-        <link name='link'>
-          <pose>0 0 3 0 -0 0</pose>
+          <pose frame=''>0 0 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3'>
-        <pose>0 8 0 0 -0 0</pose>
+        <pose frame=''>0 8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>0 8 1.5 0 -0 0</pose>
+          <pose frame=''>0 8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_0'>
-        <pose>3 8 0 0 -0 0</pose>
+        <pose frame=''>3 8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>3 8 1.5 0 -0 0</pose>
+          <pose frame=''>3 8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_1'>
-        <pose>6 8 0 0 -0 0</pose>
+        <pose frame=''>6 8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>6 8 1.5 0 -0 0</pose>
+          <pose frame=''>6 8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_10'>
-        <pose>-8 3 0 0 -0 1.57</pose>
+        <pose frame=''>-8 3 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-8 3 1.5 0 -0 1.57</pose>
+          <pose frame=''>-8 3 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_11'>
-        <pose>-8 0 0 0 -0 1.57</pose>
+        <pose frame=''>-8 0 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-8 0 1.5 0 -0 1.57</pose>
+          <pose frame=''>-8 0 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_12'>
-        <pose>-8 -3 0 0 -0 1.57</pose>
+        <pose frame=''>-8 -3 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-8 -3 1.5 0 -0 1.57</pose>
+          <pose frame=''>-8 -3 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_13'>
-        <pose>-8 -6 0 0 -0 1.57</pose>
+        <pose frame=''>-8 -6 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-8 -6 1.5 0 -0 1.57</pose>
+          <pose frame=''>-8 -6 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_14'>
-        <pose>8 6 0 0 -0 1.57</pose>
+        <pose frame=''>8 6 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>8 6 1.5 0 -0 1.57</pose>
+          <pose frame=''>8 6 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_15'>
-        <pose>8 3 0 0 -0 1.57</pose>
+        <pose frame=''>8 3 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>8 3 1.5 0 -0 1.57</pose>
+          <pose frame=''>8 3 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_16'>
-        <pose>8 0 0 0 -0 1.57</pose>
+        <pose frame=''>8 0 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>8 0 1.5 0 -0 1.57</pose>
+          <pose frame=''>8 0 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_17'>
-        <pose>8 -3 0 0 -0 1.57</pose>
+        <pose frame=''>8 -3 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>8 -3 1.5 0 -0 1.57</pose>
+          <pose frame=''>8 -3 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_18'>
-        <pose>8 -6 0 0 -0 1.57</pose>
+        <pose frame=''>8 -6 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>8 -6 1.5 0 -0 1.57</pose>
+          <pose frame=''>8 -6 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_19'>
-        <pose>6 0 0 0 -0 0</pose>
+        <pose frame=''>6 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>6 0 1.5 0 -0 0</pose>
+          <pose frame=''>6 0 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_2'>
-        <pose>-3 8 0 0 -0 0</pose>
+        <pose frame=''>-3 8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-3 8 1.5 0 -0 0</pose>
+          <pose frame=''>-3 8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_20'>
-        <pose>3 0 0 0 -0 0</pose>
+        <pose frame=''>3 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>3 0 1.5 0 -0 0</pose>
+          <pose frame=''>3 0 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_21'>
-        <pose>1.0 -1.0 0 0 -0 1.57</pose>
+        <pose frame=''>1 -1 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>1.0 -1.0 1.5 0 -0 1.57</pose>
+          <pose frame=''>1 -1 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_22'>
-        <pose>1.0 -4 0 0 -0 1.57</pose>
+        <pose frame=''>1 -4 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>1.0 -4 1.5 0 -0 1.57</pose>
+          <pose frame=''>1 -4 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_3'>
-        <pose>-6 8 0 0 -0 0</pose>
+        <pose frame=''>-6 8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-6 8 1.5 0 -0 0</pose>
+          <pose frame=''>-6 8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_4'>
-        <pose>6 -8 0 0 -0 0</pose>
+        <pose frame=''>6 -8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>6 -8 1.5 0 -0 0</pose>
+          <pose frame=''>6 -8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_5'>
-        <pose>3 -8 0 0 -0 0</pose>
+        <pose frame=''>3 -8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>3 -8 1.5 0 -0 0</pose>
+          <pose frame=''>3 -8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_6'>
-        <pose>0 -8 0 0 -0 0</pose>
+        <pose frame=''>0 -8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>0 -8 1.5 0 -0 0</pose>
+          <pose frame=''>0 -8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_7'>
-        <pose>-3 -8 0 0 -0 0</pose>
+        <pose frame=''>-3 -8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-3 -8 1.5 0 -0 0</pose>
+          <pose frame=''>-3 -8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_8'>
-        <pose>-6 -8 0 0 -0 0</pose>
+        <pose frame=''>-6 -8 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-6 -8 1.5 0 -0 0</pose>
+          <pose frame=''>-6 -8 1.5 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='brick_box_3x1x3_9'>
-        <pose>-8 6 0 0 -0 1.57</pose>
+        <pose frame=''>-8 6 0 0 -0 1.57</pose>
+        <scale>1 1 1</scale>
         <link name='chassis'>
-          <pose>-8 6 1.5 0 -0 1.57</pose>
+          <pose frame=''>-8 6 1.5 0 -0 1.57</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
+      <model name='iris'>
+        <pose frame=''>-2.54946 -5.71514 -3129.05 -0.789161 -0.677861 0.098303</pose>
+        <scale>1 1 1</scale>
+        <link name='/imu_link'>
+          <pose frame=''>-2.54946 -5.71514 -3129.05 -0.789161 -0.677861 0.098303</pose>
+          <velocity>-0.103956 -0.229104 -247.591 -0.369929 -0.358414 0.765752</velocity>
+          <acceleration>-6.4e-05 0.000291 -9.80002 0.314675 0.097862 0.194395</acceleration>
+          <wrench>-1e-06 4e-06 -0.147 0 -0 0</wrench>
+        </link>
+        <link name='base_link'>
+          <pose frame=''>-2.54946 -5.71514 -3129.05 -0.789161 -0.677861 0.098303</pose>
+          <velocity>-0.103956 -0.229104 -247.591 -0.369929 -0.358414 0.765752</velocity>
+          <acceleration>-6.4e-05 0.000291 -9.80002 0.669169 0.220331 0.372732</acceleration>
+          <wrench>-9.7e-05 0.000437 -14.7 0 -0 0</wrench>
+        </link>
+        <link name='rotor_0'>
+          <pose frame=''>-2.54263 -5.85381 -3128.83 -0.599239 0.846885 1.48462</pose>
+          <velocity>-0.074706 -0.144259 -247.537 2.95993 -0.53437 -3.12629</velocity>
+          <acceleration>-0.03625 -0.023574 -9.86547 -2.94452 0.740017 2.32414</acceleration>
+          <wrench>-0.000181 -0.000118 -0.049327 0 -0 0</wrench>
+        </link>
+        <link name='rotor_1'>
+          <pose frame=''>-2.5872 -5.56087 -3129.23 0.799506 -0.664437 -1.94644</pose>
+          <velocity>-0.158241 -0.324061 -247.662 -0.627103 -0.020851 1.04582</velocity>
+          <acceleration>0.050272 -0.018745 -9.73196 2.50554 1.25199 -0.42613</acceleration>
+          <wrench>0.000251 -9.4e-05 -0.04866 0 -0 0</wrench>
+        </link>
+        <link name='rotor_2'>
+          <pose frame=''>-2.37814 -5.52609 -3129.07 -0.413197 -0.928445 -0.414811</pose>
+          <velocity>-0.238407 -0.10753 -247.599 -0.235811 -0.534428 0.619796</velocity>
+          <acceleration>-0.129818 -0.062803 -9.85114 2.88174 0.746373 -2.06963</acceleration>
+          <wrench>-0.000649 -0.000314 -0.049256 0 -0 0</wrench>
+        </link>
+        <link name='rotor_3'>
+          <pose frame=''>-2.73674 -5.85879 -3129 0.390028 0.933739 2.70023</pose>
+          <velocity>-0.009422 -0.357451 -247.605 0.546686 0.379834 0.336284</velocity>
+          <acceleration>0.135334 0.016917 -9.74498 -0.682779 -0.335445 -2.63625</acceleration>
+          <wrench>0.000677 8.5e-05 -0.048725 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='sun'>
+        <pose frame=''>0 0 10 0 -0 0</pose>
+      </light>
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>-2 -4 1.5 0 0.1 1.1</pose>
+        <pose frame=''>-8.94267 -14.0966 17.913 -0 0.756 0.98</pose>
         <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
       </camera>
     </gui>
     <model name='asphalt_plane'>
@@ -303,6 +364,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -331,13 +395,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose frame=''>0 0 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -349,6 +414,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -377,13 +445,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>0 9 0 0 -0 0</pose>
+      <pose frame=''>0 9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_0'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -395,6 +464,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -423,13 +495,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>3 9 0 0 -0 0</pose>
+      <pose frame=''>3 9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_1'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -441,6 +514,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -469,13 +545,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>6 9 0 0 -0 0</pose>
+      <pose frame=''>6 9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_2'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -487,6 +564,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -515,13 +595,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-3 9 0 0 -0 0</pose>
+      <pose frame=''>-3 9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_3'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -533,6 +614,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -561,13 +645,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-6 9 0 0 -0 0</pose>
+      <pose frame=''>-6 9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_4'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -579,6 +664,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -607,13 +695,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>6 -9 0 0 -0 0</pose>
+      <pose frame=''>6 -9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_5'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -625,6 +714,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -653,13 +745,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>3 -9 0 0 -0 0</pose>
+      <pose frame=''>3 -9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_6'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -671,6 +764,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -699,13 +795,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>0 -9 0 0 -0 0</pose>
+      <pose frame=''>0 -9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_7'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -717,6 +814,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -745,13 +845,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-3 -9 0 0 -0 0</pose>
+      <pose frame=''>-3 -9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_8'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -763,6 +864,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -791,13 +895,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-6 -9 0 0 -0 0</pose>
+      <pose frame=''>-6 -9 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_9'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -809,6 +914,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -837,13 +945,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-7 6.45836 0 0 -0 0</pose>
+      <pose frame=''>-7 6.45836 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_10'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -855,6 +964,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -883,13 +995,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-7 3 0 0 -0 0</pose>
+      <pose frame=''>-7 3 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_11'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -901,6 +1014,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -929,13 +1045,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-7 0 0 0 -0 0</pose>
+      <pose frame=''>-7 0 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_12'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -947,6 +1064,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -975,13 +1095,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-7 -3 0 0 -0 0</pose>
+      <pose frame=''>-7 -3 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_13'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -993,6 +1114,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1021,13 +1145,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>-7 -6 0 0 -0 0</pose>
+      <pose frame=''>-7 -6 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_14'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1039,6 +1164,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1067,13 +1195,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>8 6 0 0 -0 0</pose>
+      <pose frame=''>8 6 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_15'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1085,6 +1214,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1113,13 +1245,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>8 3 0 0 -0 0</pose>
+      <pose frame=''>8 3 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_16'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1131,6 +1264,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1159,13 +1295,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>8 0 0 0 -0 0</pose>
+      <pose frame=''>8 0 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_17'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1177,6 +1314,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1205,13 +1345,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>8 -3 0 0 -0 0</pose>
+      <pose frame=''>8 -3 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_18'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1223,6 +1364,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1251,13 +1395,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>8 -6 0 0 -0 0</pose>
+      <pose frame=''>8 -6 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_19'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1269,6 +1414,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1297,13 +1445,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>6 0 0 0 -0 0</pose>
+      <pose frame=''>6 0 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_20'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1315,6 +1464,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1343,13 +1495,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>3 0 0 0 -0 0</pose>
+      <pose frame=''>3 0 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_21'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1361,6 +1514,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1389,13 +1545,14 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>1.55655 -2 0 0 -0 0</pose>
+      <pose frame=''>1.55655 -2 0 0 -0 0</pose>
     </model>
     <model name='brick_box_3x1x3_22'>
       <static>1</static>
       <link name='chassis'>
-        <pose>0 0 1.5 0 -0 0</pose>
+        <pose frame=''>0 0 1.5 0 -0 0</pose>
         <collision name='collision'>
           <geometry>
             <box>
@@ -1407,6 +1564,9 @@
             <bounce/>
             <friction>
               <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
             <contact>
               <ode/>
@@ -1435,53 +1595,16 @@
         <self_collide>0</self_collide>
         <kinematic>0</kinematic>
         <gravity>1</gravity>
+        <enable_wind>0</enable_wind>
       </link>
-      <pose>1.4604 -5 0 0 -0 0</pose>
+      <pose frame=''>1.4604 -5 0 0 -0 0</pose>
     </model>
-    <model name='asphalt_plane_0'>
-      <static>1</static>
-      <link name='link'>
-        <collision name='collision'>
-          <geometry>
-            <box>
-              <size>20 20 0.1</size>
-            </box>
-          </geometry>
-          <max_contacts>10</max_contacts>
-          <surface>
-            <bounce/>
-            <friction>
-              <ode/>
-            </friction>
-            <contact>
-              <ode/>
-            </contact>
-          </surface>
-        </collision>
-        <visual name='visual'>
-          <cast_shadows>0</cast_shadows>
-          <geometry>
-            <box>
-              <size>20 20 0.1</size>
-            </box>
-          </geometry>
-          <material>
-            <script>
-              <uri>model://asphalt_plane/materials/scripts</uri>
-              <uri>model://asphalt_plane/materials/textures</uri>
-              <name>vrc/asphalt</name>
-            </script>
-          </material>
-        </visual>
-        <velocity_decay>
-          <linear>0</linear>
-          <angular>0</angular>
-        </velocity_decay>
-        <self_collide>0</self_collide>
-        <kinematic>0</kinematic>
-        <gravity>1</gravity>
-      </link>
-      <pose>0 0 0 0 -0 0</pose>
-    </model>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind/>
   </world>
 </sdf>

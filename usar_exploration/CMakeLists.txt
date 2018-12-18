@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_world
   culling
   message_generation
+  voxblox_ros
 )
 
 add_service_files(
@@ -36,18 +37,13 @@ add_service_files(
 find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(octomap REQUIRED)
-generate_messages(
-   DEPENDENCIES
-   std_msgs
-   sensor_msgs
-   geometry_msgs
-)
+
 catkin_package(
   INCLUDE_DIRS include
   ${OCTOMAP_INCLUDE_DIRS}
   LIBRARIES ${OCTOMAP_LIBRARIES} ${OCTOMAP_LIBRARIES_DIR}
   #LIBRARIES usar_exploration occlusion_culling
-  CATKIN_DEPENDS roscpp rospy std_msgs pcl_ros octomap_world message_runtime  genmsg
+  CATKIN_DEPENDS roscpp rospy std_msgs pcl_ros octomap_world message_runtime genmsg voxblox_ros
 )
 
 include_directories(include
@@ -70,7 +66,7 @@ add_executable(occlusion_culling_test_with_rrt src/occlusion_culling_test_with_r
 add_dependencies(occlusion_culling_test_with_rrt ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(occlusion_culling_test_with_rrt ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
-add_executable(exploration_node src/exploration_node.cpp)
+add_executable(exploration_node src/exploration_node.cpp src/voxblox_map_manager.cpp)
 add_dependencies(exploration_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(exploration_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
 
@@ -78,21 +74,3 @@ target_link_libraries(exploration_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fc
 add_executable(current_view_extraction src/current_view_extraction.cpp)
 add_dependencies(current_view_extraction ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(current_view_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
-
-
-#add_executable(tfbr src/tfbr.cpp )
-#add_dependencies(tfbr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(tfbr ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
-
-
-#add_executable(current_view_srv_call src/current_view_srv_call.cpp)
-#target_link_libraries(current_view_srv_call ${catkin_LIBRARIES})
-#add_dependencies(current_view_srv_call ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
-
-#add_executable(exploration_node_client src/exploration_node_client.cpp)
-#target_link_libraries(exploration_node_client ${catkin_LIBRARIES})
-#add_dependencies(exploration_node_client ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES} usar_exploration_gencpp ${PROJECT_NAME}_generate_messages_cpp ${usar_exploration_EXPORTED_TARGETS})
-
-
-
-

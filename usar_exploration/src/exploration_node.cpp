@@ -43,7 +43,8 @@
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
 #include <octomap_msgs/conversions.h>
-#include <octomap_world/octomap_manager.h>
+#include <usar_exploration/voxblox_map_manager.h>
+
 #include <string>
 #include <tf/transform_broadcaster.h>
 
@@ -108,7 +109,7 @@ protected:
     ros::NodeHandle nh_private_;
     Params params_;
     CamParams  cam_params_  ;
-    volumetric_mapping::OctomapManager * manager_;
+    VoxbloxMapManager * manager_;
     double locationx_,locationy_,locationz_,yaw_; // current location information (target position)
     geometry_msgs::PoseStamped loc_; // exploration positions
     Eigen::Vector3d collision_bounding_box_;
@@ -188,7 +189,7 @@ ExplorationBase::ExplorationBase(const ros::NodeHandle &nh, const ros::NodeHandl
 : nh_(nh),
 nh_private_(nh_private)
 {
-    manager_ =  new volumetric_mapping::OctomapManager(nh_, nh_private_);
+    manager_ =  new VoxbloxMapManager(nh_, nh_private_);
     // Subscriber
     occlusion_cloud_sub_   = nh_.subscribe("current_viewpoint_pointcloud", 1, &ExplorationBase::OcclusionCloudCallback , this);
     // publishers
@@ -355,7 +356,7 @@ void ExplorationBase::RunStateMachine()
             {
                     transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
                     tf::Quaternion tf_q ;
-                    yaw_ = yaw_ + 0.80 ;
+                    yaw_ = yaw_ + 0.40 ;
                     tf_q = tf::createQuaternionFromYaw(yaw_);
                     transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
                     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
@@ -818,8 +819,9 @@ void ExplorationBase::RunStateMachine()
                                    
                             all_cells_counter++;
                             vec[0] = x; vec[1] = y ; vec[2] = z ;
-                            volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
+                            VoxbloxMapManager::VoxelStatus node = manager_->getVoxelStatus(vec);
                             // Counting Cell Types 
+                            /*
                             int cellType= manager_->getCellIneterestCellType(x,y,z) ;
                             switch(cellType){
                                 case 0:
@@ -838,7 +840,7 @@ void ExplorationBase::RunStateMachine()
                                     occ_not_intr_type_count++;
                                     break ; 
                             }
-                            
+                            */
                             double p = 0.5 ;
                             if (probability != -1)
                             {
@@ -851,7 +853,7 @@ void ExplorationBase::RunStateMachine()
                             information_gain_entropy +=  + Entropy ;
                             
                             
-                            double s_gain = manager_->getCellIneterestGain(vec);
+                            double s_gain = 0.5;//manager_->getCellIneterestGain(vec);
                             semantic_entropy= -s_gain * std::log(s_gain) - ((1-s_gain) * std::log(1-s_gain));
                             semantic_entropy = semantic_entropy/maxTher ; 
                             semantic_gain_entropy += semantic_entropy ;
@@ -859,9 +861,9 @@ void ExplorationBase::RunStateMachine()
                             total_gain += (information_gain_entropy + semantic_gain_entropy) ;
                             
                             
-                            if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
-                            if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
-                            if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
+                            if (node == VoxbloxMapManager::kUnknown) {unknown_cells_counter++;}
+                            if (node == VoxbloxMapManager::kFree) {free_cells_counter++;}
+                            if (node == VoxbloxMapManager::kOccupied) {occupied_cells_counter++;}
                         }
                     }
                 }
@@ -907,7 +909,7 @@ void ExplorationBase::OcclusionCloudCallback(sensor_msgs::PointCloud2::ConstPtr 
 {
     ROS_INFO("******************************************************************************") ;
     std::cout << "Frame ID " << msg->header.frame_id << std::endl <<std::flush ;
-    manager_->insertPointcloudWithTf(msg); // not used becuase volumetric mapping pkg is performing the mapping
+    //manager_->insertPointcloudWithTf(msg); // not used becuase volumetric mapping pkg is performing the mapping
     pointcloud_recieved_sub_Flag = true ;
 }
 
@@ -1070,7 +1072,8 @@ bool ExplorationBase::IsSafe(geometry_msgs::Pose p)
     // cell status 0: free , 1: occupied , 2: unknown
     // both unknown and free will be accepted to be visited x !=1
     // If only free views are accepted, then the condition should be changed to if X==0
-    if (manager_->getCellStatusBoundingBox(loc_current,box_size)==0)
+    bool stop_at_unknown_voxel = false;
+    if (manager_->getBoundingBoxStatus(loc_current,box_size,stop_at_unknown_voxel)==0)
     {
         return true;
     }
@@ -1098,15 +1101,15 @@ bool ExplorationBase::IsCollide(geometry_msgs::Pose p) {
        direction = extensionRange * direction.normalized();
      }
     
-    volumetric_mapping::OctomapManager::CellStatus cell_status;
+    VoxbloxMapManager::VoxelStatus cell_status;
     //std::cout << "Pose: "<< p << " NewPose: " << direction + origin + direction.normalized() * dOvershoot_ << std::endl;
     cell_status = manager_->getLineStatusBoundingBox(
         origin,
         end,
         //direction + origin + direction.normalized() * 0.1,
-        collision_bounding_box_);
+        collision_bounding_box_,true);
     //std::cout << "status is: " << cell_status << std::endl;//|| volumetric_mapping::OctomapManager::CellStatus::kUnknown
-    if (cell_status == volumetric_mapping::OctomapManager::CellStatus::kFree  )
+    if (cell_status == VoxbloxMapManager::kFree  )
         return false;
     
     return true;
@@ -1134,7 +1137,7 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
         return false;
     }
     
-    if (manager_->getMapSize().norm() <= 0.0) {
+    if (manager_->isEmpty()) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return false ;
     }
@@ -1234,19 +1237,18 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                     // Check cell status and add to the gain considering the corresponding factor.
                     
                     double probability;
-                    volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
-                        vec, &probability);
-                    if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                    VoxbloxMapManager::VoxelStatus node = manager_->getVoxelStatus(vec);
+                    if (node == VoxbloxMapManager::kUnknown) {
                         // Rayshooting to evaluate inspectability of cell
-                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                        if (VoxbloxMapManager::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                             gain += 1;//params_.igUnmapped_;
                         // TODO: Add probabilistic gain
                         // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                             }
-                    } else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    } else if (node == VoxbloxMapManager::kOccupied) {
                         // Rayshooting to evaluate inspectability of cell
-                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                        if (VoxbloxMapManager::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                             gain += 0;//params_.igOccupied_;
                         // TODO: Add probabilistic gain
@@ -1254,7 +1256,7 @@ double ExplorationBase::EvaluateViewPoints(geometry_msgs::Pose p , int id){
                             }
                     } else {
                         // Rayshooting to evaluate inspectability of cell
-                        if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                        if (VoxbloxMapManager::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                             gain += 0;//params_.igFree_;
                         // TODO: Add probabilistic gain
