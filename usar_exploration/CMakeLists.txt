@@ -74,3 +74,8 @@ target_link_libraries(exploration_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fc
 add_executable(current_view_extraction src/current_view_extraction.cpp)
 add_dependencies(current_view_extraction ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(current_view_extraction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
+
+add_executable(drone_commander src/drone_commander.cpp)
+target_link_libraries(drone_commander ${catkin_LIBRARIES} )
+add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+
