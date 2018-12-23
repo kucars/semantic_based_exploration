@@ -31,6 +31,7 @@
 #define SQ(x) ((x)*(x))
 #define SQRT2 0.70711
 
+
 namespace rrtNBV {
 
 class RrtTree : public TreeBase
@@ -51,6 +52,7 @@ class RrtTree : public TreeBase
 
   void publishNode(Node * node);
   double gain(StateVec state);
+  double gain_rsvs(StateVec state);
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 
   // Modified functions
@@ -61,8 +63,9 @@ class RrtTree : public TreeBase
   double gainDinsity(StateVec state, int &dinsity);
   virtual double getBestGain() ;
   virtual Eigen::Vector4d getRootNode();
+  
 
- protected:
+ protected:  
   kdtree * kdTree_;
   std::stack<StateVec> history_;
   std::vector<StateVec> bestBranchMemory_;

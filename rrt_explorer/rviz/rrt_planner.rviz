@@ -56,7 +56,8 @@ Visualization Manager:
       Marker Topic: /inspectionPath
       Name: Marker
       Namespaces:
-        {}
+        vp_branches: true
+        vp_tree: true
       Queue Size: 1000
       Value: true
     - Class: rviz/MarkerArray
@@ -64,7 +65,7 @@ Visualization Manager:
       Marker Topic: /rrt_planner/octomap_occupied
       Name: MarkerArray
       Namespaces:
-        {}
+        map: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -125,13 +126,19 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_point_cloud:
+          Value: true
+        world:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          base_point_cloud:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -169,7 +176,7 @@ Visualization Manager:
       Marker Topic: /path
       Name: Marker
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -177,7 +184,7 @@ Visualization Manager:
       Marker Topic: /explorationarea
       Name: Marker
       Namespaces:
-        {}
+        workspace: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -229,25 +236,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 18.414093
+      Distance: 15.9278545
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.170990855
-        Y: 0.934767306
-        Z: 1.07622099
+        X: 0.348087668
+        Y: 1.5943054
+        Z: 1.07775819
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.829796135
+      Pitch: 1.55979633
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.95175004
+      Yaw: 4.70175934
     Saved: ~
 Window Geometry:
   Displays:

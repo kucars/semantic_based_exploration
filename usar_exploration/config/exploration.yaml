@@ -62,7 +62,7 @@ change_detection_enabled: false
 #/exploration_node/init/pose/z: 1.209
 #/exploration_node/init/pose/yaw: 3.14
 
-/exploration_node/init/pose/x: 4
+/exploration_node/init/pose/x: 1
 /exploration_node/init/pose/y: 2
 /exploration_node/init/pose/z: 1
 /exploration_node/init/pose/yaw: -3.032297
@@ -74,9 +74,9 @@ change_detection_enabled: false
 /exploration_node/camera/vertical: [45.0]
 
 # Robot Params
-/exploration_node/robot/bbx/x: 0.1
-/exploration_node/robot/bbx/y: 0.1
-/exploration_node/robot/bbx/z: 0.1
+/exploration_node/robot/bbx/x: 0.3
+/exploration_node/robot/bbx/y: 0.3
+/exploration_node/robot/bbx/z: 0.3
 /exploration_node/robot/bbx/overshoot: 0.5
 
 # Exploration Algorithm Params 

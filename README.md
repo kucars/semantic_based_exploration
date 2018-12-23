@@ -71,3 +71,13 @@ rosrun rviz rviz
 roslaunch usar_exploration exploration.launch 
 rosrun usar_exploration current_view_extraction
 ```
+
+# RUN using rrt package 
+Choose the utility function in exploration.yaml located at /home/reem/catkin_ws/src/semantic_based_exploration/rrt_explorer/resource 
+
+```
+roslaunch rrt_explorer exploration_planner_2.launch
+roslaunch rrt_explorer nav_2.launch 
+rosrun usar_exploration current_view_extraction
+```
+

@@ -1,7 +1,7 @@
 #####################
 # System Related Parameters
 #####################
-system/v_max: 1#0.5 ##0.5
+system/v_max: 1 #0.5 ##0.5
 system/dyaw_max: 0.5
 system/camera/pitch: [15.0] #sensor_pitch: 0.093
 system/camera/horizontal: [58.0] #sensor_hor_fov: 60
@@ -85,9 +85,12 @@ change_detection_enabled: false
 /uav_1/mavros/local_position/tf/child_frame_id: fcu    #(string, default: fcu) Child frame_id for TF.
 
 # Planning Methods
-# Classic 1
-# Density 2
-# RRT     3
+# Volumetric 0
+# Semantic Rear Side Voxel 1
+# Pure_Entropy 2
+# Average Entropy 3
+
+
 /utility/method: 1
 /output/file/name: "1.csv"
 

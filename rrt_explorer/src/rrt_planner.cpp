@@ -268,7 +268,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
-        ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );
+        //ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
             
@@ -287,8 +287,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
         
         loopCount++;
         k++ ;
-        std::cout << "Candidate Number : " << k << std::endl ;
-        std::cout << "Candidate Gain : " << rrtTree->getBestGain() ;
+        //std::cout << "Candidate Number : " << k << std::endl ;
+       // std::cout << "Candidate Gain : " << rrtTree->getBestGain() ;
     }
     /*
      *       ROS_ERROR("%d %d", rrtTree->getCounter() , params_.initIterations_);
@@ -473,8 +473,8 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
-    std::cout<<"Frame Name:"<<pointcloud->header.frame_id<<"\n";
-    ROS_INFO("Received PointCloud");
+    //std::cout<<"Frame Name:"<<pointcloud->header.frame_id<<"\n";
+    //ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
     if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
     {
@@ -701,11 +701,11 @@ bool rrtNBV::RRTPlanner::setParams()
                  (ns + "/output/file/name").c_str());
     }
     
-    params_.utility_mathod_ = 1;
-    if (!ros::param::get(ns + "/utility/method", params_.utility_mathod_)) {
-        ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
-                 (ns + "/utility/method").c_str());
-    }
+//    params_.utility_mathod_ = 1;
+//    if (!ros::param::get(ns + "/utility/method", params_.utility_mathod_)) {
+//        ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
+//                 (ns + "/utility/method").c_str());
+//    }
     
     return ret;
 }

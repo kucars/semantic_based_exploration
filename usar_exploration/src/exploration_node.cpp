@@ -99,6 +99,11 @@ struct Params
     double init_loc_z ;
     double init_loc_yaw ;
     bool iflog ;
+
+    double robot_bbx;
+    double robot_bby;
+    double robot_bbz;
+
 };
 
 class ExplorationBase {
@@ -319,7 +324,7 @@ void ExplorationBase::RunStateMachine()
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
     tf::Transform transform;
-    int initial_map_generation = 1 ; 
+    int initial_map_generation = 1 ;
     bool done = false;
     sleep(5);
     //TODO: the call to the occlussion culling SHOULD be a service or action server/client, you can't control the timing
@@ -802,6 +807,7 @@ void ExplorationBase::RunStateMachine()
                 traveled_distance +=  distance ;
                 accumulative_gain = accumulative_gain + global_gain ;
                 double res_map = manager_->getResolution()  ;
+
                 Eigen::Vector3d vec;
                 double x , y , z ;
                 double maxTher = -0.5 * std::log(0.5) - ((1-0.5) * std::log(1-0.5));
@@ -907,7 +913,7 @@ void ExplorationBase::OcclusionCloudCallback(sensor_msgs::PointCloud2::ConstPtr 
 {
     ROS_INFO("******************************************************************************") ;
     std::cout << "Frame ID " << msg->header.frame_id << std::endl <<std::flush ;
-    manager_->insertPointcloudWithTf(msg); // not used becuase volumetric mapping pkg is performing the mapping
+    manager_->insertPointcloudWithTf(msg); // explicity
     pointcloud_recieved_sub_Flag = true ;
 }
 
@@ -991,7 +997,7 @@ std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPoints( int iterat
 std::vector<geometry_msgs::Pose> ExplorationBase::GenerateViewPointsRandom( int iteration_flag){
     
     std::vector<geometry_msgs::Pose> initial_poses;
-    double extension_range = 0.5 ;
+    double extension_range = 1 ;
     
     int num_of_viewpoints= 215 ;
     double radius = sqrt(
@@ -1065,7 +1071,7 @@ bool ExplorationBase::IsInsideBounds(geometry_msgs::Pose p)
 bool ExplorationBase::IsSafe(geometry_msgs::Pose p)
 {
     Eigen::Vector3d loc_current(p.position.x, p.position.y,p.position.z);
-    Eigen::Vector3d box_size(0.1,0.1,0.1);
+    Eigen::Vector3d box_size(params_.robot_bbx,params_.robot_bby,params_.robot_bbz);
     // Eigen::Vector3d box_size(0.1,0.1,0.1);
     // cell status 0: free , 1: occupied , 2: unknown
     // both unknown and free will be accepted to be visited x !=1
@@ -1081,18 +1087,18 @@ bool ExplorationBase::IsCollide(geometry_msgs::Pose p) {
     //return false;
     
     // Check for collision of new connection plus some overshoot distance.
-    collision_bounding_box_[0]=0.1;
-    collision_bounding_box_[1]=0.1;
-    collision_bounding_box_[2]=0.1;
+    collision_bounding_box_[0]=params_.robot_bbx;
+    collision_bounding_box_[1]=params_.robot_bby;
+    collision_bounding_box_[2]=params_.robot_bbz;
     
     Eigen::Vector3d origin(loc_.pose.position.x , loc_.pose.position.y ,loc_.pose.position.z);
     Eigen::Vector3d end(p.position.x , p.position.y , p.position.z);
 
     Eigen::Vector3d direction(p.position.x - origin[0], p.position.y - origin[1], p.position.z - origin[2]);
-    Eigen::Vector3d newState(origin[0] + direction[0], origin[1] + direction[1], origin[2] + direction[2]);
+//    Eigen::Vector3d newState(origin[0] + direction[0], origin[1] + direction[1], origin[2] + direction[2]);
 
 
-    double extensionRange = 1; 
+    double extensionRange = 0.5;
     double dOvershoot = 0.1;
     if (direction.norm() > extensionRange) {
        direction = extensionRange * direction.normalized();
@@ -1116,11 +1122,11 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
 {
     //check current loc is free.
     if (!IsInsideBounds(p) ){
-       // ROS_INFO("rejected by validity");
+        ROS_INFO("rejected by validity");
         return false;
     }
     if (!IsSafe(p)){
-        // ROS_INFO("rejected by Safety" );
+        ROS_INFO("rejected by Safety" );
         return false;
     }
     
@@ -1130,7 +1136,7 @@ bool ExplorationBase::IsValidViewpoint(geometry_msgs::Pose p )
     }
     
     if (IsCollide(p)){
-        // ROS_INFO("rejected by collision" );
+        ROS_INFO("rejected by collision" );
         return false;
     }
     
@@ -1679,38 +1685,59 @@ bool ExplorationBase::SetParams()
     {
         ROS_WARN("No log is specified. Looking for %s.",  "/log/on");
     }
+
+    params_.robot_bbx = 0.1;
+    if (!ros::param::get( ns+"/robot/bbx/x",  params_.robot_bbx))
+    {
+        ROS_WARN("No log is specified. Looking for %s.",  "/robot/bbx/x");
+    }
+
+    params_.robot_bby = 0.1;
+    if (!ros::param::get( ns+"/robot/bbx/y",  params_.robot_bby))
+    {
+        ROS_WARN("No log is specified. Looking for %s.",  "/robot/bbx/y");
+    }
+
+    params_.robot_bbz = 0.1;
+    if (!ros::param::get( ns+"/robot/bbx/z",  params_.robot_bbz))
+    {
+        ROS_WARN("No log is specified. Looking for %s.",  "/robot/bbx/z");
+    }
     
-    // Octomap manager parameters
-    nh_.setParam((ns+"/tf_frame").c_str(), "world");
-    nh_.setParam((ns+"/robot_frame").c_str(), "base_point_cloud");
-    nh_.setParam((ns+"/resolution").c_str(), 0.15);
-    nh_.setParam((ns+"/mesh_resolution").c_str(), 1.0);
-    nh_.setParam((ns+"/visualize_max_z").c_str(), 5);
-    nh_.setParam((ns+"/sensor_max_range").c_str(), 5);
-    nh_.setParam((ns+"/map_publish_frequency").c_str(), 0.08);
-    nh_.setParam((ns+"/probability_hit").c_str(), 0.7);
-    nh_.setParam((ns+"/probability_miss").c_str(), 0.4);
-    nh_.setParam((ns+"/threshold_min").c_str(), 0.12);
-    nh_.setParam((ns+"/threshold_max").c_str(), 0.97);
-    nh_.setParam((ns+"/threshold_occupancy").c_str(), 0.7);
-    nh_.setParam((ns+"/treat_unknown_as_occupied").c_str(), false);
-    nh_.setParam((ns+"/latch_topics").c_str(), false);
+
+
+
+//    // Octomap manager parameters
+//    nh_.setParam((ns+"/tf_frame").c_str(), "world");
+//    nh_.setParam((ns+"/robot_frame").c_str(), "base_point_cloud");
+//    nh_.setParam((ns+"/resolution").c_str(), 0.10);
+//    nh_.setParam((ns+"/mesh_resolution").c_str(), 1.0);
+//    nh_.setParam((ns+"/visualize_max_z").c_str(), 5);
+//    nh_.setParam((ns+"/sensor_max_range").c_str(), 5);
+//    nh_.setParam((ns+"/map_publish_frequency").c_str(), 0.08);
+//    nh_.setParam((ns+"/probability_hit").c_str(), 0.7);
+//    nh_.setParam((ns+"/probability_miss").c_str(), 0.4);
+//    nh_.setParam((ns+"/threshold_min").c_str(), 0.12);
+//    nh_.setParam((ns+"/threshold_max").c_str(), 0.97);
+//    nh_.setParam((ns+"/threshold_occupancy").c_str(), 0.7);
+//    nh_.setParam((ns+"/treat_unknown_as_occupied").c_str(), false);
+//    nh_.setParam((ns+"/latch_topics").c_str(), false);
     
-    //    // Octomap manager parameters
-    nh_.setParam(("/tf_frame"), "world");
-    nh_.setParam("/robot_frame", "base_point_cloud");
-    nh_.setParam(("/resolution"), 0.15);
-    nh_.setParam(("/mesh_resolution"), 1.0);
-    nh_.setParam(("/visualize_max_z"), 5);
-    nh_.setParam(("/sensor_max_range"), 5);
-    nh_.setParam(("/map_publish_frequency"), 0.08);
-    nh_.setParam(("/probability_hit"), 0.7);
-    nh_.setParam(("/probability_miss"), 0.4);
-    nh_.setParam(("/threshold_min"), 0.12);
-    nh_.setParam(("/threshold_max"), 0.97);
-    nh_.setParam(("/threshold_occupancy"), 0.7);
-    nh_.setParam(("/treat_unknown_as_occupied"), false);
-    nh_.setParam(("/latch_topics"), false);
+//    //    // Octomap manager parameters
+//    nh_.setParam(("/tf_frame"), "world");
+//    nh_.setParam("/robot_frame", "base_point_cloud");
+//    nh_.setParam(("/resolution"), 0.10);
+//    nh_.setParam(("/mesh_resolution"), 1.0);
+//    nh_.setParam(("/visualize_max_z"), 5);
+//    nh_.setParam(("/sensor_max_range"), 5);
+//    nh_.setParam(("/map_publish_frequency"), 0.08);
+//    nh_.setParam(("/probability_hit"), 0.7);
+//    nh_.setParam(("/probability_miss"), 0.4);
+//    nh_.setParam(("/threshold_min"), 0.12);
+//    nh_.setParam(("/threshold_max"), 0.97);
+//    nh_.setParam(("/threshold_occupancy"), 0.7);
+//    nh_.setParam(("/treat_unknown_as_occupied"), false);
+//    nh_.setParam(("/latch_topics"), false);
     
     return ret;
 }
