@@ -91,7 +91,7 @@ change_detection_enabled: false
 # Average Entropy 3
 
 
-/utility/method: 1
+/utility/method: 0
 /output/file/name: "1.csv"
 
 
