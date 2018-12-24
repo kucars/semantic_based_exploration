@@ -53,6 +53,8 @@ class RrtTree : public TreeBase
   void publishNode(Node * node);
   double gain(StateVec state);
   double gain_rsvs(StateVec state);
+  double gain_rses(StateVec state);
+
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 
   // Modified functions

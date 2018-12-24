@@ -89,9 +89,10 @@ change_detection_enabled: false
 # Semantic Rear Side Voxel 1
 # Pure_Entropy 2
 # Average Entropy 3
+# Semantic Rear side entropy 4 
 
 
-/utility/method: 0
+/utility/method: 4
 /output/file/name: "1.csv"
 
 
