@@ -20,8 +20,10 @@ nbvp/gain/probabilistic: 0.0
 nbvp/gain/range: 1 # Maximum distance of volumes to be considered for the gain computation (double, default: 1.0) 
 nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
-inspection_throttle: 0.5
 
+inspection_throttle: 0.5
+pcl_throttle: 0.1 # default 0.33
+output/file/name: "gains.csv"
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1
@@ -34,23 +36,13 @@ nbvp/dt: 0.1
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
-# bounding box: necessary to limit the simulation 
-# scenario (smaller than actual gazebo scenario)
-# Scenario Parameters
-#bbx/minX: -12.0
-#bbx/minY: -12.0
-#bbx/minZ: -0.0
-#bbx/maxX: 12.0
-#bbx/maxY: 12.0
-#bbx/maxZ: 3.0
-#bbx/softBounds: false
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -5.2
-bbx/maxX: 5.2
-bbx/minY: -3.0
-bbx/maxY: 5.0
-bbx/minZ: 0.0
-bbx/maxZ: 3.5
+bbx/minX: 10.0
+bbx/maxX: 10.0
+bbx/minY: -10.0
+bbx/maxY: 10.0
+bbx/minZ: -10.0
+bbx/maxZ: 10.0
 bbx/softBounds: false
 
 ############

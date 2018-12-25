@@ -46,6 +46,8 @@ protected:
   mesh::StlMesh * mesh_;
   volumetric_mapping::OctomapManager * manager_;
   rrtNBV::RrtTree *rrtTree;
+  visualization_msgs::Marker area_marker_;
+  visualization_msgs::Marker explorationAreaInit();
   bool ready_;
   rrtNBV::Params params_;
   std::string logFilePathName_;
