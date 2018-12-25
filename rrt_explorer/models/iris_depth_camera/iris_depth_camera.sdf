@@ -6,7 +6,7 @@
 
     <include>
       <uri>model://depth_camera_new</uri>
-      <pose>0.1 0 0 0 0 0</pose>
+      <pose>0.1 0 0.1 0 0 0</pose>
     </include>
     <joint name="depth_camera_new_joint" type="revolute">
       <child>depth_camera_new::link</child>
@@ -20,6 +20,7 @@
       </axis>
     </joint>
 
+    <!--
     <include>
       <uri>model://distance_sensor</uri>
       <pose>0 0 -0.1 0 0 0</pose>
@@ -36,7 +37,7 @@
       </axis>
     </joint>
 
-    <!-- <include>
+    <include>
       <uri>model://odometry_sensor</uri>
       <pose>-0.12 0.05 0 0 1.5708 1.5708</pose>
     </include>

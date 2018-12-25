@@ -98,49 +98,11 @@ change_detection_enabled: false
 #StepSize 
 /exploration_node/exp/ter/step_size: 1
 
-# Environment Related Paramters 
-# bounding box: necessary to limit the simulation 
-# scenario (smaller than actual gazebo scenario)
-
-# Exploration Area (Stanford dataset for area1 and area6)
-#/exploration_node/env/bbx/minX: 1.0
-#/exploration_node/env/bbx/maxX: 1.5
-#/exploration_node/env/bbx/minY: -2.5
-#/exploration_node/env/bbx/maxY: 40
-#/exploration_node/env/bbx/minZ: 0.0
-#/exploration_node/env/bbx/maxZ: 3.0
-
-# Exploration Area (Stanford dataset for area3)
-#/exploration_node/env/bbx/minX: 0.0
-#/exploration_node/env/bbx/maxX: 350
-#/exploration_node/env/bbx/minY: -12
-#/exploration_node/env/bbx/maxY: 10
-#/exploration_node/env/bbx/minZ: 0.0
-#/exploration_node/env/bbx/maxZ: 3.0
-
-# Exploration Area for bosch dataset
-#/exploration_node/env/bbx/minX: -2.0
-#/exploration_node/env/bbx/maxX: 7
-#/exploration_node/env/bbx/minY: -4.5
-#/exploration_node/env/bbx/maxY: 6
-#/exploration_node/env/bbx/minZ: 0.0
-#/exploration_node/env/bbx/maxZ: 2.0
-#/exploration_node/env/bbx/softBounds: false
-
-# Exploration Area for the manual Generated Area (CAD)
-#/exploration_node/env/bbx/minX: -5.2
-#/exploration_node/env/bbx/maxX: 5.2
-#/exploration_node/env/bbx/minY: -4
-#/exploration_node/env/bbx/maxY: 4
-#/exploration_node/env/bbx/minZ: 0.0
-#/exploration_node/env/bbx/maxZ: 3.5
-#/exploration_node/env/bbx/softBounds: false
-
 # NewArea:  Exploration Area for the manual Generated Area (CAD)
-/exploration_node/env/bbx/minX: -6.0
-/exploration_node/env/bbx/maxX:  6.0
-/exploration_node/env/bbx/minY: -3
-/exploration_node/env/bbx/maxY: 5.2
+/exploration_node/env/bbx/minX: -10.0
+/exploration_node/env/bbx/maxX:  10.0
+/exploration_node/env/bbx/minY: -10.0
+/exploration_node/env/bbx/maxY: 10.0
 /exploration_node/env/bbx/minZ: 0.0
 /exploration_node/env/bbx/maxZ: 3.0
 /exploration_node/env/bbx/softBounds: false

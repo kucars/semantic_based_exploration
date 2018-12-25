@@ -41,7 +41,7 @@ private:
     ros::Publisher rotationDonePub ;
     ros::ServiceClient armingClinet;
     ros::ServiceClient setModeClient;
-    geometry_msgs::PoseStamped goalPose;
+    geometry_msgs::PoseStamped goalRecieved;
     geometry_msgs::PoseStamped currentPose;
     geometry_msgs::PoseStamped hoverPose;
     geometry_msgs::PoseStamped commandPose;
@@ -68,10 +68,6 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
     setModeClient     = nh.serviceClient<mavros_msgs::SetMode>(droneName + "/mavros/set_mode");
     rotationDonePub   = nh.advertise<std_msgs::Bool> (droneName + "/rotation/done", 10);
 
-    goalPose.pose.position.x = 0;
-    goalPose.pose.position.y = 0;
-    goalPose.pose.position.z = 0;
-
     // wait for FCU connection
     while(ros::ok() && currentState.connected)
     {
@@ -81,6 +77,7 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
         rate.sleep();
     }
 
+    goalLastReceived = ros::Time::now();
     commandPose = currentPose;
     offBoardSetMode.request.custom_mode = "OFFBOARD";
     armingCommand.request.value = true;
@@ -126,11 +123,16 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
             if(rotateOnTheSpot())
                 droneCommanderState = DroneCommander::READY_FOR_WAYPOINTS;
             hoverPose = currentPose;
+            ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
             break;
         case DroneCommander::READY_FOR_WAYPOINTS:
-
-            hoverPose = currentPose;
             /*
+             * Hover at the current position waiting for goals
+             * if no goal received in a certain time, then use the hovering pose as new goal
+             */
+            ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
+
+            // No goals recieved, or timedout, so revert to hovering pose
             if(ros::Time::now() - goalLastReceived > ros::Duration(0.5))
             {
                 rotationDone.data = true;
@@ -142,12 +144,13 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
                 currentGoal = hoverPose;
             }
             else
-            */
             {
                 ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Navigating to WayPoint");
-                goalPose.header.stamp = ros::Time::now();
-                goalPose.header.frame_id = "world";
-                currentGoal = goalPose;
+                goalRecieved.header.stamp = ros::Time::now();
+                goalRecieved.header.frame_id = "world";
+                currentGoal = goalRecieved;
+                // save current pose as the hovering pose for later usage
+                hoverPose = currentPose;
             }
             ROS_INFO_THROTTLE(1.0,"   - Current Goal is: [%f %f %f]",currentGoal.pose.position.x,currentGoal.pose.position.y,currentGoal.pose.position.z);
             localPosePub.publish(currentGoal);
@@ -171,13 +174,13 @@ void DroneCommander::poseCallback(const geometry_msgs::PoseStamped::ConstPtr& ms
 void DroneCommander::goalCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
     goalLastReceived = ros::Time::now();
-    goalPose.pose = msg->pose;
+    goalRecieved.pose = msg->pose;
 }
 
 bool DroneCommander::takeOff()
 {
     ROS_INFO("Starting the planner: Performing initialization motion -- Take off ");
-    int seqNum=0 ;
+    uint seqNum=0 ;
     double takeOffAltitude = 1.0;
     double intermediateAltitude = 0;
     geometry_msgs::PoseStamped takeOffPose;
@@ -220,7 +223,7 @@ bool DroneCommander::rotateOnTheSpot()
     rotatingPose.pose.position.x = currentPose.pose.position.x;
     rotatingPose.pose.position.y = currentPose.pose.position.y;
     rotatingPose.pose.position.z = currentPose.pose.position.z;
-    int seqNum=0 ;
+    uint seqNum=0 ;
     double angleStep  = 0.025;
     double angle = 0;
     bool done = false;

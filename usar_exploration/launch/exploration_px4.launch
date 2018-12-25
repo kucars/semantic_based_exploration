@@ -29,10 +29,13 @@
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris_depth_camera"/>
     <arg name="world_file_name"    default="simple_obstacle" />
+    <arg name="world" default="$(find rrt_explorer)/worlds/new_world.world"/>
+    <!--arg name="world" default="$(find rrt_explorer)/worlds/simulatedworld.world"/-->
+    <!--arg name="world" default="$(find turtlebot_gazebo)/worlds/playground.world"/-->
     <!--arg name="world" default="$(find rrt_explorer)/worlds/flat.world"/-->
     <!--arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/-->
     <!--arg name="world" default="$(find local_planner)/../sim/worlds/$(arg world_file_name).world" /-->
-    <arg name="world" default="$(find global_planner)/../sim/worlds/test_city_2.world" />
+    <!--arg name="world" default="$(find global_planner)/../sim/worlds/test_city_2.world" /-->
     <arg name="sdf" default="$(find rrt_explorer)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 
@@ -108,9 +111,9 @@
       <param name="publish_esdf_map" value="true" />
       <param name="publish_pointclouds" value="true" />
       <param name="tsdf_voxel_size" value="$(arg resolution)" />
-      <param name="method" value="simple" /> 
+      <param name="method" value="simple" />
       <param name="color_mode" value="normals" />
-      <param name="max_ray_length_m" value="10.0" />
+      <param name="max_ray_length_m" value="8.0" />
       <param name="update_mesh_every_n_sec" value="1.0" />
       <param name="use_tf_transforms" value="true" />
       <param name="voxel_carving_enabled" value="true" />
