@@ -29,12 +29,12 @@ add_service_files(
   rrt_srv_pose.srv
 )
 
-#generate_messages(
-#  DEPENDENCIES
-#  geometry_msgs
-#  visualization_msgs
-#  std_msgs
-#)
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  visualization_msgs
+  std_msgs
+)
 
 catkin_package(
   INCLUDE_DIRS include ${OCTOMAP_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS}

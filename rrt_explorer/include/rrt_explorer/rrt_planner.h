@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <kdtree/kdtree.h>
+#include <rrt_explorer/rrt_core.h>
 #include <rrt_explorer/rrt_tree.h>
 #include <rrt_explorer/mesh_structure.h>
 #include <rrt_explorer/rrt_srv.h>

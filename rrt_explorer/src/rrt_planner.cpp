@@ -44,14 +44,14 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     params_.rootNodeDebug        = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 100);
     marker_pub_                  = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_  	 = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
-    params_.sensor_pose_pub_             = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
+    params_.sensor_pose_pub_     = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
     // params_.evaluatedPoints_    = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
     
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+    pointcloud_sub_           	 = nh_.subscribe("/camera/depth/points", 20,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
     pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
     pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
     
@@ -513,7 +513,10 @@ void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::
     if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
     {
         ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+        ros::Time  tic = ros::Time::now();
         rrtTree->insertPointcloudWithTf(pointcloud);
+        ros::Time  toc = ros::Time::now();
+        ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
         last += params_.pcl_throttle_;
     }
 }

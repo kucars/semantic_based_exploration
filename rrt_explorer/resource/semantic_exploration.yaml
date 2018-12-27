@@ -22,7 +22,7 @@ nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
 
 inspection_throttle: 0.5
-pcl_throttle: 0.1 # default 0.33
+pcl_throttle: 0.5 # default 0.33
 output/file/name: "gains.csv"
 
 # Path Planning Parameters
@@ -50,11 +50,11 @@ bbx/softBounds: false
 ############
 tf_frame: "world"
 robot_frame: "base_point_cloud"
-resolution: 0.1
+resolution: 0.25
 mesh_resolution: 1.0
 visualize_max_z: 5.0
 sensor_max_range: 9.0
-map_publish_frequency: 0.08
+map_publish_frequency: 1.0
 probability_hit: 0.7
 probability_miss: 0.4
 threshold_min: 0.12
@@ -64,8 +64,6 @@ treat_unknown_as_occupied: false
 latch_topics: false
 max_free_space: 0
 min_height_free_space: 0
-map_publish_frequency: 1
-treat_unknown_as_occupied: true
 change_detection_enabled: false
 
 #Mavros related settings
