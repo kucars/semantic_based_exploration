@@ -51,9 +51,13 @@ class RrtTree : public TreeBase
   virtual void memorizeBestBranch();
 
   void publishNode(Node * node);
-  double gain(StateVec state);
-  double gain_rsvs(StateVec state);
-  double gain_rses(StateVec state);
+  double gain(StateVec state); // Volumetric Infromation Ref [2] RRT 
+  double gain_rsvs(StateVec state); // Rear side voxel - Ref[1] 
+  double gain_rsv(StateVec state); // Semantic rear side voxel - Proposed 
+  double gain_rse(StateVec state) ; // Rear side entropy - Ref [1] 
+  double gain_rses(StateVec state); // Semantic rear side entropy - Proposed 
+
+
 
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 

@@ -26,6 +26,9 @@ int iteration_num = 0 ;
 geometry_msgs::PoseArray viewpoints2;
 double accumulativeGain = 0 ; 
 
+double globalObjectGain ;
+double globalVolumetricGain ;
+
 double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
 {
     return sqrt( (p1.position.x - p2.position.x)*(p1.position.x - p2.position.x) +  (p1.position.y - p2.position.y)*(p1.position.y - p2.position.y)  + (p1.position.z - p2.position.z) *(p1.position.z - p2.position.z) );
@@ -283,8 +286,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
             return true;
         }
-        int m = rrtTree->iterate(1);
         
+        int m = rrtTree->iterate(1);
         loopCount++;
         k++ ;
         //std::cout << "Candidate Number : " << k << std::endl ;

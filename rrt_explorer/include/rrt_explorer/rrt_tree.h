@@ -106,7 +106,9 @@ class TreeBase
   Params params_;
   int counter_;
   double bestGain_;
+  double bestObjectGain_ ; 
   Node * bestNode_;
+  Node * bestObjectNode_;
   Node * rootNode_;
   mesh::StlMesh * mesh_;
   volumetric_mapping::OctomapManager * manager_;
