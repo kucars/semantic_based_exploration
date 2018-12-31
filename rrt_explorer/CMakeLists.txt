@@ -86,11 +86,10 @@ add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate
 #target_link_libraries(rrt_navigator_px4_deep ${catkin_LIBRARIES} )
 #add_dependencies(rrt_navigator_px4_deep ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
-#PX4 with rrt original service call (returns a point)
-#add_executable(exploration_planner_node src/exploration_planner_node.cpp)
-#target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
-#add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
-
 add_executable(exploration_planner_node src/exploration_planner_node.cpp)
 target_link_libraries(exploration_planner_node ${catkin_LIBRARIES} )
 add_dependencies(exploration_planner_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+
+add_executable(drone_commander src/drone_commander.cpp)
+target_link_libraries(drone_commander ${catkin_LIBRARIES} )
+add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS})

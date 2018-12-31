@@ -47,14 +47,14 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     params_.rootNodeDebug        = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 100);
     marker_pub_                  = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_  	 = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
-    params_.sensor_pose_pub_             = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
+    params_.sensor_pose_pub_     = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
     // params_.evaluatedPoints_    = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
     
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    pointcloud_sub_           	 = nh_.subscribe("pointcloud_throttled", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+    pointcloud_sub_           	 = nh_.subscribe("/camera/depth/points", 20,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
     pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
     pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
     
@@ -68,11 +68,13 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
         ROS_ERROR("Could not start the planner. Parameters missing!");
     }
     
+    area_marker_ = explorationAreaInit();
+
     // Precompute the camera field of view boundaries. The normals of the separating hyperplanes are stored
     params_.camBoundNormals_.clear();
-    int g_ID_ = 0 ;
+    uint g_ID_ = 0 ;
     // This loop will only be executed once
-    for (int i = 0; i < params_.camPitch_.size(); i++) {
+    for (uint i = 0; i < params_.camPitch_.size(); i++) {
         double pitch = M_PI * params_.camPitch_[i] / 180.0;
         double camTop = (pitch - M_PI * params_.camVertical_[i] / 360.0) + M_PI / 2.0;
         double camBottom = (pitch + M_PI * params_.camVertical_[i] / 360.0) - M_PI / 2.0;
@@ -143,7 +145,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     
     std::string ns = ros::this_node::getName();
     std::string stlPath = "";
-    mesh_ = NULL;
+    mesh_ = nullptr;
     if (ros::param::get(ns + "/stl_file_path", stlPath))
     {
         if (stlPath.length() > 0)
@@ -194,13 +196,46 @@ rrtNBV::RRTPlanner::~RRTPlanner()
     }
 }
 
+visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
+{
+    visualization_msgs::Marker  p ;
+    p.header.stamp = ros::Time::now();
+    p.header.seq = 0;
+    p.header.frame_id = "world";
+    p.id = 0;
+    p.ns = "workspace";
+    p.type = visualization_msgs::Marker::CUBE;
+    p.action = visualization_msgs::Marker::ADD;
+    //  std::cout << "params_.env_bbx_x_min + params_.env_bbx_x_max"  << params_.env_bbx_x_min + params_.env_bbx_x_max<< std::endl ;
+
+    p.pose.position.x = 0.5 * (params_.minX_ + params_.maxX_);
+    p.pose.position.y = 0.5 * (params_.minY_ + params_.maxY_);
+    p.pose.position.z = 0.5 * (params_.minZ_ + params_.maxZ_);
+    tf::Quaternion quat;
+    quat.setEuler(0.0, 0.0, 0.0);
+    p.pose.orientation.x = quat.x();
+    p.pose.orientation.y = quat.y();
+    p.pose.orientation.z = quat.z();
+    p.pose.orientation.w = quat.w();
+    p.scale.x = params_.maxX_ - params_.minX_;
+    p.scale.y = params_.maxY_ - params_.minY_;
+    p.scale.z = params_.maxZ_ - params_.minZ_;
+    p.color.r = 200.0 / 255.0;
+    p.color.g = 100.0 / 255.0;
+    p.color.b = 0.0;
+    p.color.a = 0.3;
+    p.lifetime = ros::Duration();
+    p.frame_locked = false;
+    return p ;
+}
+
 bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rrt_explorer::rrt_srv::Response& res)
 {
     ROS_INFO("called the planner ");
 
     //ros::Time computationTime = ros::Time(0);
     ros::Time computationTime = ros::Time::now();
-
+    params_.explorationarea_.publish(area_marker_);
 //    ROS_INFO("cretaed a service ");
 
 //    geometry_msgs::Pose currentPose ;
@@ -477,13 +512,15 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
-    //std::cout<<"Frame Name:"<<pointcloud->header.frame_id<<"\n";
-    //ROS_INFO("Received PointCloud");
+   ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
     if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
     {
         ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+        ros::Time  tic = ros::Time::now();
         rrtTree->insertPointcloudWithTf(pointcloud);
+        ros::Time  toc = ros::Time::now();
+        ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
         last += params_.pcl_throttle_;
     }
 }

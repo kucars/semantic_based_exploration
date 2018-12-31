@@ -27,7 +27,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 add_service_files(
-
   DIRECTORY srv
   FILES
   extractView.srv
@@ -36,12 +35,14 @@ add_service_files(
 find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(octomap REQUIRED)
-generate_messages(
-   DEPENDENCIES
-   std_msgs
-   sensor_msgs
-   geometry_msgs
-)
+
+#generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   sensor_msgs
+#   geometry_msgs
+#)
+
 catkin_package(
   INCLUDE_DIRS include
   ${OCTOMAP_INCLUDE_DIRS}

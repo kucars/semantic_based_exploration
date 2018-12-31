@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <kdtree/kdtree.h>
+#include <rrt_explorer/rrt_core.h>
 #include <rrt_explorer/rrt_tree.h>
 #include <rrt_explorer/mesh_structure.h>
 #include <rrt_explorer/rrt_srv.h>
@@ -46,6 +47,8 @@ protected:
   mesh::StlMesh * mesh_;
   volumetric_mapping::OctomapManager * manager_;
   rrtNBV::RrtTree *rrtTree;
+  visualization_msgs::Marker area_marker_;
+  visualization_msgs::Marker explorationAreaInit();
   bool ready_;
   rrtNBV::Params params_;
   std::string logFilePathName_;

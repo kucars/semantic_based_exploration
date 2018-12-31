@@ -20,12 +20,14 @@ nbvp/gain/probabilistic: 0.0
 nbvp/gain/range: 1 # Maximum distance of volumes to be considered for the gain computation (double, default: 1.0) 
 nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
-inspection_throttle: 0.5
 
+inspection_throttle: 0.5
+pcl_throttle: 0.5 # default 0.33
+output/file/name: "gains.csv"
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1
-nbvp/tree/initial_iterations: 15
+nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
@@ -34,23 +36,13 @@ nbvp/dt: 0.1
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
-# bounding box: necessary to limit the simulation 
-# scenario (smaller than actual gazebo scenario)
-# Scenario Parameters
-#bbx/minX: -12.0
-#bbx/minY: -12.0
-#bbx/minZ: -0.0
-#bbx/maxX: 12.0
-#bbx/maxY: 12.0
-#bbx/maxZ: 3.0
-#bbx/softBounds: false
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -5.2
-bbx/maxX: 5.2
-bbx/minY: -3.0
-bbx/maxY: 5.0
-bbx/minZ: 0.0
-bbx/maxZ: 3.5
+bbx/minX: 10.0
+bbx/maxX: 10.0
+bbx/minY: -10.0
+bbx/maxY: 10.0
+bbx/minZ: -10.0
+bbx/maxZ: 10.0
 bbx/softBounds: false
 
 ############
@@ -58,11 +50,11 @@ bbx/softBounds: false
 ############
 tf_frame: "world"
 robot_frame: "base_point_cloud"
-resolution: 0.1
+resolution: 0.25
 mesh_resolution: 1.0
 visualize_max_z: 5.0
 sensor_max_range: 9.0
-map_publish_frequency: 0.08
+map_publish_frequency: 1.0
 probability_hit: 0.7
 probability_miss: 0.4
 threshold_min: 0.12
@@ -72,8 +64,6 @@ treat_unknown_as_occupied: false
 latch_topics: false
 max_free_space: 0
 min_height_free_space: 0
-map_publish_frequency: 1
-treat_unknown_as_occupied: true
 change_detection_enabled: false
 
 #Mavros related settings
@@ -88,10 +78,9 @@ change_detection_enabled: false
 # Pure_Entropy 2
 # Average Entropy 3
 # Semantic Rear side entropy 4 
-# Rear Side Voxel 5 
-# Rear Side Entropy 6 
 
-/utility/method: 1
+
+/utility/method: 4
 /output/file/name: "1.csv"
 
 

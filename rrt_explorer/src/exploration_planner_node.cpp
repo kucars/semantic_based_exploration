@@ -165,8 +165,8 @@ void ExplorationPlanner::RunStateMachine()
     //unsigned int i = 0;
     
     double dt = 1.0;
-    int iteration = 0;
-    int seqNum = 0;
+    uint iteration = 0;
+    uint seqNum = 0;
     
     
     // simulate the camera position publisher by broadcasting the /tf
@@ -457,7 +457,7 @@ void ExplorationPlanner::RunStateMachine()
             
             std::cout<< "planSrv.response.path.size()" << planSrv.response.path.size() << std::endl ; 
             
-            for (int i = 0; i < planSrv.response.path.size(); i++)
+            for (uint i = 0; i < planSrv.response.path.size(); i++)
             {
                 poseMsg_.header.seq = seqNum ;
                 poseMsg_.header.stamp = ros::Time::now();
@@ -488,11 +488,6 @@ void ExplorationPlanner::RunStateMachine()
         else
         {
             ROS_WARN_THROTTLE(1, "Planner not reachable");
-            locationx_ = locationx_ ;
-            locationy_ = locationy_ ;
-            locationz_ = locationz_;
-            yaw_ = yaw_ ; 
-            //ros::Duration(1.0).sleep();
         }
         
         if(iteration > 100) 
