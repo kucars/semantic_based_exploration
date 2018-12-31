@@ -32,7 +32,7 @@
 
 using namespace std;
 
-
+bool oneViewObjectFound = false ;
 enum UtilityFunctionType {
     VOLUMETRIC  				        = (int)0 ,
     SEMANTIC_REAR_SIDE_VOXEL                            = (int)1 ,
@@ -502,25 +502,26 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         newParent->children_.push_back(newNode);
         
 
+        // Object found in one view
+        bool objectGainFound = false ;
         switch(utilityFunction)
         {
         case VOLUMETRIC:
             ROS_INFO("Volumetric") ;
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
             break ;
-
         case REAR_SIDE_VOXEL:
             ROS_INFO("Rear side VOXEL") ;
-            newNode->gain_ = newParent->gain_ + gain_rsv(newNode->state_) ;
+            newNode->gain_ = newParent->gain_ + gain_rsv(newNode->state_,objectGainFound) ;
             break;
         case SEMANTIC_REAR_SIDE_VOXEL : //Rear Side voxel Semantic
             // Count the rays that ends up with object of interest
             ROS_INFO("Semantic rear side VOXEL") ;
-            newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_) ;
+            newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_,objectGainFound) ;
             break;
 
         case PURE_ENTROPY:
-            // newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_) ;
+            // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
             break;
 
         case AVERAGE_ENTROPY:
@@ -529,20 +530,18 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
         case REAR_SIDE_ENTROPY:
             ROS_INFO("rear side ENTROPY") ;
-            newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_) ;
+            newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
             break ;
 
         case SEMANTIC_REAR_SIDE_ENTROPY:
             ROS_INFO("Semantic rear side ENTROPY") ;
-            newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_) ;
+            newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
             break ;
         default : // RRT
             // #count number of unknonw * visible voxels in FOV
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
 
         }
-
-
         // newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
         // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
         //ROS_INFO("newParent->gain_:%f",newParent->gain_ );
@@ -551,12 +550,32 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
         // Display new node
         publishNode(newNode);
-        
-        // Update best IG and node if applicable
-        if (newNode->gain_ > bestGain_)
+
+        if (objectGainFound)
         {
-            bestGain_ = newNode->gain_;
-            bestNode_ = newNode;
+            // Object found in one of the view
+            oneViewObjectFound = true;
+
+            if(newNode->gain_ > bestObjectGain_)
+            {
+                std::cout << " INITIALAIZE" << std::endl ;
+                std::cout << " OBJECT FOUND " << std::endl ;
+                std::cout << " %%%%%%%%%%%% " << std::endl ;
+                std::cout << " %%%%%%%%%%%% " << std::endl ;
+                std::cout << " %%%%%%%%%%%% " << std::endl ;
+                std::cout << " %%%%%%%%%%%% " << std::endl ;
+                bestObjectGain_ = newNode->gain_ ;
+                bestObjectNode_ = newNode ;
+            }
+        }
+        else
+        {
+            // Update best IG and node if applicable
+            if (newNode->gain_ > bestGain_)
+            {
+                bestGain_ = newNode->gain_;
+                bestNode_ = newNode;
+            }
         }
         counter_++;
         // ROS_INFO("bestGain_ is:%f",bestGain_);
@@ -690,17 +709,87 @@ void rrtNBV::RrtTree::initialize()
             newNode->distance_ = newParent->distance_ + direction.norm();
             newParent->children_.push_back(newNode);
             // gain with distance
-            newNode->gain_ = newParent->gain_+ gain(newNode->state_) ; // * exp(-params_.degressiveCoeff_ * newNode->distance_);
+            //newNode->gain_ = newParent->gain_+ gain(newNode->state_) ; // * exp(-params_.degressiveCoeff_ * newNode->distance_);
 
+            // Object found in one view
+            bool objectGainFound = false ;
+            switch(utilityFunction)
+            {
+            case VOLUMETRIC:
+                ROS_INFO("Volumetric") ;
+                newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+                break ;
+            case REAR_SIDE_VOXEL:
+                ROS_INFO("Rear side VOXEL") ;
+                newNode->gain_ = newParent->gain_ + gain_rsv(newNode->state_,objectGainFound) ;
+                break;
+            case SEMANTIC_REAR_SIDE_VOXEL : //Rear Side voxel Semantic
+                // Count the rays that ends up with object of interest
+                ROS_INFO("$$$ Semantic rear side VOXEL $$$") ;
+                newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_,objectGainFound) ;
+                break;
+
+            case PURE_ENTROPY:
+                // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
+                break;
+
+            case AVERAGE_ENTROPY:
+                // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+                break ;
+
+            case REAR_SIDE_ENTROPY:
+                ROS_INFO("rear side ENTROPY") ;
+                newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
+                break ;
+
+            case SEMANTIC_REAR_SIDE_ENTROPY:
+                ROS_INFO("Semantic rear side ENTROPY") ;
+                newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
+                break ;
+            default : // RRT
+                // #count number of unknonw * visible voxels in FOV
+                newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+
+            }
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
 
             // Display new node
             publishNode(newNode);
             // Update best IG and node if applicable
-            if (newNode->gain_ > bestGain_) {
-                bestGain_ = newNode->gain_;
-                bestNode_ = newNode;
+//            if (newNode->gain_ > bestGain_) {
+//                bestGain_ = newNode->gain_;
+//                bestNode_ = newNode;
+//            }
+
+            if (objectGainFound)
+            {
+                // Object found in one of the view
+                oneViewObjectFound = true;
+
+                if(newNode->gain_ > bestObjectGain_)
+                {
+                    std::cout << " INITIALAIZE" << std::endl ;
+                    std::cout << " OBJECT FOUND " << std::endl ;
+                    std::cout << " ************ " << std::endl ;
+                    std::cout << " ************ " << std::endl ;
+                    std::cout << " ************ " << std::endl ;
+                    std::cout << " ************ " << std::endl ;
+
+                    bestObjectGain_ = newNode->gain_ ;
+                    bestObjectNode_ = newNode ;
+                }
             }
+            else
+            {
+                // Update best IG and node if applicable
+                if (newNode->gain_ > bestGain_)
+                {
+                    bestGain_ = newNode->gain_;
+                    bestNode_ = newNode;
+                }
+            }
+
+
             counter_++;
         }
     }
@@ -723,37 +812,65 @@ exact_root_ = current->state_;
 }
 return ret ; 
 */      
-    
-    std::vector<geometry_msgs::Pose> ret;
-    rrtNBV::Node * current = bestNode_;
-    if (current->parent_ != NULL) {
-        while (current->parent_ != rootNode_ && current->parent_ != NULL) {
-            current = current->parent_;
+    if (!oneViewObjectFound)
+    {
+        std::vector<geometry_msgs::Pose> ret;
+        rrtNBV::Node * current = bestNode_;
+        if (current->parent_ != NULL) {
+            while (current->parent_ != rootNode_ && current->parent_ != NULL) {
+                current = current->parent_;
+            }
+            geometry_msgs::Pose ret_egde;
+            ret_egde.position.x = current->state_[0] ;
+            ret_egde.position.y = current->state_[1] ;
+            ret_egde.position.z = current->state_[2] ;
+            float yaw = current->state_[3] ;
+            tf::Quaternion q = tf::createQuaternionFromYaw(yaw) ;
+            ret_egde.orientation.x = q[0] ;
+            ret_egde.orientation.y = q[1] ;
+            ret_egde.orientation.z = q[2] ;
+            ret_egde.orientation.w = q[3] ;
+            ret.push_back(ret_egde);
+            ROS_INFO("ret %d %d %d %d %d %d %d", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
+            ROS_INFO("ret size %d", ret.size());
+
+            history_.push(current->parent_->state_);
+            exact_root_ = current->state_;
         }
-        geometry_msgs::Pose ret_egde;
-        ret_egde.position.x = current->state_[0] ;
-        ret_egde.position.y = current->state_[1] ;
-        ret_egde.position.z = current->state_[2] ;
-        float yaw = current->state_[3] ;
-        tf::Quaternion q = tf::createQuaternionFromYaw(yaw) ;
-        ret_egde.orientation.x = q[0] ;
-        ret_egde.orientation.y = q[1] ;
-        ret_egde.orientation.z = q[2] ;
-        ret_egde.orientation.w = q[3] ;
-        ret.push_back(ret_egde);
-        ROS_INFO("ret %d %d %d %d %d %d %d", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
-        ROS_INFO("ret size %d", ret.size());
-        
-        history_.push(current->parent_->state_);
-        exact_root_ = current->state_;
+        return ret ;
     }
-    return ret ;
-    
+    else
+    {
+        std::vector<geometry_msgs::Pose> ret;
+        rrtNBV::Node * current = bestObjectNode_;
+        if (current->parent_ != NULL) {
+            while (current->parent_ != rootNode_ && current->parent_ != NULL) {
+                current = current->parent_;
+            }
+            geometry_msgs::Pose ret_egde;
+            ret_egde.position.x = current->state_[0] ;
+            ret_egde.position.y = current->state_[1] ;
+            ret_egde.position.z = current->state_[2] ;
+            float yaw = current->state_[3] ;
+            tf::Quaternion q = tf::createQuaternionFromYaw(yaw) ;
+            ret_egde.orientation.x = q[0] ;
+            ret_egde.orientation.y = q[1] ;
+            ret_egde.orientation.z = q[2] ;
+            ret_egde.orientation.w = q[3] ;
+            ret.push_back(ret_egde);
+            ROS_INFO("ret %d %d %d %d %d %d %d", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
+            ROS_INFO("ret size %d", ret.size());
+
+            history_.push(current->parent_->state_);
+            exact_root_ = current->state_;
+        }
+        return ret ;
+    }
 }
 
 double rrtNBV::RrtTree::getBestGain()
 {
-    if (!gainSwitch)
+    if (!oneViewObjectFound)
         return bestGain_;
     else
         return bestObjectGain_;
@@ -769,7 +886,7 @@ Eigen::Vector4d rrtNBV::RrtTree::getRootNode()
 
 geometry_msgs::Pose rrtNBV::RrtTree::getBestEdgeDeep(std::string targetFrame)
 {
-    if (!gainSwitch)
+    if (!oneViewObjectFound)
     {
 
         //ROS_INFO("the best gain in this iteration is %f", bestGain_) ;
@@ -1025,16 +1142,14 @@ double rrtNBV::RrtTree::gain(StateVec state)
     return gain;
 }
 
-// Semantic rear side voxel Ref[1]
-double rrtNBV::RrtTree::gain_rsv(StateVec state)
+// This function computes the gain using "Rear side voxel" Ref[1]
+double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
 {
-    //ROS_INFO("GAIN");
-
-    // This function computes the gain
     double gain = 0.0;
     double gainUnknown = 0.0;
     double gainObjOfInt = 0.0;
     double gainFree = 0.0 ;
+
     const double disc = manager_->getResolution();
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
@@ -1088,7 +1203,6 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state)
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnknown = gainUnknown +1 ;
-
                     }
                 }
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
@@ -1109,14 +1223,19 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state)
                         gainFree +=gainFree + 0 ;
                     }
                 }
-
-                if (gainObjOfInt == 0 )
-                    gain = gainUnknown ;
-                else
-                    gain = gainObjOfInt;
             }
         }
     }
+
+
+    if (gainObjOfInt > 0 )
+    {
+        gain = gainObjOfInt  ;
+        objectGainFound = true ;
+    }
+    else
+        gain = gainUnknown ;
+
 
     // Scale with volume
     gain *= pow(disc, 3.0);
@@ -1135,7 +1254,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state)
 }
 
 // proposed semantic rear side voxel
-double rrtNBV::RrtTree::gain_rsvs(StateVec state)
+double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
 {
     //ROS_INFO("GAIN");
 
@@ -1219,6 +1338,9 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state)
                         double s_gain = manager_->getCellIneterestGain(vec);
                         if(s_gain == 0.5)
                         {
+                            bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
+                            std::cout << " THE RESUTLS IS ** " << rearSideVoxel << std::endl  << std::flush  ;
+                            if (rearSideVoxel)
                             gainObjOfInt = gainObjOfInt + 1 ;
                         }
                         //}
@@ -1234,13 +1356,20 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state)
                     }
                 }
 
-                if (gainObjOfInt == 0 )
-                    gain = gainUnknown ;
-                else
-                    gain = gainObjOfInt;
+
             }
         }
     }
+
+
+    if (gainObjOfInt > 0 )
+    {
+        gain = gainObjOfInt  ;
+        objectGainFound = true ;
+    }
+    else
+        gain = gainUnknown ;
+
 
     // Scale with volume
     gain *= pow(disc, 3.0);
@@ -1254,12 +1383,12 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state)
         transform.setRotation(quaternion);
         gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
     }
-    ROS_INFO("GAIN ",gain);
+    ROS_INFO("GAIN %f",gain);
     return gain;
 }
 
 // semantic rear side entropy
-double rrtNBV::RrtTree::gain_rse(StateVec state)
+double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
 {
     //ROS_INFO("GAIN");
 
@@ -1353,13 +1482,19 @@ double rrtNBV::RrtTree::gain_rse(StateVec state)
                         gainFree +=gainFree + 0 ;
                     }
                 }
-                if (gainObjOfInt == 0 )
-                    gain = gainUnknown ;
-                else
-                    gain = gainObjOfInt;
+
             }
         }
     }
+
+
+    if (gainObjOfInt > 0 )
+    {
+        gain = gainObjOfInt  ;
+        objectGainFound = true ;
+    }
+    else
+        gain = gainUnknown ;
 
     // Scale with volume
     gain *= pow(disc, 3.0);
@@ -1379,7 +1514,7 @@ double rrtNBV::RrtTree::gain_rse(StateVec state)
 
 
 // proposed semantic rear side entropy
-double rrtNBV::RrtTree::gain_rses(StateVec state)
+double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
 {
     //ROS_INFO("GAIN");
 
@@ -1485,13 +1620,18 @@ double rrtNBV::RrtTree::gain_rses(StateVec state)
                     }
                 }
 
-                if (gainObjOfInt == 0 )
-                    gain = gainUnknown ;
-                else
-                    gain = gainObjOfInt;
             }
         }
     }
+
+
+    if (gainObjOfInt > 0 )
+    {
+        gain = gainObjOfInt  ;
+        objectGainFound = true ;
+    }
+    else
+        gain = gainUnknown ;
 
     // Scale with volume
     gain *= pow(disc, 3.0);
@@ -1651,29 +1791,30 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getPathBackToPrevious(
 
 void rrtNBV::RrtTree::memorizeBestBranch()
 {
-    if (!gainSwitch)
+    if (!oneViewObjectFound)
     {
         bestBranchMemory_.clear();
-    Node * current = bestNode_;
-    while (current->parent_ && current->parent_->parent_) {
-        bestBranchMemory_.push_back(current->state_);
-        current = current->parent_;
-    }
+        Node * current = bestNode_;
+        while (current->parent_ && current->parent_->parent_) {
+            bestBranchMemory_.push_back(current->state_);
+            current = current->parent_;
+        }
     }
     else
     {
         bestBranchMemory_.clear();
-    Node * current = bestObjectNode_;
-    while (current->parent_ && current->parent_->parent_) {
-        bestBranchMemory_.push_back(current->state_);
-        current = current->parent_;
-    }
+        Node * current = bestObjectNode_;
+        while (current->parent_ && current->parent_->parent_) {
+            bestBranchMemory_.push_back(current->state_);
+            current = current->parent_;
+        }
 
     }
 }
 
 void rrtNBV::RrtTree::clear()
 {
+    oneViewObjectFound = false ;
     delete rootNode_;
     rootNode_ = NULL;
     

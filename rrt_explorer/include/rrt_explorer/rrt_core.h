@@ -52,10 +52,10 @@ class RrtTree : public TreeBase
 
   void publishNode(Node * node);
   double gain(StateVec state); // Volumetric Infromation Ref [2] RRT 
-  double gain_rsvs(StateVec state); // Rear side voxel - Ref[1] 
-  double gain_rsv(StateVec state); // Semantic rear side voxel - Proposed 
-  double gain_rse(StateVec state) ; // Rear side entropy - Ref [1] 
-  double gain_rses(StateVec state); // Semantic rear side entropy - Proposed 
+  double gain_rsvs(StateVec state, bool &objectGainFound); // Rear side voxel - Ref[1] 
+  double gain_rsv(StateVec state, bool &objectGainFound); // Semantic rear side voxel - Proposed 
+  double gain_rse(StateVec state, bool &objectGainFound) ; // Rear side entropy - Ref [1] 
+  double gain_rses(StateVec state, bool &objectGainFound); // Semantic rear side entropy - Proposed 
 
 
 

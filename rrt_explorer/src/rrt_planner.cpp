@@ -313,6 +313,7 @@ loopCount++;
 }
 */
     
+
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain() ;
