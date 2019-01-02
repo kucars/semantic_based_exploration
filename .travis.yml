@@ -43,7 +43,7 @@ install:
   - cd ~/catkin_ws/
   - wstool init src
   - wstool set -y -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
-  - curl -H "Authorization: token 183514f3044151ae2f114a58b1afc1dafe658278" https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall > semantic_exploration.rosinstall
+  - curl -H 'Authorization: token 183514f3044151ae2f114a58b1afc1dafe658278' https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall > semantic_exploration.rosinstall
   - wstool merge -y -t src semantic_exploration.rosinstall
   - wstool update -t src
   - rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
