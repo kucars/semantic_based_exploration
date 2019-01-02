@@ -1,0 +1,65 @@
+# Continious Integration Configuration File for semantic exploration Package
+# Author: Tarek Taha
+# Date  : 02/01/2019
+sudo: required
+dist: xenial
+language: generic
+python:
+  - "2.7"
+compiler:
+  - gcc
+notifications:
+  email:
+    recipients:
+    - tarek.taha@gmail.com
+    on_success: change #[always|never|change] # default: change
+    on_failure: change #[always|never|change] # default: always
+
+env:
+  global:
+    # Some Global variables can go here
+    - GLOBAL_VAR="global_var"
+  matrix:
+    - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
+# Install prerequisites and/or dependencies required by the system
+before_install: 
+  - cmake --version
+  - find /usr/share -iname "*Eigen*.cmake"
+  - export CI_SOURCE_PATH=$(pwd)
+  - export REPOSITORY_NAME=${PWD##*/}
+  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME on $ROS_DISTRO"
+  - sudo -E sh -c 'echo "deb $ROS_REPOSITORY_PATH `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list'
+  - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+  - sudo apt-get update -qq
+  - sudo apt-get install ros-$ROS_DISTRO-desktop-full
+  - sudo apt-get install -qq -y python-rosdep python-wstool python-catkin-tools python-catkin-pkg xvfb ros-$ROS_DISTRO-xacro
+  - sudo apt-get install -y libcgal-dev
+  - sudo rosdep init
+  - rosdep update
+# Use this to install any prerequisites or dependencies necessary to run your build
+install: 
+  # Create workspace
+  - mkdir -p ~/catkin_ws/
+  - cd ~/catkin_ws/
+  - wstool init src
+  - wstool set -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
+  - wstool merge -t src https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall?token=AAR3chHe7p7e_GQmqZBvrNqbHrpATs7Sks5b2YtIwA%3D%3D
+  - wstool update -t src
+  - rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+  - cd ~/catkin_ws/src/semantic_based_exploration
+  - git submodule update --init --recursive
+  - mv ~/catkin_ws/src/octomap/ ~/catkin_ws
+  - cd ~/catkin_ws/octomap
+  - mkdir build 
+  - cd build 
+  - cmake ..
+  - sudo make install   
+# Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
+before_script: 
+- source /opt/ros/$ROS_DISTRO/setup.bash
+# All commands must exit with code 0 on success. Anything else is considered failure
+script:
+- cd ~/catkin_ws/
+- catkin_make
+- source devel/setup.bash
+- rospack profile
