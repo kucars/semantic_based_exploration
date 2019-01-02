@@ -75,7 +75,7 @@ bool rrtNBV::TreeBase::gainFound()
 void rrtNBV::TreeBase::insertPointcloudWithTf(
     const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
-    ROS_INFO("Adding cloud to manager");
+    //ROS_INFO("Adding cloud to manager");
     manager_->insertPointcloudWithTf(pointcloud);
 }
 

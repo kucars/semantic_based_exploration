@@ -352,7 +352,8 @@ loopCount++;
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain() ;
-    std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  ;
+    std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
+    std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  <<std::flush;
     rrtTree->memorizeBestBranch();
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
     
@@ -509,15 +510,15 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
 
 void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
 {
-   ROS_INFO("Received PointCloud");
+   //ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
     if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
     {
-        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+        //ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
         ros::Time  tic = ros::Time::now();
         rrtTree->insertPointcloudWithTf(pointcloud);
         ros::Time  toc = ros::Time::now();
-        ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
+        //ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
         last += params_.pcl_throttle_;
     }
 }
