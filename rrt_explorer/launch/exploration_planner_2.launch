@@ -29,7 +29,7 @@
       <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
       <param name="mesh_resolution" type="double" value="$(arg mesh_resolution)" />
       <param name="map_publish_frequency" value="$(arg map_publish_frequency)" />
-      <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/> 
+      <remap from="/camera/depth/points" to="$(arg pcl_topic)"/> 
       <remap from="poseStamped" to="/current_pose"/>
       <!--remap from="pose" to="/$(arg mav_name)$(arg subscript)/ground_truth/pose_with_covariance"/-->
       <!--remap from="pose" to="/$(arg mav_name)$(arg subscript)/mavros/local_position/pose"/-->

@@ -474,8 +474,7 @@ loopCount++;
 
 void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& pose)
 {
-    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
-    
+    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;   
     if (FirstPoseCalled)
     {
         FirstPoseCalled = false ;
@@ -488,7 +487,7 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
         prePose = pose.pose ;
         //ROS_INFO ("Traveled Distance %f" , traveled_distance) ;
     }
-    //std::cout<<"FRAME IS:"<<pose.header.frame_id<<"\n";
+
     rrtTree->setStateFromPoseStampedMsg(pose);
     // Planner is now ready to plan.
     ready_ = true;
@@ -497,8 +496,6 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
 void rrtNBV::RRTPlanner::posCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
 {
     rrtTree->setStateFromPoseMsg(pose);
-    // I think I should call the point cloud service here.
-    // call the manager with and insert point cloud with it OR We just call this function rrtTree->insertPointcloudWithTf(pointcloud); which will insert the point
     // Planner is now ready to plan.
     ready_ = true;
 }

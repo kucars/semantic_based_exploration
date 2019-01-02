@@ -41,15 +41,12 @@ enum UtilityFunctionType {
     SEMANTIC_REAR_SIDE_ENTROPY                          = (int)4 ,
     REAR_SIDE_VOXEL                                     = (int)5 ,
     REAR_SIDE_ENTROPY                                   = (int)6
-
-
 } ;
 
 enum UtilityFunctionType utilityFunction = VOLUMETRIC ;
 
 int marker_counter = 0 ;
-rrtNBV::RrtTree::RrtTree()
-    : rrtNBV::TreeBase::TreeBase()
+rrtNBV::RrtTree::RrtTree() : rrtNBV::TreeBase::TreeBase()
 {
     kdTree_ = kd_create(3);
     iterationCount_ = 0;
@@ -384,9 +381,10 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         ROS_WARN("No option for utility  function. Looking for /utility/method. Default is true.");
     }
 
-    //ROS_INFO("Utility Method %d" , x) ;
+    ROS_INFO("Utility Method %d " , x) ;
     //int m = utilityFunction(x) ;
     utilityFunction = (UtilityFunctionType)x;
+
     // In this function a new configuration is sampled and added to the tree.
     StateVec newState;
     
@@ -401,10 +399,8 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     //  ROS_INFO ("radius %f" , radius) ;
     
     bool solutionFound = false;
-    
-    
-    //std::srand(time(NULL));
-    
+
+    //std::srand(time(NULL)); 
     while (!solutionFound)
     {
         for (int i = 0; i < 3; i++)
@@ -437,7 +433,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     
     //*********************** DEBUG ************************** //
     // ROS_INFO("Sample Point genrated inside the exploration aera and NOT in collision with the bounding box -the bounding box is the robot dimensions");
-    //ROS_INFO("New Sample: %f %f %f " ,  newState.x() , newState.y() ,  newState.z() );
+    // ROS_INFO("New Sample: %f %f %f " ,  newState.x() , newState.y() ,  newState.z() );
     
     
     // Find nearest neighbour
@@ -455,6 +451,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     // I added this line to make the depth of the tree only 1
     if(newParent != rootNode_)
         return false ;
+
     // Check for collision of new connection plus some overshoot distance.
     Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
     Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
@@ -474,6 +471,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     // ********************* debug *************************** //
     Eigen::Vector3d  startPoint = origin ;
     Eigen::Vector3d  endPoint = direction + origin + direction.normalized() * params_.dOvershoot_;
+
     volumetric_mapping::OctomapManager::CellStatus cellStatus;
     cellStatus = manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_,params_.boundingBox_);
     
@@ -504,6 +502,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
         // Object found in one view
         bool objectGainFound = false ;
+
         switch(utilityFunction)
         {
         case VOLUMETRIC:
@@ -558,7 +557,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
             if(newNode->gain_ > bestObjectGain_)
             {
-                std::cout << " INITIALAIZE" << std::endl ;
+                std::cout << " ITERATE" << std::endl ;
                 std::cout << " OBJECT FOUND " << std::endl ;
                 std::cout << " %%%%%%%%%%%% " << std::endl ;
                 std::cout << " %%%%%%%%%%%% " << std::endl ;
@@ -570,6 +569,8 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         else
         {
+            std::cout << " ITEROBJECT NOT FOUND " << std::endl ;
+
             // Update best IG and node if applicable
             if (newNode->gain_ > bestGain_)
             {
@@ -586,7 +587,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
 void rrtNBV::RrtTree::initialize()
 {
-    ROS_INFO("EXPLORATION AREA");
+    ROS_INFO("INITIALIZATION");
     // Publish visualization of total exploration area
     visualization_msgs::Marker p;
     p.header.stamp = ros::Time::now();
@@ -679,6 +680,7 @@ void rrtNBV::RrtTree::initialize()
     // recomputing the gain.
     for (typename std::vector<StateVec>::reverse_iterator iter = bestBranchMemory_.rbegin();
          iter != bestBranchMemory_.rend(); ++iter) {
+        ROS_WARN("Memorize best Branch");
         StateVec newState = *iter;
         kdres * nearest = kd_nearest3(kdTree_, newState.x(), newState.y(), newState.z());
         if (kd_res_size(nearest) <= 0) {
@@ -1249,7 +1251,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
         transform.setRotation(quaternion);
         gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
     }
-    ROS_INFO("GAIN ",gain);
+    ROS_INFO("GAIN %f",gain);
     return gain;
 }
 
