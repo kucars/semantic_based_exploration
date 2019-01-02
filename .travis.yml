@@ -62,5 +62,12 @@ before_script:
 script:
 - cd ~/catkin_ws/
 - catkin_make
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="gflags_catkin"
+- cp src/semantic_based_exploration/glog_catkin/fix-unused-typedef-warning.patch src/
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="glog_catkin"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="usar_exploration"
 - source devel/setup.bash
 - rospack profile
