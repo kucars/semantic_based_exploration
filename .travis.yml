@@ -42,8 +42,9 @@ install:
   - mkdir -p ~/catkin_ws/
   - cd ~/catkin_ws/
   - wstool init src
-  - wstool set -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
-  - wstool merge -t src https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall?token=AAR3chHe7p7e_GQmqZBvrNqbHrpATs7Sks5b2YtIwA%3D%3D
+  - wstool set -y -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
+  - "curl -H 'Authorization: token 183514f3044151ae2f114a58b1afc1dafe658278' https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall > semantic_exploration.rosinstall"
+  - wstool merge -y -t src semantic_exploration.rosinstall
   - wstool update -t src
   - rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
   - cd ~/catkin_ws/src/semantic_based_exploration
@@ -61,5 +62,12 @@ before_script:
 script:
 - cd ~/catkin_ws/
 - catkin_make
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="gflags_catkin"
+- cp src/semantic_based_exploration/glog_catkin/fix-unused-typedef-warning.patch src/
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="glog_catkin"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
+- catkin_make -DCATKIN_WHITELIST_PACKAGES="usar_exploration"
 - source devel/setup.bash
 - rospack profile
