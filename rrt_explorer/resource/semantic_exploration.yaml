@@ -50,7 +50,7 @@ bbx/softBounds: false
 ############
 tf_frame: "world"
 robot_frame: "base_point_cloud"
-resolution: 0.25
+resolution: 0.2
 mesh_resolution: 1.0
 visualize_max_z: 5.0
 sensor_max_range: 9.0
