@@ -34,7 +34,7 @@ before_install:
   - sudo apt-get install ros-$ROS_DISTRO-desktop-full
   - sudo apt-get install -qq -y python-rosdep python-wstool python-catkin-tools python-catkin-pkg xvfb ros-$ROS_DISTRO-xacro
   - sudo apt-get install -y libcgal-dev
-  - sudo apt-get install ros-$ROS_DISTRO-rviz-visual-tools
+  - sudo apt-get install -y ros-$ROS_DISTRO-rviz-visual-tools ros-$ROS_DISTRO-mavros* ros-$ROS_DISTRO-mavlink
   - sudo rosdep init
   - rosdep update
 # Use this to install any prerequisites or dependencies necessary to run your build
