@@ -503,18 +503,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         // Object found in one view
         bool objectGainFound = false ;
 
-
-//        VOLUMETRIC  				        = (int)0 ,
-//        REAR_SIDE_VOXEL                                     = (int)1 ,
-//        SEMANTIC_REAR_SIDE_VOXEL                            = (int)2 ,
-//        REAR_SIDE_ENTROPY                                   = (int)3 ,
-//        SEMANTIC_REAR_SIDE_ENTROPY                          = (int)4 ,
-//        PURE_ENTROPY				 	= (int)5 ,
-//        AVERAGE_ENTROPY                                     = (int)6
-
-
-
-
         switch(utilityFunction)
         {
         case VOLUMETRIC: // RRT
@@ -738,15 +726,6 @@ void rrtNBV::RrtTree::initialize()
                 ROS_INFO("$$$ Semantic rear side VOXEL $$$") ;
                 newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_,objectGainFound) ;
                 break;
-
-            case PURE_ENTROPY:
-                // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
-                break;
-
-            case AVERAGE_ENTROPY:
-                // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-                break ;
-
             case REAR_SIDE_ENTROPY:
                 ROS_INFO("rear side ENTROPY") ;
                 newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
@@ -756,10 +735,16 @@ void rrtNBV::RrtTree::initialize()
                 ROS_INFO("Semantic rear side ENTROPY") ;
                 newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
                 break ;
+            case PURE_ENTROPY:
+                // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
+                break;
+
+            case AVERAGE_ENTROPY:
+                // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+                break ;
             default : // RRT
                 // #count number of unknonw * visible voxels in FOV
                 newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-
             }
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
 
