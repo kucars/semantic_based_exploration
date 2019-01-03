@@ -84,14 +84,15 @@ change_detection_enabled: false
 
 # Planning Methods
 # Volumetric 0
-# Semantic Rear Side Voxel 1
-# Pure_Entropy 2
-# Average Entropy 3
-# Semantic Rear side entropy 4 
-# Rear Side Voxel 5 
-# Rear Side Entropy 6 
+# Rear Side Voxel 1
+# Semantic Rear Side Voxel 2
+# Rear Side Entropy 3 
+# Semantic Rear Side Entropy 4 
+# Pure Entropy 5
+# Average Entropy 6
 
-/utility/method: 6
+
+/utility/method: 4
 /output/file/name: "1.csv"
 
 

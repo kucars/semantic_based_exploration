@@ -35,12 +35,12 @@ using namespace std;
 bool oneViewObjectFound = false ;
 enum UtilityFunctionType {
     VOLUMETRIC  				        = (int)0 ,
-    SEMANTIC_REAR_SIDE_VOXEL                            = (int)1 ,
-    PURE_ENTROPY				 	= (int)2 ,
-    AVERAGE_ENTROPY                                     = (int)3 ,
+    REAR_SIDE_VOXEL                                     = (int)1 ,
+    SEMANTIC_REAR_SIDE_VOXEL                            = (int)2 ,
+    REAR_SIDE_ENTROPY                                   = (int)3 ,
     SEMANTIC_REAR_SIDE_ENTROPY                          = (int)4 ,
-    REAR_SIDE_VOXEL                                     = (int)5 ,
-    REAR_SIDE_ENTROPY                                   = (int)6
+    PURE_ENTROPY				 	= (int)5 ,
+    AVERAGE_ENTROPY                                     = (int)6
 } ;
 
 enum UtilityFunctionType utilityFunction = VOLUMETRIC ;
@@ -503,9 +503,21 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         // Object found in one view
         bool objectGainFound = false ;
 
+
+//        VOLUMETRIC  				        = (int)0 ,
+//        REAR_SIDE_VOXEL                                     = (int)1 ,
+//        SEMANTIC_REAR_SIDE_VOXEL                            = (int)2 ,
+//        REAR_SIDE_ENTROPY                                   = (int)3 ,
+//        SEMANTIC_REAR_SIDE_ENTROPY                          = (int)4 ,
+//        PURE_ENTROPY				 	= (int)5 ,
+//        AVERAGE_ENTROPY                                     = (int)6
+
+
+
+
         switch(utilityFunction)
         {
-        case VOLUMETRIC:
+        case VOLUMETRIC: // RRT
             ROS_INFO("Volumetric") ;
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
             break ;
@@ -518,15 +530,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             ROS_INFO("Semantic rear side VOXEL") ;
             newNode->gain_ = newParent->gain_ + gain_rsvs(newNode->state_,objectGainFound) ;
             break;
-
-        case PURE_ENTROPY:
-            // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
-            break;
-
-        case AVERAGE_ENTROPY:
-            // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-            break ;
-
         case REAR_SIDE_ENTROPY:
             ROS_INFO("rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
@@ -536,16 +539,25 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             ROS_INFO("Semantic rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
             break ;
-        default : // RRT
+        case PURE_ENTROPY:
+            // newNode->gain_ = newParent->gain_ + gain_pureEntropy(newNode->state_) ;
+            break;
+
+        case AVERAGE_ENTROPY:
+            // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+            break ;
+
+        default :
             // #count number of unknonw * visible voxels in FOV
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
 
         }
+
         // newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
         // newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
         //ROS_INFO("newParent->gain_:%f",newParent->gain_ );
         //ROS_INFO("Branch Gain IS:%f",newNode->gain_ );
-        
+
         kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
         // Display new node
         publishNode(newNode);
