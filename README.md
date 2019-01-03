@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/kucars/semantic_based_exploration.svg?token=taDG4jUnkubXTpZBekpy&branch=master)](https://travis-ci.com/kucars/semantic_based_exploration)
+
 # Semantic Based Exploration
 The repository aims to provide an exploration algorithm and relevant packages to enable a semantic-aware autonomous exploration task for robots in indoor environments.  
 
