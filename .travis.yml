@@ -73,6 +73,7 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_msgs" 
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_ros"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
