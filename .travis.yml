@@ -34,6 +34,7 @@ before_install:
   - sudo apt-get install ros-$ROS_DISTRO-desktop-full
   - sudo apt-get install -qq -y python-rosdep python-wstool python-catkin-tools python-catkin-pkg xvfb ros-$ROS_DISTRO-xacro
   - sudo apt-get install -y libcgal-dev
+  - sudo apt-get install ros-$ROS_DISTRO-rviz-visual-tools
   - sudo rosdep init
   - rosdep update
 # Use this to install any prerequisites or dependencies necessary to run your build
@@ -54,7 +55,7 @@ install:
   - mkdir build 
   - cd build 
   - cmake .. -DBUILD_OCTOVIS_SUBPROJECT=OFF
-  - sudo make install   
+  - sudo make install
 # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
 before_script: 
 - source /opt/ros/$ROS_DISTRO/setup.bash
@@ -71,6 +72,7 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_msgs" 
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
