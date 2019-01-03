@@ -25,7 +25,7 @@ inspection_throttle: 0.5
 
 # Path Planning Parameters
 nbvp/tree/extension_range: 1
-nbvp/tree/initial_iterations: 15
+nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
@@ -91,7 +91,7 @@ change_detection_enabled: false
 # Rear Side Voxel 5 
 # Rear Side Entropy 6 
 
-/utility/method: 1
+/utility/method: 6
 /output/file/name: "1.csv"
 
 

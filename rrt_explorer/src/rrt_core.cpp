@@ -1138,7 +1138,7 @@ double rrtNBV::RrtTree::gain(StateVec state)
     return gain;
 }
 
-// This function computes the gain using "Rear side voxel" Ref[1]
+// This function computes the gain using "Rear side voxel". ref[1] " A comparison of a volumetric information gain metrics for active 3D object reconstruction"
 double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
 {
     // gain variables
@@ -1266,6 +1266,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
     std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
     std::cout << " number Of Accepted Visibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
     std::cout << " number Of Rear Side Voxel In One View is " << gainObjOfInt << std::endl << std::flush ; ;
+    std::cout << " number Of Visible Rear Side Interest Voxels In One View is " << numOfRearSideVoxels << std::endl << std::flush ; ;
 
 
     if (gainObjOfInt > 0 )
@@ -1397,8 +1398,10 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
                         gainOccupied += 0 ;
                         numOfOccupiedVisibleVoxels++;
 
-                        double s_gain = manager_->getCellIneterestGain(vec);
-                        if(s_gain == 0.5)
+                        //double s_gain = manager_->getCellIneterestGain(vec);
+                        //if(s_gain == 0.5)
+                        int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
+                        if (voxelType == 2)
                         {
                             numOfVisibleInterestVoxels++;
                             bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
@@ -1433,8 +1436,9 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
     std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ; ;
     std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
     std::cout << " number Of Accepted Visibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
-    std::cout << " number Of Rear Side Voxel In One View is " << gainObjOfInt << std::endl << std::flush ; ;
-    std::cout << " number Of Rear Side Interest Voxels In One View is " << numOfVisibleInterestVoxels << std::endl << std::flush ; ;
+    //std::cout << " number Of Rear Side Voxel In One View is " << gainObjOfInt << std::endl << std::flush ; ;
+    std::cout << " number Of Visible Interest Voxels In One View is " << numOfVisibleInterestVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Visible  Rear Side Interest Voxels In One View is " << numOfRearSideVoxels << std::endl << std::flush ; ;
 
 
     if (gainObjOfInt > 0 )
@@ -1467,17 +1471,34 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
     return gain;
 }
 
-// semantic rear side entropy
+// rear side entropy. ref[1] " A comparison of a volumetric information gain metrics for active 3D object reconstruction"
 double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
 {
-    //ROS_INFO("GAIN");
-
-    // This function computes the gain
+    // gain variables
     double gain = 0.0;
     double gainUnknown = 0.0;
-    double gainObjOfInt = 0.0;
     double gainFree = 0.0 ;
+    double gainOccupied = 0.0 ;
+    double gainObjOfInt = 0.0;
+
+    // counting variables
+    int numberOfAcceptedVoxelInOneView = 0 ;
+    int numOfFreeVoxels = 0 ;
+    int numOfFreeVisibleVoxels = 0 ;
+    int numOfFreeInvisibleVoxels = 0 ;
+
+    int numOfOccupiedVoxels = 0 ;
+    int numOfOccupiedVisibleVoxels = 0 ;
+    int numOfOccupiedInvisibleVoxels = 0 ;
+
+    int numOfUnknownVoxels = 0 ;
+    int numOfUnknownVisibleVoxels = 0 ;
+    int numOfUnknownInvisibleVoxels = 0 ;
+
+    int numOfRearSideVoxels = 0 ;
+
     const double disc = manager_->getResolution();
+    std::cout << "RESOLUTION " << disc <<std::endl << std::flush ;
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
@@ -1521,63 +1542,94 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
                     continue;
                 }
 
+
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                    numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnknown = gainUnknown +1 ;
-
-                    }
+                        gainUnknown +=1 ;
+                        numOfUnknownVisibleVoxels++ ;
+                    }else
+                        numOfUnknownInvisibleVoxels++;
                 }
+
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
+                        // Since it is visible then for sure it has either a rear side (free or unknown)
+                        // it should be used after knowning that the occupied voxel belongs to obj of interest.
+                        gainOccupied += 0 ;
+                        numOfOccupiedVisibleVoxels++;
 
 
                         bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
-                        ROS_INFO("The result is %d " , rearSideVoxel) ;  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
 
+                        ROS_INFO("The result is %d " , rearSideVoxel) ;  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
                         if (rearSideVoxel)
                         {
-
                             double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
                             double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                             double Iv = Pv * entropy ;
-
-                            std::cout << "**************** Rear Side  *********************" << std::endl  ;
+                            std::cout << "**************** Rear Side Entropy *********************" << std::endl  ;
                             //double rearSideEntropy = this->manager_->getRearSideEntropy(origin, vec);
-                            gainObjOfInt = gainObjOfInt + Iv  ;
+                            gainObjOfInt =+ Iv  ;
+                            numOfRearSideVoxels++;
+
                         }
-                    }
+
+                    }else
+                        numOfOccupiedInvisibleVoxels++;
+
                 }
                 else {
+                    numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainFree +=gainFree + 0 ;
-                    }
+                        gainFree += 0 ;
+                        numOfFreeVisibleVoxels++ ;
+                    }else
+                        numOfFreeInvisibleVoxels++;
                 }
+
+                numberOfAcceptedVoxelInOneView++;
 
             }
         }
     }
 
 
+    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
+    //std::cout << " number Of Rear Side Voxel In One View is " << gainObjOfInt << std::endl << std::flush ; ;
+    std::cout << " number Of Rear Side Interest Voxels In One View is " << numOfRearSideVoxels << std::endl << std::flush ; ;
+
     if (gainObjOfInt > 0 )
     {
         gain = gainObjOfInt  ;
         objectGainFound = true ;
+        std::cout << "Object Gain " << gain << std::endl ;
     }
     else
+    {
         gain = gainUnknown ;
+        std::cout << "Volumetric Gain " << gain << std::endl;
+    }
 
+    std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
     // Scale with volume
+    // TODO: Remove the scaling from the entropy functions
     gain *= pow(disc, 3.0);
+    std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
+
     // Check the gain added by inspectable surface
     if (mesh_) {
         // ROS_INFO("****gain added by inspectable surface*****");
@@ -1596,14 +1648,33 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
 // proposed semantic rear side entropy
 double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
 {
-    //ROS_INFO("GAIN");
 
-    // This function computes the gain
+    // gain variables
     double gain = 0.0;
     double gainUnknown = 0.0;
-    double gainObjOfInt = 0.0;
     double gainFree = 0.0 ;
+    double gainOccupied = 0.0 ;
+    double gainObjOfInt = 0.0;
+
+    // counting variables
+    int numberOfAcceptedVoxelInOneView = 0 ;
+    int numOfFreeVoxels = 0 ;
+    int numOfFreeVisibleVoxels = 0 ;
+    int numOfFreeInvisibleVoxels = 0 ;
+
+    int numOfOccupiedVoxels = 0 ;
+    int numOfOccupiedVisibleVoxels = 0 ;
+    int numOfOccupiedInvisibleVoxels = 0 ;
+
+    int numOfUnknownVoxels = 0 ;
+    int numOfUnknownVisibleVoxels = 0 ;
+    int numOfUnknownInvisibleVoxels = 0 ;
+
+    int numOfRearSideVoxels = 0 ;
+    int numOfVisibleInterestVoxels = 0 ;
+
     const double disc = manager_->getResolution();
+    std::cout << "RESOLUTION " << disc <<std::endl << std::flush ;
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
@@ -1647,74 +1718,96 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
                     continue;
                 }
 
+
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                    numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnknown = gainUnknown +1 ;
-
-                    }
+                        gainUnknown +=1 ;
+                        numOfUnknownVisibleVoxels++ ;
+                    }else
+                        numOfUnknownInvisibleVoxels++;
                 }
+
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-
+                        // Since it is visible then for sure it has either a rear side (free or unknown)
+                        // it should be used after knowning that the occupied voxel belongs to obj of interest.
+                        gainOccupied += 0 ;
+                        numOfOccupiedVisibleVoxels++;
                         double s_gain = manager_->getCellIneterestGain(vec);
                         if(s_gain == 0.5)
                         {
+                            numOfVisibleInterestVoxels++;
                             bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
                             ROS_INFO("The result is %d " , rearSideVoxel) ;  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
-
                             if (rearSideVoxel)
                             {
-
-
                                 double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
-
                                 double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-
                                 double Iv = Pv * entropy ;
-
-                                std::cout << "**************** Rear Side  *********************" << std::endl  ;
+                                std::cout << "**************** Rear Side Entropy *********************" << std::endl  ;
                                 //double rearSideEntropy = this->manager_->getRearSideEntropy(origin, vec);
-                                gainObjOfInt = gainObjOfInt + Iv  ;
-                                std::cout << "**************** object found *********************" << std::endl  ;
-                                //double rearSideEntropy = this->manager_->getRearSideEntropy(origin, vec);
-
-                                //gainObjOfInt = gainObjOfInt + rearSideEntropy ;
+                                gainObjOfInt =+ Iv  ;
+                                numOfRearSideVoxels++;
                             }
                         }
+                    }else
+                        numOfOccupiedInvisibleVoxels++;
 
-                    }
                 }
                 else {
+                    numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainFree +=gainFree + 0 ;
-                    }
+                        gainFree += 0 ;
+                        numOfFreeVisibleVoxels++ ;
+                    }else
+                        numOfFreeInvisibleVoxels++;
                 }
+
+                numberOfAcceptedVoxelInOneView++;
 
             }
         }
     }
 
 
+    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
+    //std::cout << " number Of Rear Side Voxel In One View is " << gainObjOfInt << std::endl << std::flush ; ;
+    std::cout << " number Of Visible Interest Voxels In One View is " << numOfVisibleInterestVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Rear Side Interest Voxels In One View is " << numOfRearSideVoxels << std::endl << std::flush ; ;
+
+
     if (gainObjOfInt > 0 )
     {
         gain = gainObjOfInt  ;
         objectGainFound = true ;
+        std::cout << "Object Gain " << gain << std::endl ;
     }
     else
+    {
         gain = gainUnknown ;
+        std::cout << "Volumetric Gain " << gain << std::endl;
+    }
 
+    std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
     // Scale with volume
+    // TODO: Remove the scaling from the entropy functions
     gain *= pow(disc, 3.0);
+    std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
+
     // Check the gain added by inspectable surface
     if (mesh_) {
         // ROS_INFO("****gain added by inspectable surface*****");
@@ -1729,119 +1822,6 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
     return gain;
 }
 
-
-// rear side voxel ref[1] " A comparison of a volumetric information gain metrics for active 3D object reconstruction"
-//double rrtNBV::RrtTree::gain_rsvs(StateVec state)
-//{
-//    //ROS_INFO("GAIN");
-
-//    // This function computes the gain
-//    double gain = 0.0;
-//    double gainUnknown = 0.0;
-//    double gainObjOfInt = 0.0;
-//    double gainFree = 0.0 ;
-//    const double disc = manager_->getResolution();
-//    Eigen::Vector3d origin(state[0], state[1], state[2]);
-//    Eigen::Vector3d vec;
-//    double rangeSq = pow(params_.gainRange_, 2.0);
-//    int i = 0 ;
-//    // Iterate over all nodes within the allowed distance
-//    for (vec[0] = std::max(state[0] - params_.gainRange_, params_.minX_);
-//         vec[0] < std::min(state[0] + params_.gainRange_, params_.maxX_); vec[0] += disc) {
-//        for (vec[1] = std::max(state[1] - params_.gainRange_, params_.minY_);
-//             vec[1] < std::min(state[1] + params_.gainRange_, params_.maxY_); vec[1] += disc) {
-//            for (vec[2] = std::max(state[2] - params_.gainRange_, params_.minZ_);
-//                 vec[2] < std::min(state[2] + params_.gainRange_, params_.maxZ_); vec[2] += disc) {
-
-//                Eigen::Vector3d dir = vec - origin;
-//                // Skip if distance is too large
-//                if (dir.transpose().dot(dir) > rangeSq) {
-//                    continue;
-//                }
-//                bool insideAFieldOfView = false;
-//                // Check that voxel center is inside one of the fields of view.
-//                for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_
-//                     .camBoundNormals_.begin(); itCBN != params_.camBoundNormals_.end(); itCBN++) {
-//                    bool inThisFieldOfView = true;
-//                    for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
-//                         itSingleCBN != itCBN->end(); itSingleCBN++) {
-//                        Eigen::Vector3d normal = Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ())
-//                                * (*itSingleCBN);
-//                        double val = dir.dot(normal.normalized());
-
-//                        if (val < SQRT2 * disc) {
-//                            inThisFieldOfView = false;
-//                            break;
-//                        }
-//                    }
-
-//                    if (inThisFieldOfView) {
-//                        insideAFieldOfView = true;
-//                        break;
-//                    }
-//                }
-//                if (!insideAFieldOfView) {
-//                    continue;
-//                }
-
-//                // Check cell status and add to the gain considering the corresponding factor.
-//                double probability;
-//                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
-//                            vec, &probability);
-//                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
-//                    // Rayshooting to evaluate inspectability of cell
-//                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-//                            != this->manager_->getVisibility(origin, vec, false)) {
-//                        gainUnknown = gainUnknown +1 ;
-
-//                    }
-//                }
-//                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
-//                    // Rayshooting to evaluate inspectability of cell
-//                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-//                            != this->manager_->getVisibility(origin, vec, false)) {
-
-//                        bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
-
-//                        std::cout << " THE RESUTLS IS ** " << r << std::endl  ;
-//                        if (rearSideVoxel)
-//                        {
-
-//                                gainObjOfInt = gainObjOfInt + 1 ;
-//                        }
-//                    }
-//                }
-//                else {
-//                    // Rayshooting to evaluate inspectability of cell
-//                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-//                            != this->manager_->getVisibility(origin, vec, false)) {
-//                        gainFree +=gainFree + 0 ;
-//                    }
-//                }
-
-//                if (gainObjOfInt == 0 )
-//                    gain = gainUnknown ;
-//                else
-//                    gain = gainObjOfInt;
-//            }
-//        }
-//    }
-
-//    // Scale with volume
-//    gain *= pow(disc, 3.0);
-//    // Check the gain added by inspectable surface
-//    if (mesh_) {
-//        // ROS_INFO("****gain added by inspectable surface*****");
-//        tf::Transform transform;
-//        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-//        tf::Quaternion quaternion;
-//        quaternion.setEuler(0.0, 0.0, state[3]);
-//        transform.setRotation(quaternion);
-//        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-//    }
-//    ROS_INFO("GAIN ",gain);
-//    return gain;
-//}
 
 
 std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getPathBackToPrevious(

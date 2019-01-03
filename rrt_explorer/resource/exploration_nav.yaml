@@ -1,7 +1,7 @@
 /exploration_planner_node/log/on: true
-/exploration_planner_node/init/pose/x: 4
+/exploration_planner_node/init/pose/x: 0
 #-4
-/exploration_planner_node/init/pose/y: 2
+/exploration_planner_node/init/pose/y: -2.5
 #2.5
 /exploration_planner_node/init/pose/z: 0.3
 /exploration_planner_node/init/pose/yaw: 0
