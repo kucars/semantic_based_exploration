@@ -95,7 +95,7 @@ change_detection_enabled: false
 # proximity count 9
 
 
-/utility/method: 8
+/utility/method: 7
 /output/file/name: "1.csv"
 
 

@@ -302,14 +302,14 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
     int loopCount = 0;
     int k = 1 ;
 
-
+int failedIteration =0 ;
+int succesfulIteration =0 ;
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
         //ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
-            
             ROS_INFO("No gain found, shutting down");
             //  ros::shutdown();
             return true;
@@ -317,17 +317,27 @@ bool rrtNBV::RRTPlanner::plannerCallback(rrt_explorer::rrt_srv::Request& req, rr
         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
         {
             ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
-            
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
             return true;
         }
         
-        int m = rrtTree->iterate(1);
+        bool m = rrtTree->iterate(1);
+        if (m==true){
+            succesfulIteration++;
+           // std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
+
+        }
+
+
+
         loopCount++;
         k++ ;
         //std::cout << "Candidate Number : " << k << std::endl ;
-       // std::cout << "Candidate Gain : " << rrtTree->getBestGain() ;
+        //std::cout << "Candidate Gain : " << rrtTree->getBestGain() << std::endl;
     }
+    // std::cout << "succesfulIteration : " << succesfulIteration<< std::endl;
+    // std::cout << "failedIteration : " << failedIteration<< std::endl;
+
     /*
      *       ROS_ERROR("%d %d", rrtTree->getCounter() , params_.initIterations_);
      *

@@ -32,7 +32,7 @@
 
 using namespace std;
 
-bool oneViewObjectFound = false ;
+bool oneViewObjectFound;
 enum UtilityFunctionType {
     VOLUMETRIC  				        = (int)0 ,
     REAR_SIDE_VOXEL                                     = (int)1 ,
@@ -559,7 +559,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
         if (objectGainFound)
         {
-            // Object found in one of the view
+            // Object found in one of the views
             oneViewObjectFound = true;
             if(newNode->gain_ > bestObjectGain_)
             {
@@ -591,6 +591,14 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 void rrtNBV::RrtTree::initialize()
 {
     ROS_INFO("INITIALIZATION");
+    // get method
+    int x = 0;
+    if (!ros::param::get("/utility/method", x)) {
+        ROS_WARN("No option for utility  function. Looking for /utility/method. Default is true.");
+    }
+    utilityFunction = (UtilityFunctionType)x;
+
+
     // Publish visualization of total exploration area
     visualization_msgs::Marker p;
     p.header.stamp = ros::Time::now();
@@ -837,8 +845,17 @@ return ret ;
             ret_egde.orientation.z = q[2] ;
             ret_egde.orientation.w = q[3] ;
             ret.push_back(ret_egde);
-            ROS_INFO("ret %d %d %d %d %d %d %d", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+
+            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
             ROS_INFO("ret size %d", ret.size());
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
 
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
@@ -864,8 +881,16 @@ return ret ;
             ret_egde.orientation.z = q[2] ;
             ret_egde.orientation.w = q[3] ;
             ret.push_back(ret_egde);
-            ROS_INFO("ret %d %d %d %d %d %d %d", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0] ,  current->state_[1], current->state_[2], q[0] , q[1] , q[2], q[3]);
             ROS_INFO("ret size %d", ret.size());
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
@@ -1907,11 +1932,14 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
+                probability =  0.5 ; // becasue it is unknown/ ummapped voxel ;
+
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
+
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
                         double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         double Iv = Pv * entropy ;
@@ -1963,17 +1991,17 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
     std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
 
 
-    if (gainOcclusionAware > 0 )
-    {
+   // if (gainOcclusionAware > 0 )
+  //  {
         gain = gainOcclusionAware  ;
-        objectGainFound = true ;
+        objectGainFound = false ;
         std::cout << "Occlusion Aware Gain " << gain << std::endl ;
-    }
-    else
-    {
-        gain = gainUnknown ;
-        std::cout << "Volumetric Gain " << gain << std::endl;
-    }
+  //  }
+ //   else
+  //  {
+  //      gain = gainUnknown ;
+  //      std::cout << "Volumetric Gain " << gain << std::endl;
+ //   }
 
     std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
     // Scale with volume
@@ -2095,6 +2123,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
 double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainFound)
 {
 
+    ROS_INFO("UNOBSERVED VOXEL ********************************************************************************************");
     // gain variables
     double gain = 0.0;
     double gainUnknown = 0.0;
@@ -2166,12 +2195,14 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
                 double probability;
                 volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
+
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ ummapped voxel ;
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
+
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
                         double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         double Iv = Pv * entropy ;
@@ -2217,17 +2248,17 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
     std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
 
 
-    if (gainUnobservedVoxel > 0 )
-    {
+    //if (gainUnobservedVoxel > 0 )
+    //{
         gain = gainUnobservedVoxel  ;
-        objectGainFound = true ;
+        objectGainFound = false ;
         std::cout << "unobserved voxel Gain " << gain << std::endl ;
-    }
-    else
-    {
-        gain = gainUnknown ;
-        std::cout << "Volumetric Gain " << gain << std::endl;
-    }
+   // }
+   // else
+   // {
+   //    gain = gainUnknown ;
+   //     std::cout << "Volumetric Gain " << gain << std::endl;
+   // }
 //    gain = gainUnobservedVoxel  ;
 //    objectGainFound = true ;
 //    std::cout << "unobserved voxel Gain " << gain << std::endl ;
