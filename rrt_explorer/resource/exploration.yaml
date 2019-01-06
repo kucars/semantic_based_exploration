@@ -90,9 +90,12 @@ change_detection_enabled: false
 # Semantic Rear Side Entropy 4 
 # Pure Entropy 5
 # Average Entropy 6
+# Occlusion Aware 7 
+# unobserved voxel 8
+# proximity count 9
 
 
-/utility/method: 4
+/utility/method: 8
 /output/file/name: "1.csv"
 
 

@@ -56,7 +56,8 @@ class RrtTree : public TreeBase
   double gain_rsv(StateVec state, bool &objectGainFound); // Semantic rear side voxel - Proposed 
   double gain_rse(StateVec state, bool &objectGainFound) ; // Rear side entropy - Ref [1] 
   double gain_rses(StateVec state, bool &objectGainFound); // Semantic rear side entropy - Proposed 
-
+  double gain_occlusion_aware(StateVec state, bool &objectGainFound); // Occlusion Aware Ref-[1]
+  double gain_unobserved_voxel(StateVec state, bool & objectGainFound) ;// Unobserved Voxel Ref[1] 
 
 
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
