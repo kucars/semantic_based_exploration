@@ -35,6 +35,8 @@ rrtNBV::TreeBase::TreeBase()
 {
   bestGain_ = params_.zero_gain_;
   bestNode_ = NULL;
+  bestObjectGain_ = params_.zero_gain_;
+  bestObjectNode_ = NULL ;
   counter_ = 0;
   rootNode_ = NULL;
 }
@@ -45,6 +47,8 @@ rrtNBV::TreeBase::TreeBase(mesh::StlMesh * mesh, volumetric_mapping::OctomapMana
   manager_ = manager;
   bestGain_ = params_.zero_gain_;
   bestNode_ = NULL;
+  bestObjectGain_ = params_.zero_gain_;
+  bestObjectNode_ = NULL ;
   counter_ = 0;
   rootNode_ = NULL;
 }
