@@ -2364,12 +2364,12 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         numOfUnknownVisibleVoxels++ ;
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         gainUnknown+=+1 ;
                     }else
                         numOfUnknownInvisibleVoxels++;
@@ -2377,12 +2377,11 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
 
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
                     numOfOccupiedVoxels++;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnobservedVoxel+= 0 ;
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         numOfOccupiedVisibleVoxels++;
 
                     }else
@@ -2391,12 +2390,11 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
                 }
                 else {
                     numOfFreeVoxels++ ;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnobservedVoxel+= 0 ;
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         numOfFreeVisibleVoxels++ ;
 
                     }else
@@ -2411,7 +2409,6 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
 
     std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ;
     std::cout << " number Of Voxels In One View is " << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl << std::flush ; ;
-
     std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
 
@@ -2438,6 +2435,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
 // Average Entropy Ref[1] "A comparison of a volumetric information gain metrics for active 3D object reconstruction"
 double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
 {
+    ROS_INFO("Average Entropy");
 
     // gain variables
     double gain = 0.0;
@@ -2514,11 +2512,12 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
+
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         numOfUnknownVisibleVoxels++ ;
                         gainUnknown+=+1 ;
                     }else
@@ -2527,12 +2526,11 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
 
                 else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
                     numOfOccupiedVoxels++;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnobservedVoxel+= 0 ;
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         numOfOccupiedVisibleVoxels++;
 
                     }else
@@ -2541,12 +2539,11 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
                 }
                 else {
                     numOfFreeVoxels++ ;
-                    voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                    gain+=voxelEntropy ;
                     // Rayshooting to evaluate inspectability of cell
                     if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
-                        gainUnobservedVoxel+= 0 ;
+                        voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        gain+=voxelEntropy ;
                         numOfFreeVisibleVoxels++ ;
 
                     }else
@@ -2559,7 +2556,8 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
         }
     }
 
-    gain = gain/numberOfAcceptedVoxelInOneView ;
+    int traversedVoxels = numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels  ;
+    gain = gain/traversedVoxels ;
     std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ;
     std::cout << " number Of Voxels In One View is " << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl << std::flush ; ;
     std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
