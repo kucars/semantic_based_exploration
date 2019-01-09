@@ -3,7 +3,7 @@
     <arg name="subscript" default="" />
     <arg name="enable_logging" default="false" />
     <arg name="enable_ground_truth" default="true" />
-    <arg name="param_file" default="$(find rrt_explorer)/resource/semantic_exploration.yaml" />
+    <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
     <arg name="x" default="-1.0"/>
     <arg name="y" default="0.5"/>
     <arg name="z" default="0.3"/>
@@ -33,7 +33,7 @@
     <arg name="est" default="lpe"/>
     <arg name="vehicle" default="iris_depth_camera"/>
     <arg name="world_file_name"    default="simple_obstacle" />
-    <arg name="world" default="$(find rrt_explorer)/worlds/new_world.world"/>
+    <arg name="world" default="$(find semantic_exploration)/worlds/new_world.world"/>
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 
     <param name="use_sim_time" value="true" />
@@ -96,23 +96,23 @@
     <arg name="pcl_topic" default="/semantic_pcl/semantic_pcl"/>
     <arg name="stl_file_path" default="" />
 
-    <node name="rrt_planner" pkg="rrt_explorer" type="rrt_planner" output="screen">
+    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen">
         <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
         <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
         <remap from="poseStamped" to="/current_pose"/>
-        <remap from="rrt_explorer" to="/rrt_explorer"/>
+        <remap from="semantic_exploration" to="/semantic_exploration"/>
         <!-- all volumetric mapping params are in the yaml file -->
         <rosparam command="load" file="$(arg param_file)" />
     </node>
     
-    <arg name="param_file" default="$(find semantic_exploration)/resource/exploration_nav.yaml" />
+    <arg name="nav_param_file" default="$(find semantic_exploration)/config/exploration_nav.yaml" />
     <node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen" >
-        <rosparam command="load" file="$(arg param_file)"/>
+        <rosparam command="load" file="$(arg nav_param_file)"/>
     </node>
       
     <rosparam file="$(find semantic_cloud)/config/semantic_cloud.yaml" command="load"/>
     <!--node pkg="semantic_cloud" type="semantic_cloud.py" name="semantic_cloud" output="screen"/-->
 
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find rrt_explorer)/rviz/semantic.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic.rviz"/>
 
 </launch>
