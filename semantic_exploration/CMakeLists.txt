@@ -74,6 +74,10 @@ add_executable(exploration_node src/exploration_node.cpp)
 add_dependencies(exploration_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(exploration_node ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${Boost_LIBRARIES} ${LIBFCL_LIBRARIES})
 
+add_executable(exploration_planner_node src/exploration_planner_node.cpp)
+add_dependencies(exploration_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(exploration_planner_node ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${Boost_LIBRARIES} ${LIBFCL_LIBRARIES})
+
 add_executable(drone_commander src/drone_commander.cpp)
 target_link_libraries(drone_commander ${catkin_LIBRARIES} )
 add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS})
