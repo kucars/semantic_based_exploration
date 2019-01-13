@@ -134,7 +134,9 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
                        "orientation.z"              << "," <<
                        "orientation.w"              << "," <<
                        "accumulativeGain"           << "," <<
-                       "rrt_gain"                   << "\n";
+                       "rrt_gain"                   << "," <<
+                       "objectFound"                   << "\n";
+
     }
     
     //debug
@@ -322,20 +324,15 @@ int succesfulIteration =0 ;
         }
         
         bool m = rrtTree->iterate(1);
-        if (m==true){
+        if (m==true)
             succesfulIteration++;
            // std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
-
-        }
-
-
-
         loopCount++;
         k++ ;
         //std::cout << "Candidate Number : " << k << std::endl ;
         //std::cout << "Candidate Gain : " << rrtTree->getBestGain() << std::endl;
     }
-    // std::cout << "succesfulIteration : " << succesfulIteration<< std::endl;
+    std::cout << "succesfulIteration : " << succesfulIteration<< std::endl;
     // std::cout << "failedIteration : " << failedIteration<< std::endl;
 
     /*
@@ -421,17 +418,18 @@ loopCount++;
                 
                 
                 // TODO: Revise the equation
-                occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                occupancy_entropy = occupancy_entropy / maxThreshold ;
-                information_gain_entropy += occupancy_entropy ;
+                //occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
+                //occupancy_entropy = occupancy_entropy / maxThreshold ;
+                //information_gain_entropy += occupancy_entropy ;
                 
                 // Calculate semantic_gain
-                double semantic_gain  = manager_->getCellIneterestGain(vec);
-                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-                semantic_entropy = semantic_entropy /maxThreshold ;
-                semantic_gain_entropy += semantic_entropy ;
+                //double semantic_gain = 0 ;
+                //double semantic_gain  = manager_->getCellIneterestGain(vec);
+                //semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
+                //semantic_entropy = semantic_entropy /maxThreshold ;
+                //semantic_gain_entropy += semantic_entropy ;
                 
-                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
+                //total_gain += (information_gain_entropy + semantic_gain_entropy) ;
                 
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}

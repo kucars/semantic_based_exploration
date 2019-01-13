@@ -60,7 +60,7 @@ class RrtTree : public TreeBase
   double gain_unobserved_voxel(StateVec state, bool & objectGainFound) ;// Unobserved Voxel Ref[1] 
   double gain_pure_entropy(StateVec state) ; 
   double gain_avg_entropy(StateVec state) ; 
-
+  double gain_svv(StateVec state, bool & objectGainFound) ; // Proposed 
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 
   // Modified functions

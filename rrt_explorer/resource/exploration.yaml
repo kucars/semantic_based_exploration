@@ -92,10 +92,11 @@ change_detection_enabled: false
 # Average Entropy 6
 # Occlusion Aware 7 
 # unobserved voxel 8
-# proximity count 9
+# semantic visible voxel 9
+# proximity count 10 // Not implemented yet 
 
 
-/utility/method: 6
+/utility/method: 9
 /output/file/name: "1.csv"
 
 

@@ -42,7 +42,8 @@ enum UtilityFunctionType {
     PURE_ENTROPY				 	= (int)5 ,
     AVERAGE_ENTROPY                                     = (int)6 ,
     OCCLUSION_AWARE                                     = (int)7 ,
-    UNOBSERVED_VOXEL                                    = (int)8
+    UNOBSERVED_VOXEL                                    = (int)8 ,
+    SEMANTIC_VISIBLE_VOXEL                              = (int)9
 } ;
 
 enum UtilityFunctionType utilityFunction = VOLUMETRIC ;
@@ -57,9 +58,10 @@ rrtNBV::RrtTree::RrtTree() : rrtNBV::TreeBase::TreeBase()
     }
     
     // If logging is required, set up files here
-    bool ifLog = false;
+    bool ifLog = true;
     std::string ns = ros::this_node::getName();
     ros::param::get(ns + "/nbvp/log/on", ifLog);
+    params_.log_ = ifLog ;
     if (ifLog) {
         time_t rawtime;
         struct tm * ptm;
@@ -87,7 +89,7 @@ rrtNBV::RrtTree::RrtTree(mesh::StlMesh * mesh, volumetric_mapping::OctomapManage
         inspectionThrottleTime_.push_back(ros::Time::now().toSec());
     }
     // If logging is required, set up files here
-    bool ifLog = false;
+    bool ifLog = true;
     std::string ns = ros::this_node::getName();
     ros::param::get(ns + "/nbvp/log/on", ifLog);
     if (ifLog) {
@@ -104,6 +106,13 @@ rrtNBV::RrtTree::RrtTree(mesh::StlMesh * mesh, volumetric_mapping::OctomapManage
         fileResponse_.open((logFilePath_ + "response.txt").c_str(), std::ios::out);
         filePath_.open((logFilePath_ + "path.txt").c_str(), std::ios::out);
     }
+
+    filePath_ << "v " << ",";
+    filePath_ << 0 << ",";
+    filePath_ << 1 << ",";
+    filePath_ << 3 << ",";
+    filePath_ << 3 << "\n";
+
 }
 
 rrtNBV::RrtTree::~RrtTree()
@@ -524,17 +533,16 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             ROS_INFO("rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
             break ;
-
         case SEMANTIC_REAR_SIDE_ENTROPY:
             ROS_INFO("Semantic rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
             break ;
         case PURE_ENTROPY:
-             newNode->gain_ = newParent->gain_ + gain_pure_entropy(newNode->state_) ;
+            newNode->gain_ = newParent->gain_ + gain_pure_entropy(newNode->state_) ;
             break;
 
         case AVERAGE_ENTROPY:
-             newNode->gain_ = newParent->gain_ + gain_avg_entropy(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+            newNode->gain_ = newParent->gain_ + gain_avg_entropy(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
             break ;
         case OCCLUSION_AWARE:
             newNode->gain_ = newParent->gain_ + gain_occlusion_aware(newNode->state_,objectGainFound) ;
@@ -545,7 +553,10 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         default :
             // #count number of unknonw * visible voxels in FOV
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-
+        case SEMANTIC_VISIBLE_VOXEL:
+            ROS_INFO("Semantic Visible Voxels") ;
+            newNode->gain_ = newParent->gain_ + gain_svv(newNode->state_,objectGainFound) ;
+            break ;
         }
 
         // newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
@@ -573,7 +584,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         else
         {
             std::cout << " ITERATE" << std::endl ;
-            std::cout << " OBJECT NOT FOUND " << std::endl ;
+            std::cout << " VOLUMETRIC GAIN ONLY  " << std::endl ;
             // Update best IG and node if applicable
             if (newNode->gain_ > bestGain_)
             {
@@ -754,13 +765,17 @@ void rrtNBV::RrtTree::initialize()
                 newNode->gain_ = newParent->gain_ + gain_pure_entropy(newNode->state_) ;
                 break;
             case AVERAGE_ENTROPY:
-                 newNode->gain_ = newParent->gain_ + gain_avg_entropy(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+                newNode->gain_ = newParent->gain_ + gain_avg_entropy(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
                 break ;
             case OCCLUSION_AWARE:
                 newNode->gain_ = newParent->gain_ + gain_occlusion_aware(newNode->state_,objectGainFound) ;
                 break;
             case UNOBSERVED_VOXEL:
                 newNode->gain_ = newParent->gain_ + gain_unobserved_voxel(newNode->state_,objectGainFound) ;
+                break ;
+            case SEMANTIC_VISIBLE_VOXEL:
+                ROS_INFO("Semantic Visible Voxels") ;
+                newNode->gain_ = newParent->gain_ + gain_svv(newNode->state_,objectGainFound) ;
                 break ;
             default : // RRT
                 // #count number of unknonw * visible voxels in FOV
@@ -856,6 +871,13 @@ return ret ;
             ROS_INFO("**************************************");
             ROS_INFO("**************************************");
 
+            filePath_ << "v " << ",";
+            filePath_ << current->state_[0]<< ",";
+            filePath_ << current->state_[1] << ",";
+            filePath_ << current->state_[2] << ",";
+            filePath_ << current->state_[3] << "\n";
+
+
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -890,6 +912,11 @@ return ret ;
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            filePath_ << "o " << ",";
+            filePath_ << current->state_[0]<< ",";
+            filePath_ << current->state_[1] << ",";
+            filePath_ << current->state_[2] << ",";
+            filePath_ << current->state_[3] << "\n";
 
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
@@ -1990,17 +2017,17 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
     std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
 
 
-   // if (gainOcclusionAware > 0 )
-  //  {
-        gain = gainOcclusionAware  ;
-        objectGainFound = false ;
-        std::cout << "Occlusion Aware Gain " << gain << std::endl ;
-  //  }
- //   else
-  //  {
-  //      gain = gainUnknown ;
-  //      std::cout << "Volumetric Gain " << gain << std::endl;
- //   }
+    // if (gainOcclusionAware > 0 )
+    //  {
+    gain = gainOcclusionAware  ;
+    objectGainFound = false ;
+    std::cout << "Occlusion Aware Gain " << gain << std::endl ;
+    //  }
+    //   else
+    //  {
+    //      gain = gainUnknown ;
+    //      std::cout << "Volumetric Gain " << gain << std::endl;
+    //   }
 
     std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
     // Scale with volume
@@ -2249,18 +2276,18 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
 
     //if (gainUnobservedVoxel > 0 )
     //{
-        gain = gainUnobservedVoxel  ;
-        objectGainFound = false ;
-        std::cout << "unobserved voxel Gain " << gain << std::endl ;
-   // }
-   // else
-   // {
-   //    gain = gainUnknown ;
-   //     std::cout << "Volumetric Gain " << gain << std::endl;
-   // }
-//    gain = gainUnobservedVoxel  ;
-//    objectGainFound = true ;
-//    std::cout << "unobserved voxel Gain " << gain << std::endl ;
+    gain = gainUnobservedVoxel  ;
+    objectGainFound = false ;
+    std::cout << "unobserved voxel Gain " << gain << std::endl ;
+    // }
+    // else
+    // {
+    //    gain = gainUnknown ;
+    //     std::cout << "Volumetric Gain " << gain << std::endl;
+    // }
+    //    gain = gainUnobservedVoxel  ;
+    //    objectGainFound = true ;
+    //    std::cout << "unobserved voxel Gain " << gain << std::endl ;
 
     std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
     // Scale with volume
@@ -2582,6 +2609,180 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
     return gain;
 }
 
+// Average Entropy Ref[1] "A comparison of a volumetric information gain metrics for active 3D object reconstruction"
+double rrtNBV::RrtTree::gain_svv(StateVec state, bool & objectGainFound)
+{
+    ROS_INFO("SEMANTIC VISIBLE VOXEL");
+
+    // gain variables
+    double gain = 0.0;
+    double gainUnknown = 0.0;
+    double gainFree = 0.0 ;
+    double gainOccupied = 0.0 ;
+    double gainObjOfInt = 0.0 ;
+    // counting variables
+    int numberOfAcceptedVoxelInOneView = 0 ;
+    int numOfFreeVoxels = 0 ;
+    int numOfFreeVisibleVoxels = 0 ;
+    int numOfFreeInvisibleVoxels = 0 ;
+
+    int numOfOccupiedVoxels = 0 ;
+    int numOfOccupiedVisibleVoxels = 0 ;
+    int numOfOccupiedInvisibleVoxels = 0 ;
+
+    int numOfUnknownVoxels = 0 ;
+    int numOfUnknownVisibleVoxels = 0 ;
+    int numOfUnknownInvisibleVoxels = 0 ;
+
+    const double disc = manager_->getResolution();
+    std::cout << "RESOLUTION " << disc <<std::endl << std::flush ;
+    Eigen::Vector3d origin(state[0], state[1], state[2]);
+    Eigen::Vector3d vec;
+    double rangeSq = pow(params_.gainRange_, 2.0);
+    int i = 0 ;
+    // Iterate over all nodes within the allowed distance
+    for (vec[0] = std::max(state[0] - params_.gainRange_, params_.minX_);
+         vec[0] < std::min(state[0] + params_.gainRange_, params_.maxX_); vec[0] += disc) {
+        for (vec[1] = std::max(state[1] - params_.gainRange_, params_.minY_);
+             vec[1] < std::min(state[1] + params_.gainRange_, params_.maxY_); vec[1] += disc) {
+            for (vec[2] = std::max(state[2] - params_.gainRange_, params_.minZ_);
+                 vec[2] < std::min(state[2] + params_.gainRange_, params_.maxZ_); vec[2] += disc) {
+
+                Eigen::Vector3d dir = vec - origin;
+                // Skip if distance is too large
+                if (dir.transpose().dot(dir) > rangeSq) {
+                    continue;
+                }
+                bool insideAFieldOfView = false;
+                // Check that voxel center is inside one of the fields of view.
+                for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_
+                     .camBoundNormals_.begin(); itCBN != params_.camBoundNormals_.end(); itCBN++) {
+                    bool inThisFieldOfView = true;
+                    for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN = itCBN->begin();
+                         itSingleCBN != itCBN->end(); itSingleCBN++) {
+                        Eigen::Vector3d normal = Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ())
+                                * (*itSingleCBN);
+                        double val = dir.dot(normal.normalized());
+
+                        if (val < SQRT2 * disc) {
+                            inThisFieldOfView = false;
+                            break;
+                        }
+                    }
+
+                    if (inThisFieldOfView) {
+                        insideAFieldOfView = true;
+                        break;
+                    }
+                }
+                if (!insideAFieldOfView) {
+                    continue;
+                }
+
+
+                double probability = 1 ;
+                //double voxelEntropy = 0 ;
+                // Check cell status and add to the gain considering the corresponding factor.
+                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                            vec, &probability);
+                // Unknown
+                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                    probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
+                    numOfUnknownVoxels++;
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                        //voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
+                        //gain+=voxelEntropy ;
+                        numOfUnknownVisibleVoxels++ ;
+                        gainUnknown+=+1 ;
+                    }else
+                        numOfUnknownInvisibleVoxels++;
+                }
+
+                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                    numOfOccupiedVoxels++;
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+
+                        // int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
+                        // if (voxelType == 2)
+                        // {
+                        double s_gain = manager_->getCellIneterestGain(vec);
+                        if(s_gain == 0.5)
+                        {
+                            ROS_ERROR("OBJECT OF INTEREST FOUND");
+                            gainObjOfInt++ ;
+                        }
+
+                        numOfOccupiedVisibleVoxels++;
+                    }else
+                        numOfOccupiedInvisibleVoxels++;
+
+                }
+                else {
+                    numOfFreeVoxels++ ;
+                    // Rayshooting to evaluate inspectability of cell
+                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                            != this->manager_->getVisibility(origin, vec, false)) {
+                        numOfFreeVisibleVoxels++ ;
+
+                    }else
+                        numOfFreeInvisibleVoxels++;
+                }
+
+                numberOfAcceptedVoxelInOneView++;
+
+            }
+        }
+    }
+
+    int traversedVoxels = numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels  ;
+    gain = gain/traversedVoxels ;
+    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView << std::endl << std::flush ;
+    std::cout << " number Of Voxels In One View is " << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted visible Voxels In One View is " << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels << std::endl << std::flush ; ;
+    std::cout << " number Of Accepted Invisibal Voxels In One View is " << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels << std::endl << std::flush ; ;
+
+
+    if (gainObjOfInt > 0 )
+    {
+        gain = gainObjOfInt  ;
+        objectGainFound = true ;
+        std::cout << "Object Gain FOUND" << gain << std::endl ;
+    }
+    else
+    {
+        gain = gainUnknown ;
+        std::cout << "Volumetric Gain " << gain << std::endl;
+    }
+
+
+
+
+
+    // Scale with volume
+    std::cout<<"gain before scaling " << gain  << std::endl << std::flush ;
+    gain *= pow(disc, 3.0);
+    std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
+
+    // Check the gain added by inspectable surface
+    if (mesh_) {
+        // ROS_INFO("****gain added by inspectable surface*****");
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
+        tf::Quaternion quaternion;
+        quaternion.setEuler(0.0, 0.0, state[3]);
+        transform.setRotation(quaternion);
+        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
+    }
+    ROS_INFO("GAIN %f ",gain);
+    return gain;
+}
+
+
+
 std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getPathBackToPrevious(
         std::string targetFrame)
 {
@@ -2785,7 +2986,8 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::samplePath(StateVec start, Sta
         geometry_msgs::Pose pose;
         tf::poseTFToMsg(poseTF, pose);
         ret.push_back(pose);
-        if (params_.log_) {
+        // save only the current position
+        if (params_.log_ && it ==0.0) {
             filePath_ << poseTF.getOrigin().x() << ",";
             filePath_ << poseTF.getOrigin().y() << ",";
             filePath_ << poseTF.getOrigin().z() << ",";
