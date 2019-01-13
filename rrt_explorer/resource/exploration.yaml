@@ -93,10 +93,11 @@ change_detection_enabled: false
 # Occlusion Aware 7 
 # unobserved voxel 8
 # semantic visible voxel 9
+# semantic occlusion aware 10 
 # proximity count 10 // Not implemented yet 
 
 
-/utility/method: 9
+/utility/method: 10
 /output/file/name: "1.csv"
 
 

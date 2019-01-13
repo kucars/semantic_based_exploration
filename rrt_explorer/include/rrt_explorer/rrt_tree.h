@@ -115,6 +115,7 @@ class TreeBase
   StateVec root_;
   StateVec exact_root_;
   std::vector<std::string> agentNames_;
+   
  public:
   TreeBase();
   TreeBase(mesh::StlMesh * mesh, volumetric_mapping::OctomapManager * manager);
@@ -139,6 +140,7 @@ class TreeBase
   bool gainFound();
   void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
   double getGain() ; 
+
 };
 }
 #endif

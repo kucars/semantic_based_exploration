@@ -359,6 +359,7 @@ loopCount++;
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain() ;
+    bool ObjectFoundFlag = rrtTree->getObjectFlag() ;
     std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  <<std::flush;
     rrtTree->memorizeBestBranch();

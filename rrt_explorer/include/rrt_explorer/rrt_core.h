@@ -61,6 +61,8 @@ class RrtTree : public TreeBase
   double gain_pure_entropy(StateVec state) ; 
   double gain_avg_entropy(StateVec state) ; 
   double gain_svv(StateVec state, bool & objectGainFound) ; // Proposed 
+  double gain_semantic_occlusion_aware(StateVec state, bool & objectGainFound); // proposed 
+
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 
   // Modified functions
@@ -71,7 +73,7 @@ class RrtTree : public TreeBase
   double gainDinsity(StateVec state, int &dinsity);
   virtual double getBestGain() ;
   virtual Eigen::Vector4d getRootNode();
-  
+  bool getObjectFlag() ; 
 
  protected:  
   kdtree * kdTree_;
