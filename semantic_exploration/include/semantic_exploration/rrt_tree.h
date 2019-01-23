@@ -84,7 +84,7 @@ struct Params
   
   
   std::string output_file_name_ ; 
-  int utility_mathod_ ; 
+  int utility_method_ ;
 };
 
 class Node

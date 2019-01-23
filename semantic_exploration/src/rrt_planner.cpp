@@ -12,22 +12,8 @@
 #include <fstream>
 #include <iostream>
 
-#include <geometry_msgs/PoseArray.h>
-
 using namespace std;
 using namespace Eigen;
-
-// Global variables 
-double traveled_distance = 0 ;
-double information_gain =0; 
-bool FirstPoseCalled=true;
-geometry_msgs::Pose prePose;
-int iteration_num = 0 ;
-geometry_msgs::PoseArray viewpoints2;
-double accumulativeGain = 0 ; 
-
-double globalObjectGain ;
-double globalVolumetricGain ;
 
 double calculateDistance(geometry_msgs::Pose p1 , geometry_msgs::Pose p2)
 {
@@ -39,7 +25,6 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
       nh_private_(nh_private)
 {
     manager_ = new volumetric_mapping::OctomapManager(nh, nh_private);
-    
     // Set up the topics and services
     params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_     = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
@@ -48,21 +33,22 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     marker_pub_                  = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_  	 = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
     params_.sensor_pose_pub_     = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
-    // params_.evaluatedPoints_    = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
+    // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
     
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
-    posStampedClient_            = nh_.subscribe("current_pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
+    posStampedClient_            = nh_.subscribe("/mavros/local_position/pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    pointcloud_sub_           	 = nh_.subscribe("/camera/depth/points", 20,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
+    pointcloud_sub_           	 = nh_.subscribe("/camera/depth/points", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
     pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
     pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
-    
-    
-    //logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/params";
-    //system(("mkdir -p " + logFilePathName_).c_str());
-    // logFilePathName_ += "/";
-    
+
+    traveled_distance = 0;
+    information_gain  = 0;
+    FirstPoseCalled   = true;
+    iteration_num     = 0;
+    accumulativeGain  = 0;
+
     if (!setParams())
     {
         ROS_ERROR("Could not start the planner. Parameters missing!");
@@ -74,7 +60,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     params_.camBoundNormals_.clear();
     uint g_ID_ = 0 ;
     // This loop will only be executed once
-    for (uint i = 0; i < params_.camPitch_.size(); i++) {
+    for (uint i = 0; i < params_.camPitch_.size(); i++)
+    {
         double pitch = M_PI * params_.camPitch_[i] / 180.0;
         double camTop = (pitch - M_PI * params_.camVertical_[i] / 360.0) + M_PI / 2.0;
         double camBottom = (pitch + M_PI * params_.camVertical_[i] / 360.0) - M_PI / 2.0;
@@ -103,7 +90,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
         struct tm * ptm;
         time(&rawtime);
         ptm = gmtime(&rawtime);
-        logFilePathName_ = ros::package::getPath("rrt_explorer") + "/data/"
+        logFilePathName_ = ros::package::getPath("semantic_exploration") + "/data/"
                 + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
                 + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
                 + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
@@ -134,7 +121,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
                        "orientation.z"              << "," <<
                        "orientation.w"              << "," <<
                        "accumulativeGain"           << "," <<
-                       "rrt_gain"                   << "\n";
+                       "rrt_gain"                   << "," <<
+                       "objectFound"                << "\n";
     }
     
     //debug
@@ -201,13 +189,11 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
     visualization_msgs::Marker  p ;
     p.header.stamp = ros::Time::now();
     p.header.seq = 0;
-    p.header.frame_id = "world";
+    p.header.frame_id = params_.navigationFrame_;
     p.id = 0;
     p.ns = "workspace";
     p.type = visualization_msgs::Marker::CUBE;
     p.action = visualization_msgs::Marker::ADD;
-    //  std::cout << "params_.env_bbx_x_min + params_.env_bbx_x_max"  << params_.env_bbx_x_min + params_.env_bbx_x_max<< std::endl ;
-
     p.pose.position.x = 0.5 * (params_.minX_ + params_.maxX_);
     p.pose.position.y = 0.5 * (params_.minY_ + params_.maxY_);
     p.pose.position.z = 0.5 * (params_.minZ_ + params_.maxZ_);
@@ -220,10 +206,10 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
     p.scale.x = params_.maxX_ - params_.minX_;
     p.scale.y = params_.maxY_ - params_.minY_;
     p.scale.z = params_.maxZ_ - params_.minZ_;
-    p.color.r = 200.0 / 255.0;
-    p.color.g = 100.0 / 255.0;
-    p.color.b = 0.0;
-    p.color.a = 0.3;
+    p.color.r = static_cast<float>(200.0 / 255.0);
+    p.color.g = static_cast<float>(100.0 / 255.0);
+    p.color.b = 0.0f;
+    p.color.a = 0.3f;
     p.lifetime = ros::Duration();
     p.frame_locked = false;
     return p ;
@@ -231,42 +217,42 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
 
 bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request& req, semantic_exploration::GetPath::Response& res)
 {
-    ROS_INFO("called the planner ");
+    ROS_INFO("called the planner");
 
     //ros::Time computationTime = ros::Time(0);
     ros::Time computationTime = ros::Time::now();
     params_.explorationarea_.publish(area_marker_);
-//    ROS_INFO("cretaed a service ");
+    //    ROS_INFO("cretaed a service ");
 
-//    geometry_msgs::Pose currentPose ;
-//    currentPose.position.x = rrtTree->getRootNode()[0];
-//    currentPose.position.y = rrtTree->getRootNode()[1]  ;
-//    currentPose.position.z = rrtTree->getRootNode()[2]  ;
-//    ROS_INFO("Fill a service ");
+    //    geometry_msgs::Pose currentPose ;
+    //    currentPose.position.x = rrtTree->getRootNode()[0];
+    //    currentPose.position.y = rrtTree->getRootNode()[1]  ;
+    //    currentPose.position.z = rrtTree->getRootNode()[2]  ;
+    //    ROS_INFO("Fill a service ");
 
-//    tf::Quaternion tf_q ;
-//    tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
-//    currentPose.orientation.x =tf_q.getX() ;
-//    currentPose.orientation.y =tf_q.getY() ;
-//    currentPose.orientation.z =tf_q.getZ() ;
-//    currentPose.orientation.w =tf_q.getW() ;
-//    ROS_ERROR("1");
+    //    tf::Quaternion tf_q ;
+    //    tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
+    //    currentPose.orientation.x =tf_q.getX() ;
+    //    currentPose.orientation.y =tf_q.getY() ;
+    //    currentPose.orientation.z =tf_q.getZ() ;
+    //    currentPose.orientation.w =tf_q.getW() ;
+    //    ROS_ERROR("1");
 
-//    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
-//    srv.request.currentPose = currentPose  ;
+    //    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
+    //    srv.request.currentPose = currentPose  ;
 
-//    ros::service::waitForService("current_view",ros::Duration(1.0));
-//    if (ros::service::call("current_view", srv))
-//    {
-//        ROS_INFO("call service viewpoint ");
-//        *currentPosePtr = srv.response.currentViewPointcloud;
-//        manager_->insertPointcloudWithTf(currentPosePtr);
-//    }
-//    else
-//    {
-//        ROS_ERROR("Failed to call service");
-//       // return 1;
-//    }
+    //    ros::service::waitForService("current_view",ros::Duration(1.0));
+    //    if (ros::service::call("current_view", srv))
+    //    {
+    //        ROS_INFO("call service viewpoint ");
+    //        *currentPosePtr = srv.response.currentViewPointcloud;
+    //        manager_->insertPointcloudWithTf(currentPosePtr);
+    //    }
+    //    else
+    //    {
+    //        ROS_ERROR("Failed to call service");
+    //       // return 1;
+    //    }
 
 
     // Check that planner is ready to compute path.
@@ -280,7 +266,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         return true;
     }
     
-    if (manager_ == NULL) {
+    if (manager_ == nullptr) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: No octomap available!");
         return true;
     }
@@ -302,66 +288,40 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     int loopCount = 0;
     int k = 1 ;
 
-int failedIteration =0 ;
-int succesfulIteration =0 ;
+    int failedIteration =0 ;
+    int succesfulIteration =0 ;
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
-        //ROS_INFO ("%f %f ",rrtTree->getCounter() , params_.cuttoffIterations_ );
+        ROS_INFO("Counter:%d Cuttoff Iterations:%d GainFound:%d BestGain:%f",rrtTree->getCounter() , params_.cuttoffIterations_,rrtTree->gainFound(),rrtTree->getBestGain());
+
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
-            ROS_INFO("No gain found, shutting down");
-            //  ros::shutdown();
+            ROS_WARN("No gain found, shutting down");
+            ros::shutdown();
             return true;
         }
         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
         {
-            ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
+            ROS_WARN("Exceeding maximum failed iterations, return to previous point!");
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
             return true;
         }
-        
         bool m = rrtTree->iterate(1);
-        if (m==true){
+        if (m==true)
+        {
             succesfulIteration++;
-           // std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
-
+            ROS_INFO("########## BEST GAIN ############## :%f",rrtTree->getBestGain());
         }
-
-
-
         loopCount++;
         k++ ;
-        //std::cout << "Candidate Number : " << k << std::endl ;
-        //std::cout << "Candidate Gain : " << rrtTree->getBestGain() << std::endl;
     }
-    // std::cout << "succesfulIteration : " << succesfulIteration<< std::endl;
-    // std::cout << "failedIteration : " << failedIteration<< std::endl;
-
-    /*
-     *       ROS_ERROR("%d %d", rrtTree->getCounter() , params_.initIterations_);
-     *
-     *       while(rrtTree->getCounter() < params_.initIterations_)
-     *        {
-     *         //ROS_WARN("%d %d", rrtTree->getCounter() , params_.initIterations_);
-     *
-     *         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
-     *         {
-     *           ROS_INFO_THROTTLE(1, "Exceeding maximum failed iterations, return to previous point!");
-     *           res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
-     *           return true;
-}      
-rrtTree->iterate(1);
-
-loopCount++;
-// ROS_INFO ("DONE ITERATE");
-}
-*/
-    
+    ROS_INFO("Done RRT");
 
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain() ;
+    bool ObjectFoundFlag = rrtTree->getObjectFlag() ;
     std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain()  << std::endl << std::flush ;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl  <<std::flush;
     rrtTree->memorizeBestBranch();
@@ -421,17 +381,17 @@ loopCount++;
                 
                 
                 // TODO: Revise the equation
-                occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
-                occupancy_entropy = occupancy_entropy / maxThreshold ;
-                information_gain_entropy += occupancy_entropy ;
+                //                occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
+                //                occupancy_entropy = occupancy_entropy / maxThreshold ;
+                //                information_gain_entropy += occupancy_entropy ;
                 
                 // Calculate semantic_gain
-                double semantic_gain  = manager_->getCellIneterestGain(vec);
-                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
-                semantic_entropy = semantic_entropy /maxThreshold ;
-                semantic_gain_entropy += semantic_entropy ;
+                //                double semantic_gain  = manager_->getCellIneterestGain(vec);
+                //                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
+                //                semantic_entropy = semantic_entropy /maxThreshold ;
+                //                semantic_gain_entropy += semantic_entropy ;
                 
-                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
+                //                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
                 
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
                 if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
@@ -485,7 +445,7 @@ loopCount++;
 
 void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& pose)
 {
-    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;   
+    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
     if (FirstPoseCalled)
     {
         FirstPoseCalled = false ;
@@ -563,8 +523,9 @@ rrtNBV::Params rrtNBV::RRTPlanner::getParams()
 
 bool rrtNBV::RRTPlanner::setParams()
 {
-    std::string ns = ros::this_node::getName();
-    std::cout<<"Node name is:"<<ns<<"\n";
+    //std::string ns = ros::this_node::getName();
+    //std::cout<<"Node name is:"<<ns<<"\n";
+    std::string ns = "";
     bool ret = true;
     params_.v_max_ = 0.25;
     if (!ros::param::get(ns + "/system/v_max", params_.v_max_)) {
@@ -750,11 +711,12 @@ bool rrtNBV::RRTPlanner::setParams()
                  (ns + "/output/file/name").c_str());
     }
     
-//    params_.utility_mathod_ = 1;
-//    if (!ros::param::get(ns + "/utility/method", params_.utility_mathod_)) {
-//        ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
-//                 (ns + "/utility/method").c_str());
-//    }
+    params_.utility_method_ = 1;
+    if (!ros::param::get(ns + "/utility/method", params_.utility_method_))
+    {
+        ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
+                 (ns + "/utility/method").c_str());
+    }
     
     return ret;
 }

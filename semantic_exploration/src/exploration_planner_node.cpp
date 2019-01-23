@@ -1,6 +1,3 @@
-#ifndef EXPLORATIONPLANNER_H_
-#define EXPLORATIONPLANNER_H_
-
 #include "ros/ros.h"
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -59,7 +56,7 @@
 
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/default_topics.h>
-#include <rrt_explorer/rrt_srv.h>
+#include <semantic_exploration/GetPath.h>
 
 #define SQ(x) ((x)*(x))
 #define SQRT2 0.70711
@@ -67,14 +64,10 @@
 using namespace std;
 using namespace octomap;
 
-
 struct Params
 {
-    // Initial position params
-    double init_loc_x ;
-    double init_loc_y ;
-    double init_loc_z ;
-    double init_loc_yaw ;
+    double dt;
+    int numIterations;
     bool iflog ;
 };
 
@@ -84,383 +77,125 @@ protected:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
     Params params_;
-    double locationx_,locationy_,locationz_,yaw_; // current location information (target position)
-    geometry_msgs::PoseStamped loc_; // exploration positions
-    
-    // Publishers and subscribers
-    ros::Publisher current_pose_pub_;
-    //    ros::Subscriber occlusion_cloud_sub_;
-    
-    // logging
-    std::string log_file_path_;
-    ofstream file_path_;
-    
-    
+    geometry_msgs::PoseStamped currentPose, explorationViewPointPose;
+    ros::Publisher explorationViewpointPub;
+    ros::Subscriber localPoseSub;
+    bool currentPositionUpdated;
+
 public:
-    //ExplorationPlanner();
     ExplorationPlanner (const ros::NodeHandle &nh, const ros::NodeHandle &nh_private) ;
     ~ExplorationPlanner();
-    
-    //void init() ;
+    void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
     bool SetParams();
     void RunStateMachine() ;
-    
-    // callback functions
-    //void OcclusionCloudCallback(sensor_msgs::PointCloud2::ConstPtr msg);
 };
-
-#endif //
 
 ExplorationPlanner::~ExplorationPlanner()
 {
-    if (file_path_.is_open()) {
-        file_path_.close();
-    }
+
 }
 
 ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private)
-: nh_(nh),
-nh_private_(nh_private)
+    : nh_(nh),
+      nh_private_(nh_private)
 {
-    // publishers
-    current_pose_pub_      = nh_.advertise<geometry_msgs::PoseStamped>("current_pose", 10);
-    
+    currentPositionUpdated = false;
+    std::string droneName      = ros::this_node::getName();
+    std::string droneNameSpace = ros::this_node::getNamespace();
+
+    ROS_INFO("Drone Name:%s NameSpace:%s",droneName.c_str(),droneNameSpace.c_str());
+
+    explorationViewpointPub = nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
+    localPoseSub            = nh_.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback,this);
     if (!ExplorationPlanner::SetParams())
     {
         ROS_ERROR("Could not start. Parameters missing!");
     }
-    
-
-    // setup logging files
-    /*if (params_.iflog) {
-     *        time_t rawtime;
-     *        struct tm * ptm;
-     *        time(&rawtime);
-     *        ptm = gmtime(&rawtime);
-     *        log_file_path_ = ros::package::getPath("usar_exploration") + "/data/"
-     *                + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
-     *                + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
-     *                + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
-     *        system(("mkdir -p " + log_file_path_).c_str());
-     *        log_file_path_ += "/";
-     *        file_path_.open((log_file_path_ + "gains.csv").c_str(), std::ios::out);
-}*/
-    
 }
 
+void ExplorationPlanner::poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+    this->currentPose.pose = msg->pose;
+    currentPositionUpdated = true;
+    ROS_INFO_THROTTLE(1,"Recieved a Pose");
+}
 
 void ExplorationPlanner::RunStateMachine()
 {
-    // read initial position from param file
-    locationx_ = params_.init_loc_x ;
-    locationy_ = params_.init_loc_y;
-    locationz_ = params_.init_loc_z;
-    yaw_       = params_.init_loc_yaw  ;
-    ROS_INFO("initial Position %f , %f , %f , %f", locationx_ ,locationy_,locationz_ ,yaw_);
-    
-   // int iteration_flag = 0 ;
-    ros::Rate loop_rate(10);
-    
-    //std_srvs::Empty srv;
-    //unsigned int i = 0;
-    
-    double dt = 1.0;
-    uint iteration = 0;
-    uint seqNum = 0;
+    ros::Rate loopRate(10);
+
+    std_srvs::Empty srv;
+    bool unpaused = ros::service::call("/gazebo/unpause_physics", srv);
+    unsigned int i = 0;
+
+    // Trying to unpause Gazebo for 10 seconds.
+    while (i <= 10 && !unpaused)
+    {
+      ROS_INFO("Wait for 1 second before trying to unpause Gazebo again.");
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      unpaused = ros::service::call("/gazebo/unpause_physics", srv);
+      ++i;
+    }
+
+    if(!unpaused)
+    {
+      ROS_FATAL("Could not wake up Gazebo.");
+      return;
+    }
+    else
+    {
+      ROS_INFO("Unpaused the Gazebo simulation.");
+    }
+
+
+    while(!currentPositionUpdated)
+    {
+        ROS_INFO_THROTTLE(1,"Waiting for Pose");
+        ros::spinOnce();
+        loopRate.sleep();
+    }
+
+    ROS_INFO("initial Position %f , %f , %f", currentPose.pose.position.x ,currentPose.pose.position.y, currentPose.pose.position.z);
+    int iteration = 0;
+    int seqNum = 0;
     
     
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
     tf::Transform transform;
-    
-    
-    transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-    tf::Quaternion tf_q ;
-    tf_q = tf::createQuaternionFromYaw(yaw_);
-    transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-    loc_.pose.position.x = locationx_;
-    loc_.pose.position.y = locationy_;
-    loc_.pose.position.z = locationz_;
-    loc_.pose.orientation.x = tf_q.getX();
-    loc_.pose.orientation.y = tf_q.getY();
-    loc_.pose.orientation.z = tf_q.getZ();
-    loc_.pose.orientation.w = tf_q.getW();
-    loc_.header.frame_id="world";
-    loc_.header.stamp=ros::Time::now();
-    current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-    
-//    usar_exploration::extractView srv;
-//    ROS_INFO("cretaed a service ");
 
-//    geometry_msgs::Pose currentPose ;
-//    currentPose.position.x = rrtTree->getRootNode()[0];
-//    currentPose.position.y = rrtTree->getRootNode()[1]  ;
-//    currentPose.position.z = rrtTree->getRootNode()[2]  ;
-//    ROS_INFO("Fill a service ");
-
-//    tf::Quaternion tf_q ;
-//    tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
-//    currentPose.orientation.x =tf_q.getX() ;
-//    currentPose.orientation.y =tf_q.getY() ;
-//    currentPose.orientation.z =tf_q.getZ() ;
-//    currentPose.orientation.w =tf_q.getW() ;
-//    ROS_ERROR("1");
-
-
-
-    for (int i = 0 ; i < 5 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationz_ = locationz_ + 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f",i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 40 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        yaw_ = yaw_ + 0.15 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    
-    for (int i = 0 ; i < 5 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationz_ = locationz_ + 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i,loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 40 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        yaw_ = yaw_ + 0.15 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 10 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationx_ = locationx_ - 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 10 ; i++ )
-    {
-        
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationx_ = locationx_ + 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%i poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    
-    for (int i = 0 ; i < 10 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationy_ = locationy_ - 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 10 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationy_ = locationy_ + 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1) ;
-    }
-    
-    for (int i = 0 ; i < 5 ; i++ )
-    {
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        locationz_ = locationz_ - 0.1 ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("%d poseMsg %f , %f , %f , %f", i, loc_.pose.position.x ,loc_.pose.position.y,loc_.pose.position.z ,yaw_);
-        sleep(1);
-}
     // Start planning: The planner is called and the computed path sent to the controller.
     ros::Time startTime = ros::Time::now() ;
     while (ros::ok())
     {
-
-        sleep(5);
-
         ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
         
-        // Broadcast the TF of the camera location
-        transform.setOrigin(tf::Vector3(locationx_, locationy_, locationz_) );
-        tf::Quaternion tf_q ;
-        tf_q = tf::createQuaternionFromYaw(yaw_);
-        transform.setRotation(tf::Quaternion(tf_q.getX(),  tf_q.getY(), tf_q.getZ(),  tf_q.getW()));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(),"/world", "/base_point_cloud"));
-        loc_.pose.position.x = locationx_;
-        loc_.pose.position.y = locationy_;
-        loc_.pose.position.z = locationz_;
-        loc_.pose.orientation.x = tf_q.getX();
-        loc_.pose.orientation.y = tf_q.getY();
-        loc_.pose.orientation.z = tf_q.getZ();
-        loc_.pose.orientation.w = tf_q.getW();        
-        loc_.header.frame_id="world";
-        loc_.header.stamp=ros::Time::now();
-        current_pose_pub_.publish(loc_) ; // publish it for the current view extraction code
-        ROS_INFO("sent In iterate %f %f  %f %f %f %f %f ", loc_.pose.position.x,loc_.pose.position.y,loc_.pose.position.z,loc_.pose.orientation.x,loc_.pose.orientation.y,loc_.pose.orientation.z,loc_.pose.orientation.w);
-        
-        geometry_msgs::PoseStamped poseMsg_ ; // ??? 
-        
-        rrt_explorer::rrt_srv planSrv;
+        geometry_msgs::PoseStamped poseMsg_ ;
+        semantic_exploration::GetPath planSrv;
         planSrv.request.header.stamp = ros::Time::now();
-        planSrv.request.header.seq = iteration;
+        planSrv.request.header.seq   = static_cast<uint>(iteration);
         planSrv.request.header.frame_id = "world";
+
+        ROS_INFO("Planner Call");
         ros::service::waitForService("rrt_planner",ros::Duration(1.0));
-        
-        if (ros::service::call("rrt_planner", planSrv))
+        if(ros::service::call("rrt_planner", planSrv))
         {
+            ROS_INFO("Planner Call Successfull");
             seqNum++;
             if (planSrv.response.path.size() == 0)
             {
                 ROS_INFO(" ****************** No Path *************************");
-                //ros::Duration(1.0).sleep();
+                ros::Duration(1.0).sleep();
             }
             else
                 ROS_INFO(" #################### Path Found #######################");
             
-            std::cout<< "planSrv.response.path.size()" << planSrv.response.path.size() << std::endl ; 
+            ROS_INFO("planSrv.response.path.size():%zu", planSrv.response.path.size());
             
-            for (uint i = 0; i < planSrv.response.path.size(); i++)
+            for(uint i = 0; i < planSrv.response.path.size(); i++)
             {
-                poseMsg_.header.seq = seqNum ;
-                poseMsg_.header.stamp = ros::Time::now();
+                poseMsg_.header.seq      = static_cast<uint>(seqNum);
+                poseMsg_.header.stamp    = ros::Time::now();
                 poseMsg_.header.frame_id = "world";
                 poseMsg_.pose.position.x = planSrv.response.path[i].position.x ;
                 poseMsg_.pose.position.y = planSrv.response.path[i].position.y ;
@@ -473,106 +208,64 @@ void ExplorationPlanner::RunStateMachine()
                 poseMsg_.pose.orientation.y = quat[1] ;
                 poseMsg_.pose.orientation.z = quat[2] ;
                 poseMsg_.pose.orientation.w = quat[3] ;
-                current_pose_pub_.publish(poseMsg_);
-                // Update next position 
-                locationx_ = poseMsg_.pose.position.x ;
-                locationy_ = poseMsg_.pose.position.y ;
-                locationz_ = poseMsg_.pose.position.z ;
-                yaw_ = yaw; 
+                explorationViewpointPub.publish(poseMsg_);
+                        ROS_INFO("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,poseMsg_.pose.position.y,poseMsg_.pose.position.z,poseMsg_.pose.orientation.x,poseMsg_.pose.orientation.y,poseMsg_.pose.orientation.z,poseMsg_.pose.orientation.w);
                 ros::spinOnce();
-                //ros::Duration(dt).sleep();
+                //ros::Duration(params_.dt).sleep();
             }
-            iteration++;
-            
         }
         else
         {
             ROS_WARN_THROTTLE(1, "Planner not reachable");
+            ros::Duration(1.0).sleep();
         }
-        
-        if(iteration > 100) 
-            break; 
-        ROS_INFO("next Position %f , %f , %f , %f", locationx_ ,locationy_,locationz_ ,yaw_);
+
+        iteration++;
+
+        if(iteration > params_.numIterations)
+            break;
         ros::spinOnce();
-        loop_rate.sleep();
+        loopRate.sleep();
     }
     
     ros::Time endTime = ros::Time::now() ;
     double elapsed =  endTime.toSec() - startTime.toSec();
-    std::cout<< "The planning Time " << elapsed << std::endl ; 
+    std::cout<< "The planning Time " << elapsed << std::endl ;
 }
 
 bool ExplorationPlanner::SetParams()
 {
-    std::string ns = ros::this_node::getName();
-    std::cout<<"Node name is:"<<ns<<"\n";
+    //std::string ns = ros::this_node::getName();
+    //std::cout<<"Node name is:"<<ns<<"\n";
+    std::string ns = "";
     bool ret = true;
-    
-    // Environment Params
-    // Note1: using (ns + "env/bbx/minX").c_str() will not work. It should be (ns + "/env/bbx/minX").c_str()
-    // Note2: ros::param::get uses the params related to the namespace
-    
-    
-    
+
     // Exploration Algorithm Params
     // 1- Termination
-    //params_.num_of_iteration = 60;
-    //if (!ros::param::get( ns+"/exp/ter/num_iteration", params_.num_of_iteration))
-    // {
-    //     ROS_WARN("No number of iteration for termination specified. Looking for %s.", ( "exp/ter/num_iteration"));
-    // }
-    
-    // initial position params
-    
-    params_.init_loc_x = 4 ;
-    if (!ros::param::get( ns+"/init/pose/x",  params_.init_loc_x))
+
+    params_.numIterations = 50;
+    if (!ros::param::get(ns + "/exploration/num_iterations", params_.numIterations))
     {
-        ROS_WARN("No initial position in X is specified. Looking for %s.",  "/init/pose/x");
+        ROS_WARN("No number of iteration for termination specified. Looking for %s", (ns+"/exploration/num_iterations").c_str());
     }
-    params_.init_loc_y = 2;
-    if (!ros::param::get( ns+"/init/pose/y",  params_.init_loc_y))
+
+    params_.dt = 1.0;
+    if(!ros::param::get(ns + "/exploration/dt", params_.dt))
     {
-        ROS_WARN("No initial position in Y is specified. Looking for %s.",  "/init/pose/y");
-    }
-    params_.init_loc_yaw = 1 ;
-    if (!ros::param::get( ns+"/init/pose/yaw",  params_.init_loc_yaw))
-    {
-        ROS_WARN("No initial position in yaw is specified. Looking for %s.",  "/init/pose/yaw");
-    }
-    params_.init_loc_z =0.5;
-    if (!ros::param::get( ns+"/init/pose/z",  params_.init_loc_z))
-    {
-        ROS_WARN("No initial position in Z is specified. Looking for %s.",  "/init/pose/z");
+        ROS_WARN("Delta T between Iterations not found. Looking for %s", (ns+"/exploration/dt").c_str());
     }
     params_.iflog = false;
-    if (!ros::param::get( ns+"/log/on",  params_.iflog))
+    if (!ros::param::get( ns+"/exploration/log/on",  params_.iflog))
     {
-        ROS_WARN("No log is specified. Looking for %s.",  "/log/on");
+        ROS_WARN("No log is specified. Looking for %s.",  (ns+"/exploration/log/on").c_str());
     }
-    
-    
-    //    // Octomap manager parameters
-    /*   nh_.setParam(("/tf_frame"), "world");
-     *    nh_.setParam("/robot_frame", "base_point_cloud");
-     *    nh_.setParam(("/resolution"), 0.15);
-     *    nh_.setParam(("/mesh_resolution"), 1.0);
-     *    nh_.setParam(("/visualize_max_z"), 5);
-     *    nh_.setParam(("/sensor_max_range"), 5);
-     *    nh_.setParam(("/map_publish_frequency"), 0.08);
-     *    nh_.setParam(("/probability_hit"), 0.7);
-     *    nh_.setParam(("/probability_miss"), 0.4);
-     *    nh_.setParam(("/threshold_min"), 0.12);
-     *    nh_.setParam(("/threshold_max"), 0.97);
-     *    nh_.setParam(("/threshold_occupancy"), 0.7);
-     *    nh_.setParam(("/treat_unknown_as_occupied"), false);
-     *    nh_.setParam(("/latch_topics"), false);
-     */
+
     return ret;
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "exploration");
+    ros::init(argc, argv, "exploration_planner_node");
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
     ExplorationPlanner expObj(nh , nh_private )  ;

@@ -62,7 +62,7 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
     std::cout<<"Drone Namespace is:"<<droneName << std::endl;
     stateSub          = nh.subscribe<mavros_msgs::State>(droneName + "/mavros/state", 10, &DroneCommander::stateCallback,this);
     localPoseSub      = nh.subscribe<geometry_msgs::PoseStamped>(droneName + "/mavros/local_position/pose", 10, &DroneCommander::poseCallback,this);
-    goalSub           = nh.subscribe<geometry_msgs::PoseStamped>(droneName + "/rrt_waypoint", 100,&DroneCommander::goalCallback,this);
+    goalSub           = nh.subscribe<geometry_msgs::PoseStamped>(droneName + "/semantic_exploration_viewpoint", 100,&DroneCommander::goalCallback,this);
     localPosePub      = nh.advertise<geometry_msgs::PoseStamped>(droneName + "/mavros/setpoint_position/local", 10);
     armingClinet      = nh.serviceClient<mavros_msgs::CommandBool>(droneName + "/mavros/cmd/arming");
     setModeClient     = nh.serviceClient<mavros_msgs::SetMode>(droneName + "/mavros/set_mode");
@@ -133,17 +133,17 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
             ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
 
             // No goals recieved, or timedout, so revert to hovering pose
-            if(ros::Time::now() - goalLastReceived > ros::Duration(0.5))
-            {
-                rotationDone.data = true;
-                rotationDonePub.publish(rotationDone);
-                ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Hovering");
-                // Don't change hover pose, just header info
-                hoverPose.header.stamp = ros::Time::now();
-                hoverPose.header.frame_id = "world";
-                currentGoal = hoverPose;
-            }
-            else
+//            if(ros::Time::now() - goalLastReceived > ros::Duration(0.5))
+//            {
+//                rotationDone.data = true;
+//                rotationDonePub.publish(rotationDone);
+//                ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Hovering");
+//                // Don't change hover pose, just header info
+//                hoverPose.header.stamp = ros::Time::now();
+//                hoverPose.header.frame_id = "world";
+//                currentGoal = hoverPose;
+//            }
+//            else
             {
                 ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Navigating to WayPoint");
                 goalRecieved.header.stamp = ros::Time::now();

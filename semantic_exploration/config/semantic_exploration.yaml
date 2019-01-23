@@ -22,22 +22,27 @@ nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
 
 inspection_throttle: 0.5
-#pcl_throttle: 0.5 # default 0.33
+pcl_throttle: 0.33 # default 0.33
 output/file/name: "gains.csv"
 
-# Path Planning Parameters
-nbvp/tree/extension_range: 1
+# Path Planning Parameters: rrt_planner.cpp
+nbvp/tree/extension_range: 3
 nbvp/tree/initial_iterations: 5
 nbvp/tree/cuttoff_iterations: 200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
+
+# Exploration Loop: exploration_planner_node.cpp
+exploration/log/on: true
+exploration/dt: 2.0
+exploration/num_iterations: 100
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: 10.0
+bbx/minX: -10.0
 bbx/maxX: 10.0
 bbx/minY: -10.0
 bbx/maxY: 10.0
@@ -80,17 +85,5 @@ change_detection_enabled: false
 # Semantic Rear side entropy 4 
 
 
-/utility/method: 4
+/utility/method: 0
 /output/file/name: "1.csv"
-
-
-#/utility/method: 2
-#/output/file/name: "2.csv"
-
-
-#/utility/method: 3
-#/output/file/name: "3.csv"
-
-
-#/utility/method: 4
-#/output/file/name: "4.csv"

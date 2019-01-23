@@ -4,6 +4,7 @@
     <arg name="enable_logging" default="false" />
     <arg name="enable_ground_truth" default="true" />
     <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
+
     <arg name="x" default="-1.0"/>
     <arg name="y" default="0.5"/>
     <arg name="z" default="0.3"/>
@@ -49,7 +50,6 @@
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="false"/>
-    <arg name="paused" default="false"/>
     <arg name="respawn_gazebo" default="false"/>
 
     <!-- MAVROS configs -->
@@ -72,7 +72,7 @@
         <include file="$(find mavros)/launch/node.launch">
             <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
             <!-- Need to change the config file to get the tf topic and get local position in terms of local origin -->
-            <arg name="config_yaml" value="$(find local_planner)/resource/px4_config.yaml" />
+            <arg name="config_yaml" value="$(find semantic_exploration)/config/px4_config.yaml" />
             <arg name="fcu_url" value="$(arg fcu_url)" />
             <arg name="gcs_url" value="$(arg gcs_url)" />
             <arg name="tgt_system" value="$(arg tgt_system)" />
@@ -84,6 +84,7 @@
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="headless" value="$(arg headless)"/>
         <arg name="gui" value="$(arg gui)"/>
+        <arg name="paused" value="true"/>
         <arg name="world_name" value="$(arg world)" />
     </include>
 
@@ -96,20 +97,18 @@
     <arg name="pcl_topic" default="/semantic_pcl/semantic_pcl"/>
     <arg name="stl_file_path" default="" />
 
-    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen">
+    <rosparam command="load" file="$(arg param_file)" />
+    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen"> <!--launch-prefix="gdb --ex run --args"-->
         <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
         <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
         <remap from="poseStamped" to="/current_pose"/>
         <remap from="semantic_exploration" to="/semantic_exploration"/>
-        <!-- all volumetric mapping params are in the yaml file -->
-        <rosparam command="load" file="$(arg param_file)" />
     </node>
     
-    <arg name="nav_param_file" default="$(find semantic_exploration)/config/exploration_nav.yaml" />
-    <node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen" >
-        <rosparam command="load" file="$(arg nav_param_file)"/>
-    </node>
-      
+    <!--node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/-->
+
+    <!--node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/-->
+
     <rosparam file="$(find semantic_cloud)/config/semantic_cloud.yaml" command="load"/>
     <!--node pkg="semantic_cloud" type="semantic_cloud.py" name="semantic_cloud" output="screen"/-->
 

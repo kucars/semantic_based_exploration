@@ -59,7 +59,9 @@ class RrtTree : public TreeBase
   double gain_occlusion_aware(StateVec state, bool &objectGainFound); // Occlusion Aware Ref-[1]
   double gain_unobserved_voxel(StateVec state, bool & objectGainFound) ;// Unobserved Voxel Ref[1] 
   double gain_pure_entropy(StateVec state) ; 
-  double gain_avg_entropy(StateVec state) ; 
+  double gain_avg_entropy(StateVec state) ;
+  double gain_svv(StateVec state, bool & objectGainFound) ; // Proposed
+  double gain_semantic_occlusion_aware(StateVec state, bool & objectGainFound); // proposed
 
   std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
 
@@ -71,7 +73,7 @@ class RrtTree : public TreeBase
   double gainDinsity(StateVec state, int &dinsity);
   virtual double getBestGain() ;
   virtual Eigen::Vector4d getRootNode();
-  
+  bool getObjectFlag() ;
 
  protected:  
   kdtree * kdTree_;

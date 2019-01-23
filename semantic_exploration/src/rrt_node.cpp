@@ -13,7 +13,7 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "rrt_explorer");
+  ros::init(argc, argv, "semantic_exploration");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 

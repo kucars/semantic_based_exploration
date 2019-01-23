@@ -70,10 +70,6 @@ target_link_libraries(rrt_planner
 
 add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
 
-add_executable(exploration_node src/exploration_node.cpp)
-add_dependencies(exploration_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(exploration_node ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${Boost_LIBRARIES} ${LIBFCL_LIBRARIES})
-
 add_executable(exploration_planner_node src/exploration_planner_node.cpp)
 add_dependencies(exploration_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(exploration_planner_node ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${fcl_LIBRARIES} ${Boost_LIBRARIES} ${LIBFCL_LIBRARIES})
