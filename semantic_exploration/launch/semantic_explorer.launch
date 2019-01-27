@@ -98,7 +98,7 @@
     <arg name="stl_file_path" default="" />
 
     <rosparam command="load" file="$(arg param_file)" />
-    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen"> <!--launch-prefix="gdb --ex run --args"-->
+    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen">
         <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
         <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
         <remap from="poseStamped" to="/current_pose"/>
