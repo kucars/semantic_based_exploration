@@ -3,7 +3,6 @@
 # Semantic Based Exploration
 The repository aims to provide an exploration algorithm and relevant packages to enable a semantic-aware autonomous exploration task for robots in indoor environments.  
 
-
 # Building 
 create a new workspace and clone all the modules into that workspace.
 
