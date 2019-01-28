@@ -41,10 +41,9 @@ rrtNBV::TreeBase::TreeBase()
   rootNode_ = NULL;
 }
 
-rrtNBV::TreeBase::TreeBase(mesh::StlMesh * mesh, volumetric_mapping::OctomapManager * manager)
+rrtNBV::TreeBase::TreeBase(OctomapGeneratorBase *octomap_generator_)
 {
-  mesh_ = mesh;
-  manager_ = manager;
+  manager_ = octomap_generator_;
   bestGain_ = params_.zero_gain_;
   bestNode_ = NULL;
   bestObjectGain_ = params_.zero_gain_;
@@ -66,23 +65,10 @@ int rrtNBV::TreeBase::getCounter()
   return counter_;
 }
 
-//int rrtNBV::TreeBase::getGain()
-//{
- // return bestGain_;
-//}
-
 bool rrtNBV::TreeBase::gainFound()
 {
   return bestGain_ > params_.zero_gain_;
 }
-
-void rrtNBV::TreeBase::insertPointcloudWithTf(
-    const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-{
-    manager_->insertPointcloudWithTf(pointcloud);
-}
-
-
 
 Eigen::Vector4d rrtNBV::TreeBase::getRootNode()
 

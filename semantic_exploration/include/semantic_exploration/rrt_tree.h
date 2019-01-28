@@ -24,6 +24,10 @@
 #include <octomap_world/octomap_manager.h>
 #include <semantic_exploration/mesh_structure.h>
 #include <tf/transform_datatypes.h>
+#include <octomap_msgs/Octomap.h>
+#include <octomap_generator/octomap_generator.h>
+#include <semantics_octree/semantics_octree.h>
+
 namespace rrtNBV {
 
 struct Params
@@ -32,6 +36,19 @@ struct Params
   std::vector<double> camHorizontal_;
   std::vector<double> camVertical_;
   std::vector<std::vector<Eigen::Vector3d> > camBoundNormals_;
+
+  std::string pointCloudTopic_;
+  std::string worldFrameId_;
+  std::string octomapSavePath_;
+  float octomapResolution_;
+  float maxRange_;
+  float rayCastRange_;
+  float clampingThresMin_;
+  float clampingThresMax_;
+  float occupancyThres_;
+  float probHit_;
+  float probMiss_;
+  int treeType_; ///<0: color octree, 1: semantic octree using bayesian fusion, 2: semantic octree using max fusion
 
   double igProbabilistic_;
   double igFree_;
@@ -51,6 +68,14 @@ struct Params
   int cuttoffIterations_;
   double dt_;
 
+  bool log_;
+  double log_throttle_;
+  double pcl_throttle_;
+  double inspection_throttle_;
+
+  std::string output_file_name_ ;
+  int utility_method_ ;
+
   double minX_;
   double minY_;
   double minZ_;
@@ -69,22 +94,13 @@ struct Params
   ros::Publisher rootNodeDebug;
   ros::Publisher sensor_pose_pub_ ; 
   ros::Publisher evaluatedPoints_ ;
-  //ros::Publisher camboundries_;
-  //ros::Publisher fovHyperplanes;
+  ros::Publisher camboundries_;
+  ros::Publisher fovHyperplanes;
   std::string navigationFrame_;
 
   //debugging
   visualization_msgs::MarkerArray pa;
   visualization_msgs::Marker camParam;
-
-  bool log_;
-  double log_throttle_;
-  double pcl_throttle_;
-  double inspection_throttle_;
-  
-  
-  std::string output_file_name_ ; 
-  int utility_method_ ;
 };
 
 class Node
@@ -110,14 +126,13 @@ class TreeBase
   Node * bestNode_;
   Node * bestObjectNode_;
   Node * rootNode_;
-  mesh::StlMesh * mesh_;
-  volumetric_mapping::OctomapManager * manager_;
+  OctomapGeneratorBase *manager_;
   StateVec root_;
   StateVec exact_root_;
   std::vector<std::string> agentNames_;
  public:
   TreeBase();
-  TreeBase(mesh::StlMesh * mesh, volumetric_mapping::OctomapManager * manager);
+  TreeBase(OctomapGeneratorBase* octomap_generator_);
   ~TreeBase();
   virtual void setStateFromPoseStampedMsg(const geometry_msgs::PoseStamped& pose) = 0;
   virtual void setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianceStamped& pose) = 0;
@@ -130,14 +145,9 @@ class TreeBase
   virtual void memorizeBestBranch() = 0;
   
   virtual Eigen::Vector4d getRootNode();
-
-  //virtual void initializeDeep() =0 ;
-  //virtual  bool iterateDeep(int iterations, double informationGain, int numOfSamples)=0;
-  //virtual geometry_msgs::Pose getBestEdgeDeep(std::string targetFrame)=0;
   void setParams(Params params);
   int getCounter();
   bool gainFound();
-  void insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
   double getGain() ; 
 };
 }

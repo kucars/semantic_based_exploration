@@ -27,6 +27,9 @@
 #include <semantic_exploration/rrt_tree.h>
 #include <semantic_exploration/mesh_structure.h>
 #include <semantic_exploration/SelectPose.h>
+#include <octomap_msgs/Octomap.h>
+#include <octomap_generator/octomap_generator.h>
+#include <semantics_octree/semantics_octree.h>
 
 #define SQ(x) ((x)*(x))
 #define SQRT2 0.70711
@@ -38,7 +41,7 @@ class RrtTree : public TreeBase
 {
  public:
   RrtTree();
-  RrtTree(mesh::StlMesh * mesh, volumetric_mapping::OctomapManager * manager);
+  RrtTree(OctomapGeneratorBase *manager_);
   ~RrtTree();
   virtual void setStateFromPoseStampedMsg(const geometry_msgs::PoseStamped& pose);
   virtual void setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianceStamped& pose);

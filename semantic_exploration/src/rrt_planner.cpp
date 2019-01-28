@@ -24,7 +24,6 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     : nh_(nh),
       nh_private_(nh_private)
 {
-    manager_ = new volumetric_mapping::OctomapManager(nh, nh_private);
     // Set up the topics and services
     params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_     = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
@@ -38,10 +37,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("/mavros/local_position/pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
-    odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
-    pointcloud_sub_           	 = nh_.subscribe("/camera/depth/points", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTf,this);
-    pointcloud_sub_cam_up_    	 = nh_.subscribe("pointcloud_throttled_up", 1,  &rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp, this);
-    pointcloud_sub_cam_down_  	 = nh_.subscribe("pointcloud_throttled_down", 1, &rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown, this);
+    odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this); 
 
     traveled_distance = 0;
     information_gain  = 0;
@@ -53,12 +49,76 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     {
         ROS_ERROR("Could not start the planner. Parameters missing!");
     }
-    
-    area_marker_ = explorationAreaInit();
 
+    // Initiate octree
+    if(params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN || params_.treeType_ == SEMANTICS_OCTREE_MAX)
+    {
+      if(params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN)
+      {
+        ROS_INFO("Semantic octomap generator [bayesian fusion]");
+        octomap_generator_ = new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>();
+      }
+      else
+      {
+        ROS_INFO("Semantic octomap generator [max fusion]");
+        octomap_generator_ = new OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>();
+      }
+      toggleSemanticService = nh_.advertiseService("toggle_use_semantic_color", &rrtNBV::RRTPlanner::toggleUseSemanticColor, this);
+    }
+    else
+    {
+      ROS_INFO("Color octomap generator");
+      octomap_generator_ = new OctomapGenerator<PCLColor, ColorOcTree>();
+    }
+
+    octomap_generator_->setClampingThresMin(params_.clampingThresMin_);
+    octomap_generator_->setClampingThresMax(params_.clampingThresMax_);
+    octomap_generator_->setResolution(params_.octomapResolution_);
+    octomap_generator_->setOccupancyThres(params_.occupancyThres_);
+    octomap_generator_->setProbHit(params_.probHit_);
+    octomap_generator_->setProbMiss(params_.probMiss_);
+    octomap_generator_->setRayCastRange(params_.rayCastRange_);
+    octomap_generator_->setMaxRange(params_.maxRange_);
+
+    fullmapPub_      = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
+    pointCloudSub_   = new message_filters::Subscriber<sensor_msgs::PointCloud2> (nh_, params_.pointCloudTopic_, 5);
+    tfPointCloudSub_ = new tf::MessageFilter<sensor_msgs::PointCloud2> (*pointCloudSub_, tfListener_, params_.worldFrameId_, 5);
+    tfPointCloudSub_->registerCallback(boost::bind(&rrtNBV::RRTPlanner::insertCloudCallback, this, _1));
+
+    area_marker_ = explorationAreaInit();
+    computeCameraFOV();
+    setupLog();
+
+    //debug
+    //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
+    //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
+    
+    std::string ns = ros::this_node::getName();
+    ROS_INFO("********************* The topic name is:%s",posStampedClient_.getTopic().c_str());
+    // Initialize the tree instance.
+    ROS_INFO("*************************** rrt generated ******************************");
+    rrtTree = new rrtNBV::RrtTree(octomap_generator_);
+    rrtTree->setParams(params_);
+    // Not yet ready. need a position msg first.
+    ready_ = false;
+}
+
+rrtNBV::RRTPlanner::~RRTPlanner()
+{    
+    if (octomap_generator_) {
+        octomap_generator_->save(params_.octomapSavePath_.c_str());
+        ROS_INFO("OctoMap saved.");
+        delete octomap_generator_;
+    }
+    if (file_path_.is_open()) {
+        file_path_.close();
+    }
+}
+
+void rrtNBV::RRTPlanner::computeCameraFOV()
+{
     // Precompute the camera field of view boundaries. The normals of the separating hyperplanes are stored
     params_.camBoundNormals_.clear();
-    uint g_ID_ = 0 ;
     // This loop will only be executed once
     for (uint i = 0; i < params_.camPitch_.size(); i++)
     {
@@ -81,11 +141,14 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
         camBoundNormals.push_back(Eigen::Vector3d(rightR.x(), rightR.y(), rightR.z()));
         camBoundNormals.push_back(Eigen::Vector3d(leftR.x(), leftR.y(), leftR.z()));
         params_.camBoundNormals_.push_back(camBoundNormals);
-        // I added the sleep here to make a time difference between the creation of the publisher and publishing function
-        //sleep(10) ;
     }
+}
+
+void rrtNBV::RRTPlanner::setupLog()
+{
     // setup logging files
-    if (params_.log_) {
+    if (params_.log_)
+    {
         time_t rawtime;
         struct tm * ptm;
         time(&rawtime);
@@ -124,63 +187,61 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
                        "rrt_gain"                   << "," <<
                        "objectFound"                << "\n";
     }
-    
-    //debug
-    //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
-    //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
-    //gainToBag                    = nh_.advertise<std_msgs::Float32>( "gainToBag", 100 );
-    
-    
-    std::string ns = ros::this_node::getName();
-    std::string stlPath = "";
-    mesh_ = nullptr;
-    if (ros::param::get(ns + "/stl_file_path", stlPath))
-    {
-        if (stlPath.length() > 0)
-        {
-            if (ros::param::get(ns + "/mesh_resolution", params_.meshResolution_))
-            {
-                std::fstream stlFile;
-                stlFile.open(stlPath.c_str());
-                if (stlFile.is_open())
-                {
-                    mesh_ = new mesh::StlMesh(stlFile);
-                    mesh_->setResolution(params_.meshResolution_);
-                    mesh_->setOctomapManager(manager_);
-                    mesh_->setCameraParams(params_.camPitch_, params_.camHorizontal_, params_.camVertical_,params_.gainRange_);
-                }
-                else
-                {
-                    ROS_WARN("Unable to open STL file");
-                }
-            }
-            else
-            {
-                ROS_WARN("STL mesh file path specified but mesh resolution parameter missing!");
-            }
-        }
-    }
-    
-    ROS_INFO("********************* The topic name is:%s",posStampedClient_.getTopic().c_str());
-    ROS_INFO("********************* The Pointcloud topic name is:%s",pointcloud_sub_.getTopic().c_str());
-    // Initialize the tree instance.
-    ROS_INFO("*************************** rrt generated ******************************");
-    rrtTree = new rrtNBV::RrtTree(mesh_, manager_);
-    rrtTree->setParams(params_);
-    // Not yet ready. need a position msg first.
-    ready_ = false;
 }
 
-rrtNBV::RRTPlanner::~RRTPlanner()
+bool rrtNBV::RRTPlanner::toggleUseSemanticColor(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-    if (manager_) {
-        delete manager_;
-    }
-    if (mesh_) {
-        delete mesh_;
-    }
-    if (file_path_.is_open()) {
-        file_path_.close();
+  octomap_generator_->setUseSemanticColor(!octomap_generator_->isUseSemanticColor());
+  if(octomap_generator_->isUseSemanticColor())
+    ROS_INFO("Using semantic color");
+  else
+    ROS_INFO("Using rgb color");
+  if (octomap_msgs::fullMapToMsg(*octomap_generator_->getOctree(), map_msg_))
+     fullmapPub_.publish(map_msg_);
+  else
+     ROS_ERROR("Error serializing OctoMap");
+  return true;
+}
+
+void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
+{
+    ROS_INFO("Received PointCloud");
+    static double last = ros::Time::now().toSec();
+    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
+    {
+        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
+        ros::Time  tic = ros::Time::now();
+
+        // Voxel filter to down sample the point cloud
+        // Create the filtering object
+        pcl::PCLPointCloud2::Ptr cloud (new pcl::PCLPointCloud2 ());
+        pcl_conversions::toPCL(*cloud_msg, *cloud);
+        // Get tf transform
+        tf::StampedTransform sensorToWorldTf;
+        try
+        {
+            tfListener_.lookupTransform(params_.worldFrameId_, cloud_msg->header.frame_id, cloud_msg->header.stamp, sensorToWorldTf);
+        }
+        catch(tf::TransformException& ex)
+        {
+            ROS_ERROR_STREAM( "Transform error of sensor data: " << ex.what() << ", quitting callback");
+            return;
+        }
+        // Transform coordinate
+        Eigen::Matrix4f sensorToWorld;
+        pcl_ros::transformAsMatrix(sensorToWorldTf, sensorToWorld);
+        octomap_generator_->insertPointCloud(cloud, sensorToWorld);
+        // Publish octomap
+        map_msg_.header.frame_id = params_.worldFrameId_;
+        map_msg_.header.stamp = cloud_msg->header.stamp;
+        if (octomap_msgs::fullMapToMsg(*octomap_generator_->getOctree(), map_msg_))
+            fullmapPub_.publish(map_msg_);
+        else
+            ROS_ERROR("Error serializing OctoMap");
+
+        ros::Time  toc = ros::Time::now();
+        ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
+        last += params_.pcl_throttle_;
     }
 }
 
@@ -218,42 +279,7 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
 bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request& req, semantic_exploration::GetPath::Response& res)
 {
     ROS_INFO("called the planner");
-
-    //ros::Time computationTime = ros::Time(0);
     ros::Time computationTime = ros::Time::now();
-    params_.explorationarea_.publish(area_marker_);
-    //    ROS_INFO("cretaed a service ");
-
-    //    geometry_msgs::Pose currentPose ;
-    //    currentPose.position.x = rrtTree->getRootNode()[0];
-    //    currentPose.position.y = rrtTree->getRootNode()[1]  ;
-    //    currentPose.position.z = rrtTree->getRootNode()[2]  ;
-    //    ROS_INFO("Fill a service ");
-
-    //    tf::Quaternion tf_q ;
-    //    tf_q = tf::createQuaternionFromYaw(rrtTree->getRootNode()[3] );
-    //    currentPose.orientation.x =tf_q.getX() ;
-    //    currentPose.orientation.y =tf_q.getY() ;
-    //    currentPose.orientation.z =tf_q.getZ() ;
-    //    currentPose.orientation.w =tf_q.getW() ;
-    //    ROS_ERROR("1");
-
-    //    sensor_msgs::PointCloud2Ptr currentPosePtr(new sensor_msgs::PointCloud2());
-    //    srv.request.currentPose = currentPose  ;
-
-    //    ros::service::waitForService("current_view",ros::Duration(1.0));
-    //    if (ros::service::call("current_view", srv))
-    //    {
-    //        ROS_INFO("call service viewpoint ");
-    //        *currentPosePtr = srv.response.currentViewPointcloud;
-    //        manager_->insertPointcloudWithTf(currentPosePtr);
-    //    }
-    //    else
-    //    {
-    //        ROS_ERROR("Failed to call service");
-    //       // return 1;
-    //    }
-
 
     // Check that planner is ready to compute path.
     if (!ros::ok()) {
@@ -266,12 +292,12 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         return true;
     }
     
-    if (manager_ == nullptr) {
+    if (octomap_generator_ == nullptr) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: No octomap available!");
         return true;
     }
     
-    if (manager_->getMapSize().norm() <= 0.0) {
+    if (octomap_generator_->getMapSize().norm() <= 0.0) {
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return true;
     }
@@ -331,7 +357,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     
     ros::Time tic_log = ros::Time::now();
     //**************** logging results ************************************************************************** //
-    double res_map = manager_->getResolution() ;
+    double res_map = octomap_generator_->getResolution() ;
     Eigen::Vector3d vec;
     double x , y , z ;
     double  all_cells_counter =0 , free_cells_counter =0 ,unknown_cells_counter = 0 ,occupied_cells_counter =0 ;
@@ -349,7 +375,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 vec[0] = x; vec[1] = y ; vec[2] = z ;
                 
                 // Counting Cell Types
-                int cellType= manager_->getCellIneterestCellType(x,y,z) ;
+                int cellType= octomap_generator_->getCellIneterestCellType(x,y,z) ;
                 switch(cellType){
                 case 0:
                     free_type_counter++;
@@ -371,7 +397,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 all_cells_counter++;
                 
                 // calculate information_gain
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(vec, &probability);
+                VoxelStatus node = octomap_generator_->getCellProbabilityPoint(vec, &probability);
                 double p = 0.5 ;
                 if (probability != -1)
                 {
@@ -386,21 +412,21 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 //                information_gain_entropy += occupancy_entropy ;
                 
                 // Calculate semantic_gain
-                //                double semantic_gain  = manager_->getCellIneterestGain(vec);
+                //                double semantic_gain  = octomap_generator_->getCellIneterestGain(vec);
                 //                semantic_entropy= -semantic_gain * std::log(semantic_gain) - ((1-semantic_gain) * std::log(1-semantic_gain));
                 //                semantic_entropy = semantic_entropy /maxThreshold ;
                 //                semantic_gain_entropy += semantic_entropy ;
                 
                 //                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
                 
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {unknown_cells_counter++;}
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kFree) {free_cells_counter++;}
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {occupied_cells_counter++;}
+                if (node == VoxelStatus::kUnknown) {unknown_cells_counter++;}
+                if (node == VoxelStatus::kFree) {free_cells_counter++;}
+                if (node == VoxelStatus::kOccupied) {occupied_cells_counter++;}
                 
                 // *************** RRT IG *********************************** //
                 
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {rrt_gain += params_.igUnmapped_;}
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {rrt_gain += params_.igOccupied_;}
+                if (node == VoxelStatus::kUnknown) {rrt_gain += params_.igUnmapped_;}
+                else if (node == VoxelStatus::kOccupied) {rrt_gain += params_.igOccupied_;}
                 else {rrt_gain += params_.igFree_;}
                 
             }
@@ -476,39 +502,6 @@ void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
     rrtTree->setStateFromOdometryMsg(pose);
     // Planner is now ready to plan.
     ready_ = true;
-}
-
-void rrtNBV::RRTPlanner::insertPointcloudWithTf(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-{
-    ROS_INFO("Received PointCloud");
-    static double last = ros::Time::now().toSec();
-    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
-    {
-        ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
-        ros::Time  tic = ros::Time::now();
-        rrtTree->insertPointcloudWithTf(pointcloud);
-        ros::Time  toc = ros::Time::now();
-        ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
-        last += params_.pcl_throttle_;
-    }
-}
-
-void rrtNBV::RRTPlanner::insertPointcloudWithTfCamUp(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-{
-    static double last = ros::Time::now().toSec();
-    if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
-        rrtTree->insertPointcloudWithTf(pointcloud);
-        last += params_.pcl_throttle_;
-    }
-}
-
-void rrtNBV::RRTPlanner::insertPointcloudWithTfCamDown(const sensor_msgs::PointCloud2::ConstPtr& pointcloud)
-{
-    static double last = ros::Time::now().toSec();
-    if (last + params_.pcl_throttle_ < ros::Time::now().toSec()) {
-        rrtTree->insertPointcloudWithTf(pointcloud);
-        last += params_.pcl_throttle_;
-    }
 }
 
 bool rrtNBV::RRTPlanner::isReady()
@@ -710,14 +703,85 @@ bool rrtNBV::RRTPlanner::setParams()
         ROS_WARN("No option for output file name. Looking for %s. Default is true.",
                  (ns + "/output/file/name").c_str());
     }
-    
     params_.utility_method_ = 1;
     if (!ros::param::get(ns + "/utility/method", params_.utility_method_))
     {
         ROS_WARN("No option for utility  function. Looking for %s. Default is true.",
                  (ns + "/utility/method").c_str());
     }
-    
+    params_.treeType_ = 1;
+    if (!ros::param::get(ns + "/octomap/tree_type", params_.treeType_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 1.",
+                 (ns + "/octomap/tree_type").c_str());
+    }
+    params_.octomapSavePath_ = "~/map.bt";
+    if (!ros::param::get(ns + "/octomap/save_path", params_.octomapSavePath_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is ~/map.bt.",
+                 (ns + "/octomap/save_path").c_str());
+    }
+    params_.pointCloudTopic_ = "/semantic_pcl/semantic_pcl";
+    if (!ros::param::get(ns + "/octomap/pointcloud_topic", params_.pointCloudTopic_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is /semantic_pcl/semantic_pcl.",
+                 (ns + "/octomap/pointcloud_topic").c_str());
+    }
+    params_.worldFrameId_ = "world";
+    if (!ros::param::get(ns + "/octomap/world_frame_id", params_.worldFrameId_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is world.",
+                 (ns + "/octomap/world_frame_id").c_str());
+    }
+    params_.octomapResolution_ = 0.02;
+    if (!ros::param::get(ns + "/octomap/resolution", params_.octomapResolution_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.02",
+                 (ns + "/octomap/resolution").c_str());
+    }
+    params_.maxRange_ = 5.0;
+    if (!ros::param::get(ns + "/octomap/max_range", params_.maxRange_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 5.0",
+                 (ns + "/octomap/max_range").c_str());
+    }
+    params_.rayCastRange_ = 2.0;
+    if (!ros::param::get(ns + "/octomap/raycast_range", params_.rayCastRange_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 2.0",
+                 (ns + "/octomap/raycast_range").c_str());
+    }
+    params_.clampingThresMin_ = 0.12;
+    if (!ros::param::get(ns + "/octomap/clamping_thres_min", params_.clampingThresMin_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.12",
+                 (ns + "/octomap/clamping_thres_min").c_str());
+    }
+    params_.clampingThresMax_ = 0.97;
+    if (!ros::param::get(ns + "/octomap/clamping_thres_max", params_.clampingThresMax_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.97",
+                 (ns + "/octomap/clamping_thres_max").c_str());
+    }
+    params_.occupancyThres_ = 0.5;
+    if (!ros::param::get(ns + "/octomap/occupancy_thres", params_.occupancyThres_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.5",
+                 (ns + "/octomap/occupancy_thres").c_str());
+    }
+    params_.probHit_ = 0.7;
+    if (!ros::param::get(ns + "/octomap/prob_hit", params_.probHit_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.7",
+                 (ns + "/octomap/prob_hit").c_str());
+    }
+    params_.probMiss_ = 0.4;
+    if (!ros::param::get(ns + "/octomap/prob_miss", params_.probMiss_))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is 0.4",
+                 (ns + "/octomap/prob_miss").c_str());
+    }
+
     return ret;
 }
 

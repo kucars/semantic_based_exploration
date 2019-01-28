@@ -80,10 +80,9 @@ rrtNBV::RrtTree::RrtTree() : rrtNBV::TreeBase::TreeBase()
     }
 }
 
-rrtNBV::RrtTree::RrtTree(mesh::StlMesh * mesh, volumetric_mapping::OctomapManager * manager)
+rrtNBV::RrtTree::RrtTree(OctomapGeneratorBase *octomap_generator_)
 {
-    mesh_ = mesh;
-    manager_ = manager;
+    manager_ = octomap_generator_;
     kdTree_ = kd_create(3);
     iterationCount_ = 0;
     for (int i = 0; i < 4; i++)
@@ -163,43 +162,6 @@ void rrtNBV::RrtTree::setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianc
     // Update the inspected parts of the mesh using the current position
     if (ros::Time::now().toSec() - inspectionThrottleTime_[0] > params_.inspection_throttle_) {
         inspectionThrottleTime_[0] += params_.inspection_throttle_;
-        if (mesh_) {
-            geometry_msgs::Pose poseTransformed;
-            tf::poseTFToMsg(transform * poseTF, poseTransformed);
-            mesh_->setPeerPose(poseTransformed, 0);
-            mesh_->incorporateViewFromPoseMsg(poseTransformed, 0);
-            // Publish the mesh marker for visualization in rviz
-            visualization_msgs::Marker inspected;
-            inspected.ns = "meshInspected";
-            inspected.id = 0;
-            inspected.header.seq = inspected.id;
-            inspected.header.stamp = pose.header.stamp;
-            inspected.header.frame_id = params_.navigationFrame_;
-            inspected.type = visualization_msgs::Marker::TRIANGLE_LIST;
-            inspected.lifetime = ros::Duration(10);
-            inspected.action = visualization_msgs::Marker::ADD;
-            inspected.pose.position.x = 0.0;
-            inspected.pose.position.y = 0.0;
-            inspected.pose.position.z = 0.0;
-            inspected.pose.orientation.x = 0.0;
-            inspected.pose.orientation.y = 0.0;
-            inspected.pose.orientation.z = 0.0;
-            inspected.pose.orientation.w = 1.0;
-            inspected.scale.x = 1.0;
-            inspected.scale.y = 1.0;
-            inspected.scale.z = 1.0;
-            visualization_msgs::Marker uninspected = inspected;
-            uninspected.header.seq++;
-            uninspected.id++;
-            uninspected.ns = "meshUninspected";
-            mesh_->assembleMarkerArray(inspected, uninspected);
-            if (inspected.points.size() > 0) {
-                params_.inspectionPath_.publish(inspected);
-            }
-            if (uninspected.points.size() > 0) {
-                params_.inspectionPath_.publish(uninspected);
-            }
-        }
     }
 }
 
@@ -258,43 +220,6 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     // Update the inspected parts of the mesh using the current position
     if (ros::Time::now().toSec() - inspectionThrottleTime_[0] > params_.inspection_throttle_) {
         inspectionThrottleTime_[0] += params_.inspection_throttle_;
-        if (mesh_) {
-            geometry_msgs::Pose poseTransformed;
-            tf::poseTFToMsg(transform * poseTF, poseTransformed);
-            mesh_->setPeerPose(poseTransformed, 0);
-            mesh_->incorporateViewFromPoseMsg(poseTransformed, 0);
-            // Publish the mesh marker for visualization in rviz
-            visualization_msgs::Marker inspected;
-            inspected.ns = "meshInspected";
-            inspected.id = 0;
-            inspected.header.seq = inspected.id;
-            inspected.header.stamp = pose.header.stamp;
-            inspected.header.frame_id = params_.navigationFrame_;
-            inspected.type = visualization_msgs::Marker::TRIANGLE_LIST;
-            inspected.lifetime = ros::Duration(10);
-            inspected.action = visualization_msgs::Marker::ADD;
-            inspected.pose.position.x = 0.0;
-            inspected.pose.position.y = 0.0;
-            inspected.pose.position.z = 0.0;
-            inspected.pose.orientation.x = 0.0;
-            inspected.pose.orientation.y = 0.0;
-            inspected.pose.orientation.z = 0.0;
-            inspected.pose.orientation.w = 1.0;
-            inspected.scale.x = 1.0;
-            inspected.scale.y = 1.0;
-            inspected.scale.z = 1.0;
-            visualization_msgs::Marker uninspected = inspected;
-            uninspected.header.seq++;
-            uninspected.id++;
-            uninspected.ns = "meshUninspected";
-            mesh_->assembleMarkerArray(inspected, uninspected);
-            if (inspected.points.size() > 0) {
-                params_.inspectionPath_.publish(inspected);
-            }
-            if (uninspected.points.size() > 0) {
-                params_.inspectionPath_.publish(uninspected);
-            }
-        }
     }
 }
 
@@ -336,43 +261,6 @@ void rrtNBV::RrtTree::setStateFromOdometryMsg(const nav_msgs::Odometry& pose)
     // Update the inspected parts of the mesh using the current position
     if (ros::Time::now().toSec() - inspectionThrottleTime_[0] > params_.inspection_throttle_) {
         inspectionThrottleTime_[0] += params_.inspection_throttle_;
-        if (mesh_) {
-            geometry_msgs::Pose poseTransformed;
-            tf::poseTFToMsg(transform * poseTF, poseTransformed);
-            mesh_->setPeerPose(poseTransformed, 0);
-            mesh_->incorporateViewFromPoseMsg(poseTransformed, 0);
-            // Publish the mesh marker for visualization in rviz
-            visualization_msgs::Marker inspected;
-            inspected.ns = "meshInspected";
-            inspected.id = 0;
-            inspected.header.seq = inspected.id;
-            inspected.header.stamp = pose.header.stamp;
-            inspected.header.frame_id = params_.navigationFrame_;
-            inspected.type = visualization_msgs::Marker::TRIANGLE_LIST;
-            inspected.lifetime = ros::Duration(10);
-            inspected.action = visualization_msgs::Marker::ADD;
-            inspected.pose.position.x = 0.0;
-            inspected.pose.position.y = 0.0;
-            inspected.pose.position.z = 0.0;
-            inspected.pose.orientation.x = 0.0;
-            inspected.pose.orientation.y = 0.0;
-            inspected.pose.orientation.z = 0.0;
-            inspected.pose.orientation.w = 1.0;
-            inspected.scale.x = 1.0;
-            inspected.scale.y = 1.0;
-            inspected.scale.z = 1.0;
-            visualization_msgs::Marker uninspected = inspected;
-            uninspected.header.seq++;
-            uninspected.id++;
-            uninspected.ns = "meshUninspected";
-            mesh_->assembleMarkerArray(inspected, uninspected);
-            if (inspected.points.size() > 0) {
-                params_.inspectionPath_.publish(inspected);
-            }
-            if (uninspected.points.size() > 0) {
-                params_.inspectionPath_.publish(uninspected);
-            }
-        }
     }
 }
 
@@ -482,7 +370,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     Eigen::Vector3d  startPoint = origin ;
     Eigen::Vector3d  endPoint = direction + origin + direction.normalized() * params_.dOvershoot_;
 
-    volumetric_mapping::OctomapManager::CellStatus cellStatus;
+    VoxelStatus cellStatus;
     cellStatus = manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_,params_.boundingBox_);
     
     ROS_INFO("params_.boundingBox_ %f    %f    %f  ",params_.boundingBox_[0], params_.boundingBox_[1], params_.boundingBox_[2]);
@@ -501,9 +389,9 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
 //    publishNode(newNode);
 
-    if (cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree) // || cellStatus == volumetric_mapping::OctomapManager::CellStatus::kUnknown)
+    if (cellStatus == VoxelStatus::kFree) // || cellStatus == VoxelStatus::kUnknown)
     {
-        if(cellStatus == volumetric_mapping::OctomapManager::CellStatus::kFree)
+        if(cellStatus == VoxelStatus::kFree)
         {
             ROS_INFO("   - Ray is Free");
         }
@@ -718,7 +606,7 @@ void rrtNBV::RrtTree::initialize()
         newState[1] = origin[1] + direction[1];
         newState[2] = origin[2] + direction[2];
 
-        if(volumetric_mapping::OctomapManager::CellStatus::kFree  == manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_, params_.boundingBox_))
+        if(VoxelStatus::kFree  == manager_->getLineStatusBoundingBox(origin, direction + origin + direction.normalized() * params_.dOvershoot_, params_.boundingBox_))
         {
             // Create new node and insert into tree
             rrtNBV::Node * newNode = new rrtNBV::Node;
@@ -925,8 +813,6 @@ Eigen::Vector4d rrtNBV::RrtTree::getRootNode()
     return rootNode_->state_ ;
 }
 
-
-
 geometry_msgs::Pose rrtNBV::RrtTree::getBestEdgeDeep(std::string targetFrame)
 {
     if (!oneViewObjectFound)
@@ -1019,12 +905,12 @@ double rrtNBV::RrtTree::gainSemantic(StateVec state)
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
 
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                if (node == VoxelStatus::kOccupied) {
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
 
                         double s_gain = manager_->getCellIneterestGain(vec);
@@ -1104,20 +990,20 @@ double rrtNBV::RrtTree::gain(StateVec state)
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
-                            != this->manager_->getVisibility(origin, vec, false)) {
+                    if(VoxelStatus::kOccupied!= this->manager_->getVisibility(origin, vec, false))
+                    {
                         gain += params_.igUnmapped_;
                         // TODO: Add probabilistic gain
                         // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
                 }
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gain += params_.igOccupied_;
 
@@ -1127,7 +1013,7 @@ double rrtNBV::RrtTree::gain(StateVec state)
                 }
                 else {
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gain += params_.igFree_;
                         // TODO: Add probabilistic gain
@@ -1171,16 +1057,6 @@ double rrtNBV::RrtTree::gain(StateVec state)
 
     // Scale with volume
     gain *= pow(disc, 3.0);
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN ",gain);
     return gain;
 }
@@ -1260,12 +1136,12 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnknown +=1 ;
                         numOfUnknownVisibleVoxels++ ;
@@ -1273,10 +1149,10 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainOccupied += 0 ;
                         numOfOccupiedVisibleVoxels++;
@@ -1294,7 +1170,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainFree += 0 ;
                         numOfFreeVisibleVoxels++ ;
@@ -1332,16 +1208,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool & objectGainFound)
     // Scale with volume
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
+
     ROS_INFO("GAIN %f",gain);
     return gain;
 }
@@ -1422,12 +1289,12 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnknown +=1 ;
                         numOfUnknownVisibleVoxels++ ;
@@ -1435,10 +1302,10 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         // Since it is visible then for sure it has either a rear side (free or unknown)
                         // it should be used after knowning that the occupied voxel belongs to obj of interest.
@@ -1465,7 +1332,7 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainFree += 0 ;
                         numOfFreeVisibleVoxels++ ;
@@ -1504,16 +1371,7 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state,bool &objectGainFound)
     // Scale with volume
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
+
     ROS_INFO("GAIN %f",gain);
     return gain;
 }
@@ -1589,15 +1447,14 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
                     continue;
                 }
 
-
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnknown +=1 ;
                         numOfUnknownVisibleVoxels++ ;
@@ -1605,10 +1462,10 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         // Since it is visible then for sure it has either a rear side (free or unknown)
                         // it should be used after knowning that the occupied voxel belongs to obj of interest.
@@ -1638,7 +1495,7 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainFree += 0 ;
                         numOfFreeVisibleVoxels++ ;
@@ -1677,16 +1534,6 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool & objectGainFound)
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -1768,12 +1615,12 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnknown +=1 ;
                         numOfUnknownVisibleVoxels++ ;
@@ -1781,10 +1628,10 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         // Since it is visible then for sure it has either a rear side (free or unknown)
                         // it should be used after knowning that the occupied voxel belongs to obj of interest.
@@ -1814,7 +1661,7 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainFree += 0 ;
                         numOfFreeVisibleVoxels++ ;
@@ -1855,16 +1702,6 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool & objectGainFound)
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -1942,14 +1779,14 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 probability =  0.5 ; // becasue it is unknown/ ummapped voxel ;
 
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
 
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
@@ -1962,10 +1799,10 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
                         double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
@@ -1980,7 +1817,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
                         double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
@@ -2021,16 +1858,6 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -2091,9 +1918,9 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool & objectGainFo
 
 //                // Check cell status and add to the gain considering the corresponding factor.
 //                double probability;
-//                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+//                VoxelStatus node = manager_->getCellProbabilityPoint(
 //                            vec, &probability);
-//                if (volumetric_mapping::OctomapManager::CellStatus::kOccupied != this->manager_->getVisibility(origin, vec, false)) {
+//                if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false)) {
 //                    double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
 //                    double  entropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
 //                    double Iv = Pv * entropy ;
@@ -2205,14 +2032,14 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
 
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ ummapped voxel ;
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
 
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec) ;
@@ -2225,10 +2052,10 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnobservedVoxel+= 0 ;
                         numOfOccupiedVisibleVoxels++;
@@ -2240,7 +2067,7 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         gainUnobservedVoxel+= 0 ;
                         numOfFreeVisibleVoxels++ ;
@@ -2281,22 +2108,9 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool & objectGainF
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
-
-
-
 
 // Pure Entropy Ref[1] "A comparison of a volumetric information gain metrics for active 3D object reconstruction"
 double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
@@ -2372,13 +2186,13 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability = 1 ;
                 double voxelEntropy = 0 ;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         numOfUnknownVisibleVoxels++ ;
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
@@ -2388,10 +2202,10 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         gain+=voxelEntropy ;
@@ -2404,7 +2218,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         gain+=voxelEntropy ;
@@ -2430,16 +2244,6 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state)
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -2520,14 +2324,14 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability = 1 ;
                 double voxelEntropy = 0 ;
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
 
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         gain+=voxelEntropy ;
@@ -2537,10 +2341,10 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         gain+=voxelEntropy ;
@@ -2553,7 +2357,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         gain+=voxelEntropy ;
@@ -2581,16 +2385,6 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state)
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -2668,14 +2462,14 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool & objectGainFound)
                 double probability = 1 ;
                 //double voxelEntropy = 0 ;
                 // Check cell status and add to the gain considering the corresponding factor.
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 // Unknown
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         //voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         //gain+=voxelEntropy ;
@@ -2685,10 +2479,10 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool & objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
 
                         // int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
@@ -2709,7 +2503,7 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool & objectGainFound)
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         numOfFreeVisibleVoxels++ ;
 
@@ -2748,16 +2542,6 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool & objectGainFound)
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
@@ -2834,14 +2618,14 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool & obj
                 double probability = 1 ;
                 //double voxelEntropy = 0 ;
                 // Check cell status and add to the gain considering the corresponding factor.
-                volumetric_mapping::OctomapManager::CellStatus node = manager_->getCellProbabilityPoint(
+                VoxelStatus node = manager_->getCellProbabilityPoint(
                             vec, &probability);
                 // Unknown
-                if (node == volumetric_mapping::OctomapManager::CellStatus::kUnknown) {
+                if (node == VoxelStatus::kUnknown) {
                     probability =  0.5 ; // becasue it is unknown/ummapped voxel ;
                     numOfUnknownVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         //voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
                         //gain+=voxelEntropy ;
@@ -2851,10 +2635,10 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool & obj
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == volumetric_mapping::OctomapManager::CellStatus::kOccupied) {
+                else if (node == VoxelStatus::kOccupied) {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
 
                         // int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
@@ -2878,7 +2662,7 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool & obj
                 else {
                     numOfFreeVoxels++ ;
                     // Rayshooting to evaluate inspectability of cell
-                    if (volumetric_mapping::OctomapManager::CellStatus::kOccupied
+                    if (VoxelStatus::kOccupied
                             != this->manager_->getVisibility(origin, vec, false)) {
                         numOfFreeVisibleVoxels++ ;
 
@@ -2915,16 +2699,6 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool & obj
     gain *= pow(disc, 3.0);
     std::cout<<"gain after scaling " << gain  << std::endl << std::flush ;
 
-    // Check the gain added by inspectable surface
-    if (mesh_) {
-        // ROS_INFO("****gain added by inspectable surface*****");
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(state.x(), state.y(), state.z()));
-        tf::Quaternion quaternion;
-        quaternion.setEuler(0.0, 0.0, state[3]);
-        transform.setRotation(quaternion);
-        gain += params_.igArea_ * mesh_->computeInspectableArea(transform);
-    }
     ROS_INFO("GAIN %f ",gain);
     return gain;
 }
