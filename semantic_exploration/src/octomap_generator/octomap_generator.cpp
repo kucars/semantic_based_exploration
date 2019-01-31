@@ -6,6 +6,9 @@
 #include <cmath>
 #include <sstream>
 #include <cstring> // For std::memcpy
+#include <minkindr_conversions/kindr_msg.h>
+#include <minkindr_conversions/kindr_tf.h>
+#include <minkindr_conversions/kindr_xml.h>
 
 template<class CLOUD, class OCTREE>
 OctomapGenerator<CLOUD, OCTREE>::OctomapGenerator(): octomap_(0.05), max_range_(1.), raycast_range_(1.){}
@@ -324,6 +327,113 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatus(const Eigen::Vector3d
         }
     }
     return VoxelStatus::kFree;
+}
+
+template<class CLOUD, class OCTREE>
+bool OctomapGenerator<CLOUD, OCTREE>::lookupTransformation(const std::string& from_frame,
+                                       const std::string& to_frame,
+                                       const ros::Time& timestamp,
+                                       Transformation* transform)
+{
+    tf::StampedTransform tf_transform;
+    ros::Time time_to_lookup = timestamp;
+    // If this transform isn't possible at the time, then try to just look up
+    // the latest (this is to work with bag files and static transform publisher,
+    // etc).
+    if (!tf_listener_.canTransform(to_frame, from_frame, time_to_lookup))
+    {
+        return false;
+        /*
+        ros::Duration timestamp_age = ros::Time::now() - time_to_lookup;
+        if (timestamp_age < tf_listener_.getCacheLength())
+        {
+            time_to_lookup = ros::Time(0);
+            ROS_WARN("Using latest TF transform instead of timestamp match.");
+        }
+        else
+        {
+            ROS_ERROR("Requested transform time older than cache limit.");
+            return false;
+        }
+        */
+    }
+
+    try {
+        tf_listener_.lookupTransform(to_frame, from_frame, time_to_lookup,
+                                     tf_transform);
+    } catch (tf::TransformException& ex) {
+        ROS_ERROR_STREAM(
+                    "Error getting TF transform from sensor data: " << ex.what());
+        return false;
+    }
+
+    tf::transformTFToKindr(tf_transform, transform);
+    return true;
+}
+
+template<class CLOUD, class OCTREE>
+void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(const sensor_msgs::PointCloud2::ConstPtr &cloud_in, const std::string& to_frame)
+{
+
+    Transformation sensor_to_world;
+    if(lookupTransformation(cloud_in->header.frame_id, to_frame, cloud_in->header.stamp, &sensor_to_world))
+    {
+        pcl::PCLPointCloud2::Ptr cloud (new pcl::PCLPointCloud2 ());
+        pcl_conversions::toPCL(*cloud_in, *cloud);
+
+        // Voxel filter to down sample the point cloud
+        // Create the filtering object
+        pcl::PCLPointCloud2::Ptr cloud_filtered(new pcl::PCLPointCloud2 ());
+        // Perform voxel filter
+        float voxel_flt_size = static_cast<float>(octomap_.getResolution());
+        pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+        sor.setInputCloud (cloud);
+        sor.setLeafSize (voxel_flt_size, voxel_flt_size, voxel_flt_size);
+        sor.filter(*cloud_filtered);
+        // Convert to PCL pointcloud
+        CLOUD pcl_cloud;
+        pcl::fromPCLPointCloud2(*cloud_filtered, pcl_cloud);
+        pcl::transformPointCloud(pcl_cloud, pcl_cloud, sensor_to_world.getTransformationMatrix());
+        octomap::point3d origin(static_cast<float>(sensor_to_world.getPosition().x()),
+                                static_cast<float>(sensor_to_world.getPosition().y()),
+                                static_cast<float>(sensor_to_world.getPosition().z()));
+        // Point cloud to be inserted with ray casting
+        octomap::Pointcloud raycast_cloud;
+        int endpoint_count = 0; // total number of endpoints inserted
+        for(typename CLOUD::const_iterator it = pcl_cloud.begin(); it != pcl_cloud.end(); ++it)
+        {
+            // Check if the point is invalid
+            if (!std::isnan(it->x) && !std::isnan(it->y) && !std::isnan(it->z))
+            {
+                float dist = sqrt((it->x - origin.x())*(it->x - origin.x()) + (it->y - origin.y())*(it->y - origin.y()) + (it->z - origin.z())*(it->z - origin.z()));
+                // Check if the point is in max_range
+                if(dist <= max_range_)
+                {
+                    // Check if the point is in the ray casting range
+                    if(dist <= raycast_range_) // Add to a point cloud and do ray casting later all together
+                    {
+                        raycast_cloud.push_back(it->x, it->y, it->z);
+                    }
+                    else // otherwise update the occupancy of node and transfer the point to the raycast range
+                    {
+                        octomap::point3d direction = (octomap::point3d(it->x, it->y, it->z) - origin).normalized ();
+                        octomap::point3d new_end = origin + direction * (raycast_range_ + octomap_.getResolution()*2);
+                        raycast_cloud.push_back(new_end);
+                        octomap_.updateNode(it->x, it->y, it->z, true, false); // use lazy_eval, run updateInnerOccupancy() when done
+                    }
+                    endpoint_count++;
+                }
+            }
+        }
+        // Do ray casting for points in raycast_range_
+        if(raycast_cloud.size() > 0)
+            octomap_.insertPointCloud(raycast_cloud, origin, raycast_range_, false, true);  // use lazy_eval, run updateInnerOccupancy() when done, use discretize to downsample cloud
+        // Update colors and semantics, differs between templates
+        updateColorAndSemantics(&pcl_cloud);
+        // updates inner node occupancy and colors
+        if(endpoint_count > 0)
+            octomap_.updateInnerOccupancy();
+    }
 }
 
 template<class CLOUD, class OCTREE>

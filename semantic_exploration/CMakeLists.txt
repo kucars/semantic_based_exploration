@@ -54,6 +54,7 @@ add_service_files(
   GetPath.srv
   SelectPose.srv
   ExtractView.srv
+  GetDroneState.srv
 )
 
 generate_messages(
@@ -92,7 +93,6 @@ add_executable(rrt_planner  src/rrt_node.cpp
                             src/rrt_tree.cpp
                             src/rrt_planner.cpp
                             src/octomap_generator/octomap_generator.cpp
-                            #src/octomap_generator/octomap_generator_ros.cpp
                             src/semantic_octree/semantics_bayesian.cpp
                             src/semantic_octree/semantics_max.cpp
                             )
@@ -102,6 +102,15 @@ target_link_libraries(rrt_planner
 )
 
 add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )
+
+add_executable(octomap_generator
+ src/octomap_generator/octomap_generator.cpp
+ src/octomap_generator/octomap_generator_ros.cpp
+ src/semantic_octree/semantics_bayesian.cpp
+ src/semantic_octree/semantics_max.cpp
+)
+
+target_link_libraries(octomap_generator ${LINK_LIBS})
 
 add_executable(exploration_planner_node src/exploration_planner_node.cpp)
 add_dependencies(exploration_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

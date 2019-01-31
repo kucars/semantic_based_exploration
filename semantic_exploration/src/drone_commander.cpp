@@ -1,58 +1,4 @@
-/**
- * @file offb_node.cpp
- * @brief offboard example node, written with mavros version 0.14.2, px4 flight
- * stack and tested in Gazebo SITL
- */
-
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <mavros_msgs/CommandBool.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/State.h>
-
-#include <tf/tf.h>
-#include <tf/transform_listener.h>
-#include <tf/transform_broadcaster.h>
-#include <tf_conversions/tf_eigen.h>
-#include <tf/transform_datatypes.h>
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Bool.h>
-
-
-class DroneCommander
-{
-public:
-    DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle &_nhPrivate);
-    ~DroneCommander(){}
-    void goalCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    void poseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    void stateCallback(const mavros_msgs::State::ConstPtr& msg);
-    enum{INITIALIZATION,TAKE_OFF,ROTATING,READY_FOR_WAYPOINTS};
-private:
-    bool takeOff();
-    bool rotateOnTheSpot();
-    ros::NodeHandle nh;
-    ros::NodeHandle nhPrivate;
-    ros::Time goalLastReceived;
-    ros::Subscriber stateSub;
-    ros::Subscriber goalSub;
-    ros::Publisher  localPosePub;
-    ros::Subscriber localPoseSub;
-    ros::Publisher rotationDonePub ;
-    ros::ServiceClient armingClinet;
-    ros::ServiceClient setModeClient;
-    geometry_msgs::PoseStamped goalRecieved;
-    geometry_msgs::PoseStamped currentPose;
-    geometry_msgs::PoseStamped hoverPose;
-    geometry_msgs::PoseStamped commandPose;
-    mavros_msgs::SetMode offBoardSetMode;
-    mavros_msgs::CommandBool armingCommand;
-    ros::Time lastRequestTime;
-    geometry_msgs::PoseStamped currentGoal;
-    mavros_msgs::State currentState;
-    std_msgs::Bool rotationDone;
-    ros::Rate rate = 50;
-};
+#include "semantic_exploration/drone_commander.h"
 
 DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle &_nhPrivate):
     nh(_nh),
@@ -67,6 +13,27 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
     armingClinet      = nh.serviceClient<mavros_msgs::CommandBool>(droneName + "/mavros/cmd/arming");
     setModeClient     = nh.serviceClient<mavros_msgs::SetMode>(droneName + "/mavros/set_mode");
     rotationDonePub   = nh.advertise<std_msgs::Bool> (droneName + "/rotation/done", 10);
+    service           = nh.advertiseService("get_drone_state", &DroneCommander::droneStateService, this);
+    std_srvs::Empty srv;
+    bool unpaused = false;
+    uint i =0;
+    // Trying to unpause Gazebo for 10 seconds.
+    while(i <= 10 && !unpaused)
+    {
+      ROS_INFO("Wait for 1 second before trying to unpause Gazebo again.");
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      unpaused = ros::service::call("/gazebo/unpause_physics", srv);
+      ++i;
+    }
+    if(!unpaused)
+    {
+      ROS_FATAL("Could not wake up Gazebo.");
+      return;
+    }
+    else
+    {
+      ROS_INFO("Unpaused the Gazebo simulation.");
+    }
 
     // wait for FCU connection
     while(ros::ok() && currentState.connected)
@@ -83,7 +50,7 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
     armingCommand.request.value = true;
     lastRequestTime = ros::Time::now();
 
-    int droneCommanderState = DroneCommander::INITIALIZATION;
+    droneCommanderState = DroneCommander::INITIALIZATION;
     while(ros::ok())
     {
         switch(droneCommanderState)
@@ -127,30 +94,22 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
             break;
         case DroneCommander::READY_FOR_WAYPOINTS:
             /*
-             * Hover at the current position waiting for goals
-             * if no goal received in a certain time, then use the hovering pose as new goal
+             * if we receive a goal, then this will be our hovering pose
+             * otherwise, use the last one
              */
             ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
 
-            // No goals recieved, or timedout, so revert to hovering pose
-//            if(ros::Time::now() - goalLastReceived > ros::Duration(0.5))
-//            {
-//                rotationDone.data = true;
-//                rotationDonePub.publish(rotationDone);
-//                ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Hovering");
-//                // Don't change hover pose, just header info
-//                hoverPose.header.stamp = ros::Time::now();
-//                hoverPose.header.frame_id = "world";
-//                currentGoal = hoverPose;
-//            }
-//            else
+            if(isGoalReceived)
             {
                 ROS_INFO_THROTTLE(1.0,"READY_FOR_WAYPOINTS ---> Navigating to WayPoint");
-                goalRecieved.header.stamp = ros::Time::now();
-                goalRecieved.header.frame_id = "world";
-                currentGoal = goalRecieved;
-                // save current pose as the hovering pose for later usage
-                hoverPose = currentPose;
+                currentGoal = goalReceived;
+                currentGoal.header.stamp  = ros::Time::now();
+                currentGoal.header.frame_id = "world";
+                // save for when we don't get anymore
+                hoverPose = currentGoal;
+            }
+            else {
+                currentGoal = hoverPose;
             }
             ROS_INFO_THROTTLE(1.0,"   - Current Goal is: [%f %f %f]",currentGoal.pose.position.x,currentGoal.pose.position.y,currentGoal.pose.position.z);
             localPosePub.publish(currentGoal);
@@ -173,8 +132,9 @@ void DroneCommander::poseCallback(const geometry_msgs::PoseStamped::ConstPtr& ms
 
 void DroneCommander::goalCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-    goalLastReceived = ros::Time::now();
-    goalRecieved.pose = msg->pose;
+    goalLastReceived  = ros::Time::now();
+    goalReceived.pose = msg->pose;
+    isGoalReceived    = true;
 }
 
 bool DroneCommander::takeOff()
@@ -184,9 +144,10 @@ bool DroneCommander::takeOff()
     double takeOffAltitude = 1.0;
     double intermediateAltitude = 0;
     geometry_msgs::PoseStamped takeOffPose;
-    takeOffPose.pose.position.x = currentPose.pose.position.x;
-    takeOffPose.pose.position.y = currentPose.pose.position.y;
-    takeOffPose.pose.position.z = currentPose.pose.position.z + takeOffAltitude;
+    takeOffPose.pose.position.x  = currentPose.pose.position.x;
+    takeOffPose.pose.position.y  = currentPose.pose.position.y;
+    takeOffPose.pose.position.z  = currentPose.pose.position.z + takeOffAltitude;
+    takeOffPose.pose.orientation = currentPose.pose.orientation;
 
     double distance2HoverPose = 1000;
     while(distance2HoverPose > 0.2)
@@ -223,9 +184,14 @@ bool DroneCommander::rotateOnTheSpot()
     rotatingPose.pose.position.x = currentPose.pose.position.x;
     rotatingPose.pose.position.y = currentPose.pose.position.y;
     rotatingPose.pose.position.z = currentPose.pose.position.z;
+    tf::Quaternion quat(currentPose.pose.orientation.x,
+                        currentPose.pose.orientation.y,
+                        currentPose.pose.orientation.z,
+                        currentPose.pose.orientation.w);
+
     uint seqNum=0 ;
     double angleStep  = 0.025;
-    double angle = 0;
+    double angle = quat.getAngle();
     bool done = false;
     double deltaTime = 1.0;
     ros::Time lastTimeTurnTime = ros::Time::now();
@@ -234,7 +200,6 @@ bool DroneCommander::rotateOnTheSpot()
         if(ros::Time::now() - lastTimeTurnTime > ros::Duration(deltaTime))
         {
             ROS_INFO_THROTTLE(0.2,"Turning around");
-            tf::Quaternion quat            = tf::Quaternion(tf::Vector3(0.0, 0.0, 1.0), angle);
             commandPose.header.seq         = seqNum++;
             commandPose.header.stamp       = ros::Time::now();
             commandPose.header.frame_id    = "world";
@@ -248,6 +213,7 @@ bool DroneCommander::rotateOnTheSpot()
             ROS_INFO("   - Trying to  rotate to: [%f %f %f %f]",commandPose.pose.position.x,commandPose.pose.position.y,commandPose.pose.position.z,180*angle/M_PI);
             ROS_INFO("   - Current Pose      is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
             angle+=(angleStep*2.0*M_PI);
+            quat.setRPY(0,0,angle);
             if(angle>=2.0*M_PI)
                 done = true;
             lastTimeTurnTime = ros::Time::now();
@@ -256,6 +222,13 @@ bool DroneCommander::rotateOnTheSpot()
         ros::spinOnce();
         rate.sleep();
     }
+    return true;
+}
+
+bool DroneCommander::droneStateService(semantic_exploration::GetDroneState::Request& request, semantic_exploration::GetDroneState::Response& response)
+{
+    response.drone_state = static_cast<uint8_t>(droneCommanderState);
+    response.success     = true;
     return true;
 }
 

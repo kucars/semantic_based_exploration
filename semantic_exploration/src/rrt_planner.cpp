@@ -6,6 +6,8 @@
 
 #include <semantic_exploration/rrt_planner.h>
 #include <semantic_exploration/rrt_tree.h>
+#include <semantic_exploration/GetDroneState.h>
+
 #include <std_srvs/Empty.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <eigen3/Eigen/Dense>
@@ -34,7 +36,6 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     params_.sensor_pose_pub_     = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
-    
     posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
     posStampedClient_            = nh_.subscribe("/mavros/local_position/pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
     odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this); 
@@ -81,9 +82,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     octomap_generator_->setMaxRange(params_.maxRange_);
 
     fullmapPub_      = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
-    pointCloudSub_   = new message_filters::Subscriber<sensor_msgs::PointCloud2> (nh_, params_.pointCloudTopic_, 5);
-    tfPointCloudSub_ = new tf::MessageFilter<sensor_msgs::PointCloud2> (*pointCloudSub_, tfListener_, params_.worldFrameId_, 5);
-    tfPointCloudSub_->registerCallback(boost::bind(&rrtNBV::RRTPlanner::insertCloudCallback, this, _1));
+    pointcloud_sub_  = nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback,this);
 
     area_marker_ = explorationAreaInit();
     computeCameraFOV();
@@ -205,32 +204,29 @@ bool rrtNBV::RRTPlanner::toggleUseSemanticColor(std_srvs::Empty::Request& reques
 
 void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 {
+
+    semantic_exploration::GetDroneState droneStateReq;
+    ROS_INFO("Getting Drone State");
+
+    ros::service::waitForService("get_drone_state",ros::Duration(1.0));
+    if(ros::service::call("get_drone_state", droneStateReq))
+    {
+        ROS_INFO("Current Drone State is:%d",droneStateReq.response.drone_state);
+        // Don't map during takeoff
+        if(droneStateReq.response.drone_state == DroneCommander::TAKE_OFF)
+            return;
+    }
+    else {
+        return;
+    }
+
     ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
-    if (last + params_.pcl_throttle_ < ros::Time::now().toSec())
+    if(ros::Time::now().toSec() - last > params_.pcl_throttle_)
     {
         ROS_INFO_THROTTLE(1.0,"inserting point cloud into rrtTree");
         ros::Time  tic = ros::Time::now();
-
-        // Voxel filter to down sample the point cloud
-        // Create the filtering object
-        pcl::PCLPointCloud2::Ptr cloud (new pcl::PCLPointCloud2 ());
-        pcl_conversions::toPCL(*cloud_msg, *cloud);
-        // Get tf transform
-        tf::StampedTransform sensorToWorldTf;
-        try
-        {
-            tfListener_.lookupTransform(params_.worldFrameId_, cloud_msg->header.frame_id, cloud_msg->header.stamp, sensorToWorldTf);
-        }
-        catch(tf::TransformException& ex)
-        {
-            ROS_ERROR_STREAM( "Transform error of sensor data: " << ex.what() << ", quitting callback");
-            return;
-        }
-        // Transform coordinate
-        Eigen::Matrix4f sensorToWorld;
-        pcl_ros::transformAsMatrix(sensorToWorldTf, sensorToWorld);
-        octomap_generator_->insertPointCloud(cloud, sensorToWorld);
+        octomap_generator_->insertPointCloud(cloud_msg, params_.worldFrameId_);
         // Publish octomap
         map_msg_.header.frame_id = params_.worldFrameId_;
         map_msg_.header.stamp = cloud_msg->header.stamp;
@@ -241,7 +237,7 @@ void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::Con
 
         ros::Time  toc = ros::Time::now();
         ROS_INFO("PointCloud Insertion Took: %f", (toc-tic).toSec());
-        last += params_.pcl_throttle_;
+        last = ros::Time::now().toSec();
     }
 }
 

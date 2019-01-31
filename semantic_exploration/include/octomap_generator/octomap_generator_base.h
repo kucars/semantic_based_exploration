@@ -3,6 +3,12 @@
 
 #include <pcl/PCLPointCloud2.h>
 #include <octomap/octomap.h>
+#include <ros/time.h>
+#include <kindr/minimal/quat-transformation.h>
+#include <sensor_msgs/PointCloud2.h>
+
+typedef kindr::minimal::QuatTransformation Transformation;
+
 /**
  * Interface for octomap_generator for polymorphism
  * \author Xuan Zhang
@@ -59,6 +65,8 @@ class OctomapGeneratorBase
      */
     virtual void insertPointCloud(const pcl::PCLPointCloud2::Ptr& cloud, const Eigen::Matrix4f& sensorToWorld) = 0;
 
+    virtual void insertPointCloud(const sensor_msgs::PointCloud2::ConstPtr& cloud, const std::string &to_frame) = 0;
+
     /// Set whether use semantic color for serialization
     virtual void setUseSemanticColor(bool use) = 0;
 
@@ -101,6 +109,11 @@ class OctomapGeneratorBase
     virtual int getCellIneterestCellType(double x, double y, double z) const = 0;
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point) const = 0;
+
+    virtual bool lookupTransformation(const std::string& from_frame,
+                                           const std::string& to_frame,
+                                           const ros::Time& timestamp,
+                                           Transformation* transform) = 0;
 };
 
 #endif//OCTOMAP_GENERATOR_BASE

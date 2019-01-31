@@ -8,6 +8,11 @@
 #include <semantics_octree/semantics_max.h>
 #include <semantics_point_type/semantics_point_type.h>
 #include <octomap_generator/octomap_generator_base.h>
+#include <tf/transform_listener.h>
+#include <tf/message_filter.h>
+#include <pcl_ros/transforms.h>
+#include <pcl_ros/impl/transforms.hpp>
+#include <pcl/conversions.h>
 
 #define COLOR_OCTREE 0
 #define SEMANTICS_OCTREE_MAX 1
@@ -82,6 +87,8 @@ class OctomapGenerator: public OctomapGeneratorBase
      */
     virtual void insertPointCloud(const pcl::PCLPointCloud2::Ptr& cloud, const Eigen::Matrix4f& sensorToWorld);
 
+    virtual void insertPointCloud(const sensor_msgs::PointCloud2::ConstPtr &cloud, const std::string &to_frame);
+
     virtual void setUseSemanticColor(bool use);
 
     virtual bool isUseSemanticColor();
@@ -125,11 +132,16 @@ class OctomapGenerator: public OctomapGeneratorBase
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point) const;
 
+    virtual bool lookupTransformation(const std::string& from_frame,
+                                           const std::string& to_frame,
+                                           const ros::Time& timestamp,
+                                           Transformation* transform);
+
   protected:
     OCTREE octomap_; ///<Templated octree instance
     float max_range_; ///<Max range for points to be inserted into octomap
     float raycast_range_; ///<Max range for points to perform raycasting to free unoccupied space
     void updateColorAndSemantics(CLOUD* pcl_cloud);
-
+    tf::TransformListener tf_listener_;
 };
 #endif//OCTOMAP_GENERATOR

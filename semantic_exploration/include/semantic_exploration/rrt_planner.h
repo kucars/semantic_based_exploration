@@ -28,6 +28,7 @@
 #include <pcl_ros/impl/transforms.hpp>
 #include <octomap_msgs/conversions.h>
 #include <pcl/conversions.h>
+#include "semantic_exploration/drone_commander.h"
 
 namespace rrtNBV {
 
@@ -58,9 +59,7 @@ protected:
     ros::ServiceServer toggleSemanticService;  ///<ROS service to toggle semantic color display
     bool toggleUseSemanticColor(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response); ///<Function to toggle whether write semantic color or rgb color as when serializing octree
     ros::Publisher fullmapPub_; ///<ROS publisher for octomap message
-    message_filters::Subscriber<sensor_msgs::PointCloud2>* pointCloudSub_; ///<ROS subscriber for pointcloud message
-    tf::MessageFilter<sensor_msgs::PointCloud2>* tfPointCloudSub_; ///<ROS tf message filter to sychronize the tf and pointcloud messages
-    tf::TransformListener tfListener_; ///<Listener for the transform between the camera and the world coordinates
+    ros::Subscriber pointcloud_sub_;
 
     OctomapGeneratorBase* octomap_generator_;
     rrtNBV::RrtTree *rrtTree;

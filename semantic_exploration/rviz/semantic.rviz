@@ -4,7 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
+        - /ColorOccupancyGrid1
       Splitter Ratio: 0.5
     Tree Height: 672
   - Class: rviz/Selection
@@ -62,7 +64,7 @@ Visualization Manager:
       Marker Topic: /rrt_planner/octomap_occupied
       Name: octomap_occupied
       Namespaces:
-        map: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -70,7 +72,7 @@ Visualization Manager:
       Marker Topic: /rrt_planner/octomap_free
       Name: octomap_free
       Namespaces:
-        map: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -219,7 +221,7 @@ Visualization Manager:
       Marker Topic: /explorationarea
       Name: explorationarea
       Namespaces:
-        workspace: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -267,6 +269,18 @@ Visualization Manager:
       Topic: /root_node
       Unreliable: false
       Value: true
+    - Class: octomap_rviz_plugin/ColorOccupancyGrid
+      Enabled: true
+      Max. Height Display: inf
+      Max. Octree Depth: 16
+      Min. Height Display: -inf
+      Name: ColorOccupancyGrid
+      Octomap Topic: /octomap_full
+      Queue Size: 5
+      Value: true
+      Voxel Alpha: 1
+      Voxel Coloring: Cell Color
+      Voxel Rendering: Occupied Voxels
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -292,25 +306,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.79100799560547
+      Distance: 16.74558448791504
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.2501944303512573
-        Y: 1.6867769956588745
-        Z: -1.9950969219207764
+        X: -0.251090943813324
+        Y: 0.9182885885238647
+        Z: -0.6703758835792542
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9597960710525513
+      Pitch: 0.8997966051101685
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.071752071380615
+      Yaw: 3.5004124641418457
     Saved: ~
 Window Geometry:
   "&Displays":
@@ -328,5 +342,5 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Width: 1855
-  X: 29
+  X: 25
   Y: 0
