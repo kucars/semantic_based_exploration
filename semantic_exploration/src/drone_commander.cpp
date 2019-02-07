@@ -150,14 +150,25 @@ bool DroneCommander::takeOff()
     takeOffPose.pose.orientation = currentPose.pose.orientation;
 
     double distance2HoverPose = 1000;
-    while(distance2HoverPose > 0.2)
+    double roll, pitch, yaw;
+    while(distance2HoverPose > 0.1)
     {
         distance2HoverPose =  fabs(currentPose.pose.position.x - takeOffPose.pose.position.x) +
                 fabs(currentPose.pose.position.y - takeOffPose.pose.position.y) +
                 fabs(currentPose.pose.position.z - takeOffPose.pose.position.z);
+        tf::Quaternion quat1(takeOffPose.pose.orientation.x,
+                            takeOffPose.pose.orientation.y,
+                            takeOffPose.pose.orientation.z,
+                            takeOffPose.pose.orientation.w);
+        tf::Quaternion quat2(currentPose.pose.orientation.x,
+                            currentPose.pose.orientation.y,
+                            currentPose.pose.orientation.z,
+                            currentPose.pose.orientation.w);
         ROS_INFO_THROTTLE(1.0,"Taking off");
-        ROS_INFO_THROTTLE(1.0,"   - Trying to  reach: [%f %f %f]",takeOffPose.pose.position.x,takeOffPose.pose.position.y,takeOffPose.pose.position.z);
-        ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
+        tf::Matrix3x3(quat1).getRPY(roll, pitch, yaw);
+        ROS_INFO_THROTTLE(1.0,"   - Trying to  reach: [%f %f %f %f]",takeOffPose.pose.position.x,takeOffPose.pose.position.y,takeOffPose.pose.position.z,yaw*180.0/M_PI);
+        tf::Matrix3x3(quat2).getRPY(roll, pitch, yaw);
+        ROS_INFO_THROTTLE(1.0,"   - Current Pose  is: [%f %f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z,yaw*180.0/M_PI);
         ROS_INFO_THROTTLE(1.0,"   - Distance to pose: [%f]",distance2HoverPose);
         if(fabs(currentPose.pose.position.z - takeOffPose.pose.position.z)>0.2)
         {
@@ -165,8 +176,13 @@ bool DroneCommander::takeOff()
         }
         else
             intermediateAltitude = takeOffPose.pose.position.z;
-        commandPose = takeOffPose;
-        commandPose.pose.position.z = intermediateAltitude;
+        commandPose.pose.orientation.x = takeOffPose.pose.orientation.x;
+        commandPose.pose.orientation.y = takeOffPose.pose.orientation.y;
+        commandPose.pose.orientation.z = takeOffPose.pose.orientation.z;
+        commandPose.pose.orientation.w = takeOffPose.pose.orientation.w;
+        commandPose.pose.position.x    = takeOffPose.pose.position.x;
+        commandPose.pose.position.y    = takeOffPose.pose.position.y;
+        commandPose.pose.position.z    = intermediateAltitude;
         commandPose.header.seq = seqNum++ ;
         commandPose.header.stamp = ros::Time::now();
         commandPose.header.frame_id = "world";
@@ -179,25 +195,29 @@ bool DroneCommander::takeOff()
 
 bool DroneCommander::rotateOnTheSpot()
 {
-    ROS_INFO("Starting the planner: Performing initialization motion -- rotation");
+    ROS_INFO("Performing initialization motion -- rotation");
     geometry_msgs::PoseStamped rotatingPose;
-    rotatingPose.pose.position.x = currentPose.pose.position.x;
-    rotatingPose.pose.position.y = currentPose.pose.position.y;
-    rotatingPose.pose.position.z = currentPose.pose.position.z;
+    rotatingPose.pose.position.x  = currentPose.pose.position.x;
+    rotatingPose.pose.position.y  = currentPose.pose.position.y;
+    rotatingPose.pose.position.z  = currentPose.pose.position.z;
+    rotatingPose.pose.orientation = currentPose.pose.orientation;
     tf::Quaternion quat(currentPose.pose.orientation.x,
                         currentPose.pose.orientation.y,
                         currentPose.pose.orientation.z,
                         currentPose.pose.orientation.w);
 
+    double roll, pitch, yaw;
+    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
     uint seqNum=0 ;
-    double angleStep  = 0.025;
-    double angle = quat.getAngle();
-    bool done = false;
+    double yawStep  = 10*M_PI/180.0; // in degrees to rad
+    double accumulatedSteps = 0;
+    ROS_INFO("Initial Yaw:%f",yaw*180.0/M_PI);
+    bool done = false, firstIteration=true;
     double deltaTime = 1.0;
     ros::Time lastTimeTurnTime = ros::Time::now();
     while(!done)
     {
-        if(ros::Time::now() - lastTimeTurnTime > ros::Duration(deltaTime))
+        if( (ros::Time::now() - lastTimeTurnTime > ros::Duration(deltaTime)) || firstIteration)
         {
             ROS_INFO_THROTTLE(0.2,"Turning around");
             commandPose.header.seq         = seqNum++;
@@ -206,17 +226,23 @@ bool DroneCommander::rotateOnTheSpot()
             commandPose.pose.position.x    = rotatingPose.pose.position.x;
             commandPose.pose.position.y    = rotatingPose.pose.position.y;
             commandPose.pose.position.z    = rotatingPose.pose.position.z;
-            commandPose.pose.orientation.x = quat[0] ;
-            commandPose.pose.orientation.y = quat[1] ;
-            commandPose.pose.orientation.z = quat[2] ;
-            commandPose.pose.orientation.w = quat[3] ;
-            ROS_INFO("   - Trying to  rotate to: [%f %f %f %f]",commandPose.pose.position.x,commandPose.pose.position.y,commandPose.pose.position.z,180*angle/M_PI);
+            tf::Quaternion qt = tf::createQuaternionFromRPY(0,0,yaw);
+            commandPose.pose.orientation.x = qt.x();
+            commandPose.pose.orientation.y = qt.y();
+            commandPose.pose.orientation.z = qt.z();
+            commandPose.pose.orientation.w = qt.w();
+
+            ROS_INFO("   - Trying to  rotate to: [%f %f %f %f]",commandPose.pose.position.x,commandPose.pose.position.y,commandPose.pose.position.z,180.0*yaw/M_PI);
             ROS_INFO("   - Current Pose      is: [%f %f %f]",currentPose.pose.position.x,currentPose.pose.position.y,currentPose.pose.position.z);
-            angle+=(angleStep*2.0*M_PI);
-            quat.setRPY(0,0,angle);
-            if(angle>=2.0*M_PI)
+
+            accumulatedSteps+=yawStep;
+            yaw+=yawStep;
+
+            if(accumulatedSteps>=2.0*M_PI)
                 done = true;
+
             lastTimeTurnTime = ros::Time::now();
+            firstIteration = false;
         }
         localPosePub.publish(commandPose);
         ros::spinOnce();

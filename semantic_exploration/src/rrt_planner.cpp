@@ -207,6 +207,7 @@ void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::Con
 
     semantic_exploration::GetDroneState droneStateReq;
     ROS_INFO("Getting Drone State");
+    return;
 
     ros::service::waitForService("get_drone_state",ros::Duration(1.0));
     if(ros::service::call("get_drone_state", droneStateReq))
