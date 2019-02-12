@@ -72,6 +72,7 @@ struct Params
   double log_throttle_;
   double pcl_throttle_;
   double inspection_throttle_;
+  bool use_gazebo_ground_truth_;
 
   std::string output_file_name_ ;
   int utility_method_ ;

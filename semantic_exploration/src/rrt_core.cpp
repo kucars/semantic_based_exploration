@@ -273,7 +273,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         ROS_WARN("No option for utility  function. Looking for /utility/method. Default is true.");
     }
 
-    ROS_INFO("Utility Method %d " , x) ;
+    ROS_INFO("Utility Method %d " , x);
     //int m = utilityFunction(x) ;
     utilityFunction = (UtilityFunctionType)x;
 
@@ -295,9 +295,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     //std::srand(time(NULL));
     while (!solutionFound)
     {
-
         ROS_INFO_THROTTLE(1.0,"Finding Root");
-
         for (int i = 0; i < 3; i++)
         {
             newState[i] = 2.0 * radius * (((double) rand()) / ((double) RAND_MAX) - 0.5);
@@ -343,24 +341,15 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     rrtNBV::Node * newParent = (rrtNBV::Node*) kd_res_item_data(nearest);
     kd_res_free(nearest);
     
-//    // I added this line to make the depth of the tree only 1
-//    if(newParent != rootNode_)
-//    {
-//        ROS_INFO("HAA");
-//        return false;
-//    }
-
     // Check for collision of new connection plus some overshoot distance.
     Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
-    Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
-            newState[2] - origin[2]);
+    Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1], newState[2] - origin[2]);
     
     if (direction.norm() > params_.extensionRange_)
     {
         direction = params_.extensionRange_ * direction.normalized();
     }
-    
-    
+        
     newState[0] = origin[0] + direction[0];
     newState[1] = origin[1] + direction[1];
     newState[2] = origin[2] + direction[2];
@@ -377,17 +366,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     ROS_INFO("params_.dOvershoot_ %f     ",params_.dOvershoot_);
     ROS_INFO("Direction + origin + direction.normalized() * params_.dOvershoot_ x%f,y:%f,z:%f",endPoint[0],endPoint[1],endPoint[2]);
     ROS_INFO("New State x%f,y:%f,z:%f",newState[0],newState[1],newState[2]);
-
-//    // Sample the new orientation
-//    newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5);
-//    // Create new node and insert into tree
-//    rrtNBV::Node * newNode = new rrtNBV::Node;
-//    newNode->state_ = newState;
-//    newNode->parent_ = newParent;
-//    newNode->distance_ = newParent->distance_ + direction.norm();
-//    newParent->children_.push_back(newNode);
-
-//    publishNode(newNode);
 
     if (cellStatus == VoxelStatus::kFree) // || cellStatus == VoxelStatus::kUnknown)
     {
@@ -417,7 +395,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         case VOLUMETRIC: // RRT
             ROS_INFO("Volumetric") ;
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-            break ;
+            break;
         case REAR_SIDE_VOXEL:
             ROS_INFO("Iterate Rear side VOXEL") ;
             newNode->gain_ = newParent->gain_ + gain_rsv(newNode->state_,objectGainFound) ;
@@ -430,37 +408,34 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         case REAR_SIDE_ENTROPY:
             ROS_INFO("rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rse(newNode->state_,objectGainFound) ;
-            break ;
-
+            break;
         case SEMANTIC_REAR_SIDE_ENTROPY:
             ROS_INFO("Semantic rear side ENTROPY") ;
             newNode->gain_ = newParent->gain_ + gain_rses(newNode->state_,objectGainFound) ;
-            break ;
+            break;
         case PURE_ENTROPY:
              newNode->gain_ = newParent->gain_ + gain_pure_entropy(newNode->state_) ;
             break;
-
         case AVERAGE_ENTROPY:
              newNode->gain_ = newParent->gain_ + gain_avg_entropy(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-            break ;
+            break;
         case OCCLUSION_AWARE:
             newNode->gain_ = newParent->gain_ + gain_occlusion_aware(newNode->state_,objectGainFound) ;
             break;
         case UNOBSERVED_VOXEL:
             newNode->gain_ = newParent->gain_ + gain_unobserved_voxel(newNode->state_,objectGainFound) ;
-            break ;
+            break;
         case SEMANTIC_VISIBLE_VOXEL:
             ROS_INFO("Semantic Visible Voxels") ;
             newNode->gain_ = newParent->gain_ + gain_svv(newNode->state_,objectGainFound) ;
-            break ;
+            break;
         case SEMANTIC_OCCLUSION_AWARE:
             ROS_INFO("Semantic Occlusion aware  Visible Voxels") ;
             newNode->gain_ = newParent->gain_ + gain_semantic_occlusion_aware(newNode->state_,objectGainFound) ;
-            break ;
-        default :
+            break;
+        default:
             // #count number of unknonw * visible voxels in FOV
             newNode->gain_ = newParent->gain_ + gain(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-
         }
 
         // newNode->gain_ = newParent->gain_ + gainSemantic(newNode->state_) ; //* exp(-params_.degressiveCoeff_ * newNode->distance_);
@@ -937,8 +912,7 @@ double rrtNBV::RrtTree::gainSemantic(StateVec state)
 // volumetric information using rrt package
 double rrtNBV::RrtTree::gain(StateVec state)
 {
-    //ROS_INFO("GAIN");
-    
+    ROS_INFO("Volumetric GAIN");
     // This function computes the gain
     double gain = 0.0;
     double gainUnknown = 0.0;
@@ -962,6 +936,8 @@ double rrtNBV::RrtTree::gain(StateVec state)
                 if (dir.transpose().dot(dir) > rangeSq) {
                     continue;
                 }
+                ROS_INFO(" Resolution is:%f vec[0]:%f vec[1]:%f vec[2]:%f gain Range:%f",disc, vec[0],vec[1],vec[2],params_.gainRange_);
+                ROS_INFO("   MinX_:%f minY_:%f minZ_:%f maxX_:%f maxY_:%f maxZ_:%f",params_.minX_,params_.minY_,params_.minZ_,params_.maxX_,params_.maxY_,params_.maxZ_);
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN = params_

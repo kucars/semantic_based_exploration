@@ -218,7 +218,7 @@ double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(const Eigen::Vec
         if (key != voxel_to_test_key) {
             octomap::OcTreeNode* node = octomap_.search(key);
 
-            if (node == NULL)
+            if (node == nullptr)
                 probability = 0.5;
             else
                 probability = node->getOccupancy();
@@ -246,7 +246,7 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getCellProbabilityPoint(
         const Eigen::Vector3d& point, double* probability) const
 {
     octomap::OcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
-    if (node == NULL) {
+    if (node == nullptr) {
         if (probability) {
             *probability = -1.0;
         }
@@ -285,7 +285,7 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getVisibility(const Eigen::Vector3d
     for (octomap::OcTreeKey key : key_ray) {
         if (key != voxel_to_test_key) {
             octomap::OcTreeNode* node = octomap_.search(key);
-            if (node == NULL) {
+            if (node == nullptr) {
                 if (stop_at_unknown_cell) {
                     return VoxelStatus::kUnknown;
                 }
@@ -312,7 +312,7 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatus(const Eigen::Vector3d
     // Now check if there are any unknown or occupied nodes in the ray.
     for (octomap::OcTreeKey key : key_ray) {
         octomap::OcTreeNode* node = octomap_.search(key);
-        if (node == NULL)
+        if (node == nullptr)
         {
             if(true)
             {
@@ -433,6 +433,9 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(const sensor_msgs::PointC
         // updates inner node occupancy and colors
         if(endpoint_count > 0)
             octomap_.updateInnerOccupancy();
+    }
+    else {
+        ROS_INFO("Failed to find transformation from %s to %s",cloud_in->header.frame_id.c_str(), to_frame.c_str());
     }
 }
 

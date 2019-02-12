@@ -6,6 +6,8 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
 {
     std::string droneName = ros::this_node::getNamespace();
     std::cout<<"Drone Namespace is:"<<droneName << std::endl;
+    droneCommanderState = DroneCommander::INITIALIZATION;
+
     stateSub          = nh.subscribe<mavros_msgs::State>(droneName + "/mavros/state", 10, &DroneCommander::stateCallback,this);
     localPoseSub      = nh.subscribe<geometry_msgs::PoseStamped>(droneName + "/mavros/local_position/pose", 10, &DroneCommander::poseCallback,this);
     goalSub           = nh.subscribe<geometry_msgs::PoseStamped>(droneName + "/semantic_exploration_viewpoint", 100,&DroneCommander::goalCallback,this);
@@ -50,7 +52,6 @@ DroneCommander::DroneCommander(const ros::NodeHandle &_nh, const ros::NodeHandle
     armingCommand.request.value = true;
     lastRequestTime = ros::Time::now();
 
-    droneCommanderState = DroneCommander::INITIALIZATION;
     while(ros::ok())
     {
         switch(droneCommanderState)

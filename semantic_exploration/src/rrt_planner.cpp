@@ -26,6 +26,11 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     : nh_(nh),
       nh_private_(nh_private)
 {
+    if (!setParams())
+    {
+        ROS_ERROR("Could not start the planner. Parameters missing!");
+    }
+
     // Set up the topics and services
     params_.inspectionPath_   	 = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_     = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
@@ -36,20 +41,23 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle &nh, const ros::NodeHandle 
     params_.sensor_pose_pub_     = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_           	 = nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
-    posClient_  	         = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
-    posStampedClient_            = nh_.subscribe("/mavros/local_position/pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
-    odomClient_                	 = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this); 
+
+    // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
+    if(params_.use_gazebo_ground_truth_)
+    {
+        odomClient_  = nh_.subscribe("odometry", 10, &rrtNBV::RRTPlanner::odomCallback, this);
+    }
+    else
+    {
+        posStampedClient_  = nh_.subscribe("/mavros/local_position/pose",10, &rrtNBV::RRTPlanner::posStampedCallback, this);
+        posClient_  	   = nh_.subscribe("pose",10, &rrtNBV::RRTPlanner::posCallback, this);
+    }
 
     traveled_distance = 0;
     information_gain  = 0;
-    FirstPoseCalled   = true;
+    firstPoseCalled   = true;
     iteration_num     = 0;
     accumulativeGain  = 0;
-
-    if (!setParams())
-    {
-        ROS_ERROR("Could not start the planner. Parameters missing!");
-    }
 
     // Initiate octree
     if(params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN || params_.treeType_ == SEMANTICS_OCTREE_MAX)
@@ -156,7 +164,7 @@ void rrtNBV::RRTPlanner::setupLog()
                 + std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) + "_"
                 + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) + "_"
                 + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
-        int x = system(("mkdir -p " + logFilePathName_).c_str());
+        system(("mkdir -p " + logFilePathName_).c_str());
         logFilePathName_ += "/";
         file_path_.open((logFilePathName_ + params_.output_file_name_).c_str(), std::ios::out);
         file_path_ <<  "iteration_num"              << "," <<
@@ -204,23 +212,25 @@ bool rrtNBV::RRTPlanner::toggleUseSemanticColor(std_srvs::Empty::Request& reques
 
 void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg)
 {
-
+    /*
+     * Here we can restrict cloud insertion to a certain drone state
+     * /
     semantic_exploration::GetDroneState droneStateReq;
     ROS_INFO("Getting Drone State");
-    return;
 
     ros::service::waitForService("get_drone_state",ros::Duration(1.0));
     if(ros::service::call("get_drone_state", droneStateReq))
     {
         ROS_INFO("Current Drone State is:%d",droneStateReq.response.drone_state);
         // Don't map during takeoff
-        if(droneStateReq.response.drone_state == DroneCommander::TAKE_OFF)
+        if(droneStateReq.response.drone_state == DroneCommander::TAKE_OFF ||
+           droneStateReq.response.drone_state == DroneCommander::INITIALIZATION)
             return;
     }
     else {
         return;
     }
-
+    */
     ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
     if(ros::Time::now().toSec() - last > params_.pcl_throttle_)
@@ -275,7 +285,7 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
 
 bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request& req, semantic_exploration::GetPath::Response& res)
 {
-    ROS_INFO("called the planner");
+    ROS_INFO("########### New Planning Iteration ###########");
     ros::Time computationTime = ros::Time::now();
 
     // Check that planner is ready to compute path.
@@ -299,7 +309,6 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         return true;
     }
     
-    ROS_INFO("###########Clear Path###############");
     res.path.clear();
     
     // Clear old tree and reinitialize.
@@ -307,12 +316,11 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     rrtTree->initialize();
     
     ROS_INFO("Tree Initilization called");
-    // Iterate the tree construction method.
+
     int loopCount = 0;
     int k = 1 ;
-
-    int failedIteration =0 ;
-    int succesfulIteration =0 ;
+    int failedIteration = 0 ;
+    int succesfulIteration = 0 ;
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
@@ -468,10 +476,9 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 
 void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& pose)
 {
-    // ROS_INFO ("Traveled Distance %f " , traveled_distance) ;
-    if (FirstPoseCalled)
+    if (firstPoseCalled)
     {
-        FirstPoseCalled = false ;
+        firstPoseCalled = false ;
         prePose = pose.pose ;
         return ;
     }
@@ -479,7 +486,6 @@ void rrtNBV::RRTPlanner::posStampedCallback(const geometry_msgs::PoseStamped& po
     {
         traveled_distance+=calculateDistance(prePose,pose.pose);
         prePose = pose.pose ;
-        //ROS_INFO ("Traveled Distance %f" , traveled_distance) ;
     }
 
     rrtTree->setStateFromPoseStampedMsg(pose);
@@ -496,6 +502,17 @@ void rrtNBV::RRTPlanner::posCallback(const geometry_msgs::PoseWithCovarianceStam
 
 void rrtNBV::RRTPlanner::odomCallback(const nav_msgs::Odometry& pose)
 {
+    if (firstPoseCalled)
+    {
+        firstPoseCalled = false ;
+        prePose = pose.pose.pose ;
+        return ;
+    }
+    else
+    {
+        traveled_distance+=calculateDistance(prePose,pose.pose.pose);
+        prePose = pose.pose.pose ;
+    }
     rrtTree->setStateFromOdometryMsg(pose);
     // Planner is now ready to plan.
     ready_ = true;
@@ -541,6 +558,11 @@ bool rrtNBV::RRTPlanner::setParams()
     if (!ros::param::get(ns + "/system/camera/vertical", params_.camVertical_)) {
         ROS_WARN("No camera vertical opening specified. Looking for %s. Default is 60deg.",
                  (ns + "/system/camera/vertical").c_str());
+    }
+    params_.use_gazebo_ground_truth_ = false;
+    if (!ros::param::get(ns + "/system/localization/use_gazebo_ground_truth", params_.use_gazebo_ground_truth_)) {
+        ROS_WARN("using localization ground truth is not specified in the parameters while Looking for %s. Default is false",
+                    (ns + "/system/localization/use_gazebo_ground_truth").c_str());
     }
     if(params_.camPitch_.size() != params_.camHorizontal_.size() ||params_.camPitch_.size() != params_.camVertical_.size() ){
         ROS_WARN("Specified camera fields of view unclear: Not all parameter vectors have same length! Setting to default.");
@@ -730,49 +752,49 @@ bool rrtNBV::RRTPlanner::setParams()
         ROS_WARN("No option for function. Looking for %s. Default is world.",
                  (ns + "/octomap/world_frame_id").c_str());
     }
-    params_.octomapResolution_ = 0.02;
+    params_.octomapResolution_ = static_cast<float>(0.02);
     if (!ros::param::get(ns + "/octomap/resolution", params_.octomapResolution_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.02",
                  (ns + "/octomap/resolution").c_str());
     }
-    params_.maxRange_ = 5.0;
+    params_.maxRange_ = 5.0f;
     if (!ros::param::get(ns + "/octomap/max_range", params_.maxRange_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 5.0",
                  (ns + "/octomap/max_range").c_str());
     }
-    params_.rayCastRange_ = 2.0;
+    params_.rayCastRange_ = 2.0f;
     if (!ros::param::get(ns + "/octomap/raycast_range", params_.rayCastRange_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 2.0",
                  (ns + "/octomap/raycast_range").c_str());
     }
-    params_.clampingThresMin_ = 0.12;
+    params_.clampingThresMin_ = 0.12f;
     if (!ros::param::get(ns + "/octomap/clamping_thres_min", params_.clampingThresMin_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.12",
                  (ns + "/octomap/clamping_thres_min").c_str());
     }
-    params_.clampingThresMax_ = 0.97;
+    params_.clampingThresMax_ = 0.97f;
     if (!ros::param::get(ns + "/octomap/clamping_thres_max", params_.clampingThresMax_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.97",
                  (ns + "/octomap/clamping_thres_max").c_str());
     }
-    params_.occupancyThres_ = 0.5;
+    params_.occupancyThres_ = 0.5f;
     if (!ros::param::get(ns + "/octomap/occupancy_thres", params_.occupancyThres_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.5",
                  (ns + "/octomap/occupancy_thres").c_str());
     }
-    params_.probHit_ = 0.7;
+    params_.probHit_ = 0.7f;
     if (!ros::param::get(ns + "/octomap/prob_hit", params_.probHit_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.7",
                  (ns + "/octomap/prob_hit").c_str());
     }
-    params_.probMiss_ = 0.4;
+    params_.probMiss_ = 0.4f;
     if (!ros::param::get(ns + "/octomap/prob_miss", params_.probMiss_))
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.4",

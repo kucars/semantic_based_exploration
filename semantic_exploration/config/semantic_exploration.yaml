@@ -12,7 +12,7 @@ octomap:
     raycast_range: 2.0
     clamping_thres_min: 0.12
     clamping_thres_max: 0.97
-    occupancy_thres: 0.6
+    occupancy_thres: 0.5
     prob_hit: 0.7
     prob_miss: 0.4
     save_path : "~/map.bt"
@@ -22,13 +22,15 @@ octomap:
 #####################
 system/v_max: 1 #0.5 ##0.5
 system/dyaw_max: 0.5
-system/camera/pitch: [15.0] #sensor_pitch: 0.093
-system/camera/horizontal: [58.0] #sensor_hor_fov: 60
+# check the relevant sdf file: depth_camera_new.sdf
+system/camera/pitch: [0.0] #sensor_pitch: 0.0
+system/camera/horizontal: [60.0] #sensor_hor_fov: 60
 system/camera/vertical: [45.0] #sensor_ver_fov: 45
 system/bbx/x: 0.1
 system/bbx/y: 0.1
 system/bbx/z: 0.1
 system/bbx/overshoot: 0.5
+system/localization/use_gazebo_ground_truth: true
 
 # Gain Computation Parameters
 nbvp/gain/free: 0.0
@@ -89,12 +91,6 @@ latch_topics: false
 max_free_space: 0
 min_height_free_space: 0
 change_detection_enabled: false
-
-#Mavros related settings
-/uav_1/mavros/local_position/frame_id: world           #(string, default: fcu) frame_id for message.
-/uav_1/mavros/local_position/tf/send: true             #(bool, default: true)
-/uav_1/mavros/local_position/tf/frame_id: world        #(string, default: local_origin) Origin frame_id for TF.
-/uav_1/mavros/local_position/tf/child_frame_id: fcu    #(string, default: fcu) Child frame_id for TF.
 
 # Planning Methods
 # Volumetric 0

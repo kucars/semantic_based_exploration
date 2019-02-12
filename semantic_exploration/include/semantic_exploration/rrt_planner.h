@@ -75,7 +75,7 @@ protected:
     // Global variables
     double traveled_distance = 0 ;
     double information_gain =0;
-    bool FirstPoseCalled=true;
+    bool firstPoseCalled=true;
     geometry_msgs::Pose prePose;
     int iteration_num = 0 ;
     geometry_msgs::PoseArray viewpoints2;

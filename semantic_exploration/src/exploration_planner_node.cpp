@@ -209,7 +209,7 @@ void ExplorationPlanner::RunStateMachine()
                 poseMsg_.pose.orientation.z = quat[2] ;
                 poseMsg_.pose.orientation.w = quat[3] ;
                 explorationViewpointPub.publish(poseMsg_);
-                        ROS_INFO("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,poseMsg_.pose.position.y,poseMsg_.pose.position.z,poseMsg_.pose.orientation.x,poseMsg_.pose.orientation.y,poseMsg_.pose.orientation.z,poseMsg_.pose.orientation.w);
+                ROS_INFO("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,poseMsg_.pose.position.y,poseMsg_.pose.position.z,poseMsg_.pose.orientation.x,poseMsg_.pose.orientation.y,poseMsg_.pose.orientation.z,poseMsg_.pose.orientation.w);
                 ros::spinOnce();
                 //ros::Duration(params_.dt).sleep();
             }
@@ -220,10 +220,11 @@ void ExplorationPlanner::RunStateMachine()
             ros::Duration(1.0).sleep();
         }
 
-        iteration++;
-
-        if(iteration > params_.numIterations)
+        if( ++iteration > params_.numIterations)
+        {
+            ROS_INFO("Finished all iterations:%d, exiting", iteration);
             break;
+        }
         ros::spinOnce();
         loopRate.sleep();
     }
