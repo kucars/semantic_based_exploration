@@ -34,7 +34,11 @@ before_install:
   - sudo apt-get install ros-$ROS_DISTRO-desktop-full
   - sudo apt-get install -qq -y python-rosdep python-wstool python-catkin-tools python-catkin-pkg xvfb ros-$ROS_DISTRO-xacro
   - sudo apt-get install -y libcgal-dev
+  - sudo apt-get install -y ros-$ROS_DISTRO-octomap ros-$ROS_DISTRO-octomap-ros ros-$ROS_DISTRO-octomap-mapping
   - sudo apt-get install -y ros-$ROS_DISTRO-rviz-visual-tools ros-$ROS_DISTRO-mavros* ros-$ROS_DISTRO-mavlink
+  - sudo apt-get install -y python-jinja2
+  - sudo apt-get install -y libopencv-dev libprotobuf-dev libprotoc-dev protobuf-compiler libeigen3-dev
+  - sudo pip install numpy toml
   - sudo rosdep init
   - rosdep update
 # Use this to install any prerequisites or dependencies necessary to run your build
@@ -44,18 +48,16 @@ install:
   - cd ~/catkin_ws/
   - wstool init src
   - wstool set -y -t src semantic_based_exploration https://github.com/kucars/semantic_based_exploration.git --git
-  - "curl -H 'Authorization: token 183514f3044151ae2f114a58b1afc1dafe658278' https://raw.githubusercontent.com/kucars/semantic_based_exploration/master/semantic_exploration.rosinstall > semantic_exploration.rosinstall"
-  - wstool merge -y -t src semantic_exploration.rosinstall
   - wstool update -t src
   - rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
   - cd ~/catkin_ws/src/semantic_based_exploration
+  - git checkout semantic_exploration_octomap_generator
   - git submodule update --init --recursive
-  - mv ~/catkin_ws/src/octomap/ ~/catkin_ws
-  - cd ~/catkin_ws/octomap
-  - mkdir build 
-  - cd build 
-  - cmake .. -DBUILD_OCTOVIS_SUBPROJECT=OFF
-  - sudo make install
+  - cd ~/catkin_ws
+  - git clone https://github.com/PX4/Firmware.git
+  - cd ~/catkin_ws/Firmware
+  - git checkout v1.8.2
+  - make posix_sitl_default
 # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
 before_script: 
 - source /opt/ros/$ROS_DISTRO/setup.bash
@@ -70,15 +72,15 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="eigen_checks"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_msgs" 
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_ros"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="culling"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="usar_exploration"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_msgs" 
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_ros"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="culling"
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="rrt_explorer"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
