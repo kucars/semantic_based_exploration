@@ -37,6 +37,7 @@ before_install:
   - sudo apt-get install -y ros-$ROS_DISTRO-octomap ros-$ROS_DISTRO-octomap-ros ros-$ROS_DISTRO-octomap-mapping
   - sudo apt-get install -y ros-$ROS_DISTRO-rviz-visual-tools ros-$ROS_DISTRO-mavros* ros-$ROS_DISTRO-mavlink
   - sudo apt-get install python-jinja2
+  - sudo pip install numpy toml
   - sudo rosdep init
   - rosdep update
 # Use this to install any prerequisites or dependencies necessary to run your build
