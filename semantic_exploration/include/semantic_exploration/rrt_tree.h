@@ -21,12 +21,12 @@
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
-#include <octomap_world/octomap_manager.h>
-#include <semantic_exploration/mesh_structure.h>
 #include <tf/transform_datatypes.h>
 #include <octomap_msgs/Octomap.h>
 #include <octomap_generator/octomap_generator.h>
 #include <semantics_octree/semantics_octree.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 namespace rrtNBV {
 

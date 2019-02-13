@@ -40,7 +40,6 @@
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
 #include <octomap_msgs/conversions.h>
-#include <octomap_world/octomap_manager.h>
 #include <string>
 #include <tf/transform_broadcaster.h>
 

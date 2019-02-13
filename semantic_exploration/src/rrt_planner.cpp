@@ -287,6 +287,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 {
     ROS_INFO("########### New Planning Iteration ###########");
     ros::Time computationTime = ros::Time::now();
+    params_.explorationarea_.publish(area_marker_);
 
     // Check that planner is ready to compute path.
     if (!ros::ok()) {
@@ -319,12 +320,10 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 
     int loopCount = 0;
     int k = 1 ;
-    int failedIteration = 0 ;
-    int succesfulIteration = 0 ;
 
     while((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
-        ROS_INFO("Counter:%d Cuttoff Iterations:%d GainFound:%d BestGain:%f",rrtTree->getCounter() , params_.cuttoffIterations_,rrtTree->gainFound(),rrtTree->getBestGain());
+        ROS_INFO_THROTTLE(0.1,"Counter:%d Cuttoff Iterations:%d GainFound:%d BestGain:%f",rrtTree->getCounter() , params_.cuttoffIterations_,rrtTree->gainFound(),rrtTree->getBestGain());
 
         if (rrtTree->getCounter() > params_.cuttoffIterations_)
         {
@@ -338,10 +337,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
             return true;
         }
-        bool m = rrtTree->iterate(1);
-        if (m==true)
+        if(rrtTree->iterate(1))
         {
-            succesfulIteration++;
             ROS_INFO("########## BEST GAIN ############## :%f",rrtTree->getBestGain());
         }
         loopCount++;

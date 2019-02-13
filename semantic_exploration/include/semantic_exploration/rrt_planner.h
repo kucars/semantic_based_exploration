@@ -9,7 +9,6 @@
 #include <kdtree/kdtree.h>
 #include <semantic_exploration/rrt_core.h>
 #include <semantic_exploration/rrt_tree.h>
-#include <semantic_exploration/mesh_structure.h>
 #include <semantic_exploration/GetPath.h>
 #include <iostream>
 #include <fstream>
@@ -29,6 +28,8 @@
 #include <octomap_msgs/conversions.h>
 #include <pcl/conversions.h>
 #include "semantic_exploration/drone_commander.h"
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 namespace rrtNBV {
 

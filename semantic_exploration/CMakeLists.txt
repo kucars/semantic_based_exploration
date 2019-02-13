@@ -20,7 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   visualization_msgs
   message_generation
-  octomap_world
   std_msgs
   tf
   kdtree
@@ -39,6 +38,8 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   std_srvs
   octomap_msgs
+  minkindr
+  minkindr_conversions
 )
 
 find_package(Eigen REQUIRED)
@@ -46,7 +47,6 @@ find_package(Eigen REQUIRED)
 find_package(PCL REQUIRED QUIET COMPONENTS common sample_consensus io segmentation filters)
 
 find_package(octomap REQUIRED)
-#include("/usr/local/share/octomap/octomap-config.cmake")
 
 add_service_files(
   DIRECTORY srv
@@ -68,7 +68,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include ${OCTOMAP_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS}
   LIBRARIES ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${PROJECT_NAME}
-  CATKIN_DEPENDS message_runtime roscpp geometry_msgs visualization_msgs octomap_world tf kdtree trajectory_msgs mav_msgs rospy std_msgs pcl_ros genmsg
+  CATKIN_DEPENDS message_runtime roscpp geometry_msgs visualization_msgs tf kdtree trajectory_msgs mav_msgs rospy std_msgs pcl_ros genmsg
   DEPENDS octomap PCL
 )
 
@@ -88,7 +88,6 @@ set(LINK_LIBS
 )
 
 add_executable(rrt_planner  src/rrt_node.cpp
-                            src/mesh_structure.cpp
                             src/rrt_core.cpp
                             src/rrt_tree.cpp
                             src/rrt_planner.cpp
