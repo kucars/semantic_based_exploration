@@ -57,7 +57,7 @@ install:
   - git clone https://github.com/PX4/Firmware.git
   - cd ~/catkin_ws/Firmware
   - git checkout v1.8.2
-  - make posix_sitl_default gazebo
+  - make posix_sitl_default
 # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
 before_script: 
 - source /opt/ros/$ROS_DISTRO/setup.bash
