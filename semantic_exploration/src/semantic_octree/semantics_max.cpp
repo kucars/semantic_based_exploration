@@ -1,8 +1,8 @@
-#include<semantics_octree/semantics_max.h>
+#include <semantics_octree/semantics_max.h>
 namespace octomap
 {
-  std::ostream& operator<<(std::ostream& out, SemanticsMax const& s)
-  {
+std::ostream& operator<<(std::ostream& out, SemanticsMax const& s)
+{
     return out << '(' << s.semantic_color << ", " << s.confidence << ')';
-  }
 }
+}  // namespace octomap

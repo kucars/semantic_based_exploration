@@ -1,0 +1,38 @@
+---
+BasedOnStyle:  Google
+AccessModifierOffset: -2
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AlwaysBreakBeforeMultilineStrings: false
+BreakConstructorInitializersBeforeComma: true
+BinPackParameters: true
+ColumnLimit:    100
+PointerBindsToType: true
+PenaltyBreakBeforeFirstCallParameter: 19
+PenaltyBreakFirstLessLess: 1000
+PenaltyExcessCharacter: 1000
+Cpp11BracedListStyle: true
+IndentWidth:     4
+TabWidth:        4
+SpaceAfterControlStatementKeyword: true
+ReflowComments: false
+
+# Configure each individual brace in BraceWrapping
+BreakBeforeBraces: Custom
+
+# Control of individual brace wrapping cases
+BraceWrapping: {
+    AfterClass: 'true'
+    AfterControlStatement: 'true'
+    AfterEnum : 'true'
+    AfterFunction : 'true'
+    AfterNamespace : 'true'
+    AfterStruct : 'true'
+    AfterUnion : 'true'
+    BeforeCatch : 'true'
+    BeforeElse : 'true'
+    IndentBraces : 'false'
+}
+...
+

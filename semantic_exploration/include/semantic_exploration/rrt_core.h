@@ -17,56 +17,59 @@
 #ifndef RRTTREE_H_
 #define RRTTREE_H_
 
-#include <ros/ros.h>
-#include <ros/package.h>
-#include <sstream>
-#include <eigen3/Eigen/Dense>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <nav_msgs/Odometry.h>
 #include <kdtree/kdtree.h>
-#include <semantic_exploration/rrt_tree.h>
-#include <semantic_exploration/SelectPose.h>
-#include <octomap_msgs/Octomap.h>
+#include <nav_msgs/Odometry.h>
 #include <octomap_generator/octomap_generator.h>
+#include <octomap_msgs/Octomap.h>
+#include <ros/package.h>
+#include <ros/ros.h>
+#include <semantic_exploration/SelectPose.h>
+#include <semantic_exploration/rrt_tree.h>
 #include <semantics_octree/semantics_octree.h>
+#include <eigen3/Eigen/Dense>
+#include <sstream>
 
-#define SQ(x) ((x)*(x))
+#define SQ(x) ((x) * (x))
 #define SQRT2 0.70711
 
-
-namespace rrtNBV {
-
+namespace rrtNBV
+{
 class RrtTree : public TreeBase
 {
-public:
+  public:
     RrtTree();
     RrtTree(OctomapGeneratorBase *manager_);
     ~RrtTree();
-    virtual void setStateFromPoseStampedMsg(const geometry_msgs::PoseStamped& pose);
-    virtual void setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianceStamped& pose);
-    virtual void setStateFromOdometryMsg(const nav_msgs::Odometry& pose);
+    virtual void setStateFromPoseStampedMsg(const geometry_msgs::PoseStamped &pose);
+    virtual void setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianceStamped &pose);
+    virtual void setStateFromOdometryMsg(const nav_msgs::Odometry &pose);
     virtual void initialize();
+    virtual void setup();
     virtual bool iterate(int iterations);
     virtual std::vector<geometry_msgs::Pose> getBestEdge(std::string targetFrame);
     virtual void clear();
     virtual std::vector<geometry_msgs::Pose> getPathBackToPrevious(std::string targetFrame);
     virtual void memorizeBestBranch();
 
-    void publishNode(Node * node);
+    void publishNode(Node *node);
     double getGain(StateVec state, bool &objectGainFound);
-    double gain_volumetric(StateVec state, bool &objectGainFound); // Volumetric Infromation Ref [2] RRT
-    double gain_rsvs(StateVec state, bool &objectGainFound); // Rear side voxel - Ref[1]
-    double gain_rsv(StateVec state, bool &objectGainFound); // Semantic rear side voxel - Proposed
-    double gain_rse(StateVec state, bool &objectGainFound) ; // Rear side entropy - Ref [1]
-    double gain_rses(StateVec state, bool &objectGainFound); // Semantic rear side entropy - Proposed
-    double gain_occlusion_aware(StateVec state, bool &objectGainFound); // Occlusion Aware Ref-[1]
-    double gain_unobserved_voxel(StateVec state, bool & objectGainFound) ;// Unobserved Voxel Ref[1]
+    double gain_volumetric(StateVec state,
+                           bool &objectGainFound);            // Volumetric Infromation Ref [2] RRT
+    double gain_rsvs(StateVec state, bool &objectGainFound);  // Rear side voxel - Ref[1]
+    double gain_rsv(StateVec state, bool &objectGainFound);   // Semantic rear side voxel - Proposed
+    double gain_rse(StateVec state, bool &objectGainFound);   // Rear side entropy - Ref [1]
+    double gain_rses(StateVec state,
+                     bool &objectGainFound);  // Semantic rear side entropy - Proposed
+    double gain_occlusion_aware(StateVec state, bool &objectGainFound);   // Occlusion Aware Ref-[1]
+    double gain_unobserved_voxel(StateVec state, bool &objectGainFound);  // Unobserved Voxel Ref[1]
     double gain_pure_entropy(StateVec state, bool &objectGainFound);
-    double gain_avg_entropy(StateVec state, bool &objectGainFound) ;
-    double gain_svv(StateVec state, bool & objectGainFound) ; // Proposed
-    double gain_semantic_occlusion_aware(StateVec state, bool & objectGainFound); // proposed
+    double gain_avg_entropy(StateVec state, bool &objectGainFound);
+    double gain_svv(StateVec state, bool &objectGainFound);                       // Proposed
+    double gain_semantic_occlusion_aware(StateVec state, bool &objectGainFound);  // proposed
 
-    std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end, std::string targetFrame);
+    std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end,
+                                                std::string targetFrame);
 
     // Modified functions
     void initializeDeep();
@@ -74,11 +77,12 @@ public:
     geometry_msgs::Pose getBestEdgeDeep(std::string targetFrame);
     double gainPureEntropy(StateVec state);
     double gainDinsity(StateVec state, int &dinsity);
-    virtual double getBestGain() ;
+    virtual double getBestGain();
     virtual Eigen::Vector4d getRootNode();
     bool getObjectFlag();
 
-    enum UtilityFunctionType {
+    enum UtilityFunctionType
+    {
         VOLUMETRIC = 0,
         REAR_SIDE_VOXEL,
         SEMANTIC_REAR_SIDE_VOXEL,
@@ -91,8 +95,9 @@ public:
         SEMANTIC_VISIBLE_VOXEL,
         SEMANTIC_OCCLUSION_AWARE
     };
-protected:
-    kdtree * kdTree_;
+
+  protected:
+    kdtree *kdTree_;
     std::stack<StateVec> history_;
     std::vector<StateVec> bestBranchMemory_;
     int g_ID_;
@@ -108,6 +113,6 @@ protected:
     int utilityFunction;
     std::ofstream outfile;
 };
-}
+}  // namespace rrtNBV
 
 #endif

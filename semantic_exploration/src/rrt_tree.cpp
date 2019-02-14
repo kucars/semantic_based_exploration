@@ -17,62 +17,62 @@
 
 rrtNBV::Node::Node()
 {
-  parent_ = NULL;
-  distance_ = DBL_MAX;
-  gain_ = 0.0;
+    parent_ = NULL;
+    distance_ = DBL_MAX;
+    gain_ = 0.0;
 }
 
 rrtNBV::Node::~Node()
 {
-  for (typename std::vector<Node*>::iterator it = children_.begin();
-      it != children_.end(); it++) {
-    delete (*it);
-    (*it) = NULL;
-  }
+    for (typename std::vector<Node *>::iterator it = children_.begin(); it != children_.end(); it++)
+    {
+        delete (*it);
+        (*it) = NULL;
+    }
 }
 
 rrtNBV::TreeBase::TreeBase()
 {
-  bestGain_ = params_.zero_gain_;
-  bestNode_ = NULL;
-  bestObjectGain_ = params_.zero_gain_;
-  bestObjectNode_ = NULL ;
-  counter_ = 0;
-  rootNode_ = NULL;
+    bestGain_ = params_.zero_gain_;
+    bestNode_ = NULL;
+    bestObjectGain_ = params_.zero_gain_;
+    bestObjectNode_ = NULL;
+    counter_ = 0;
+    rootNode_ = NULL;
 }
 
 rrtNBV::TreeBase::TreeBase(OctomapGeneratorBase *octomap_generator_)
 {
-  manager_ = octomap_generator_;
-  bestGain_ = params_.zero_gain_;
-  bestNode_ = NULL;
-  bestObjectGain_ = params_.zero_gain_;
-  bestObjectNode_ = NULL ;
-  counter_ = 0;
-  rootNode_ = NULL;
+    manager_ = octomap_generator_;
+    bestGain_ = params_.zero_gain_;
+    bestNode_ = NULL;
+    bestObjectGain_ = params_.zero_gain_;
+    bestObjectNode_ = NULL;
+    counter_ = 0;
+    rootNode_ = NULL;
 }
 
 rrtNBV::TreeBase::~TreeBase()
-{}
+{
+}
 
 void rrtNBV::TreeBase::setParams(Params params)
 {
-  params_ = params;
+    params_ = params;
 }
 
 int rrtNBV::TreeBase::getCounter()
 {
-  return counter_;
+    return counter_;
 }
 
 bool rrtNBV::TreeBase::gainFound()
 {
-  return bestGain_ > params_.zero_gain_;
+    return bestGain_ > params_.zero_gain_;
 }
 
 Eigen::Vector4d rrtNBV::TreeBase::getRootNode()
 
 {
-    return rootNode_->state_ ;
+    return rootNode_->state_;
 }
-
