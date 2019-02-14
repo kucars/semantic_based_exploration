@@ -80,8 +80,8 @@ script:
  #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
  #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
  #- catkin_make -DCATKIN_WHITELIST_PACKAGES="culling"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="rrt_explorer"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
  - source devel/setup.bash
