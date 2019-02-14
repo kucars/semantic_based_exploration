@@ -34,7 +34,6 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   nav_msgs
   rviz_visual_tools
-  culling
   pcl_conversions
   std_srvs
   octomap_msgs
