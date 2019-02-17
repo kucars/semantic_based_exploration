@@ -61,6 +61,7 @@ install:
 # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
 before_script: 
 - source /opt/ros/$ROS_DISTRO/setup.bash
+- rospack profile
 # All commands must exit with code 0 on success. Anything else is considered failure
 script:
  - cd ~/catkin_ws/
@@ -72,14 +73,6 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="eigen_checks"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_map_base"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_msgs" 
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_ros"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="octomap_world"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_mapping"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="volumetric_msgs"
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="culling"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="rrt_explorer"

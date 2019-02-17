@@ -106,5 +106,5 @@ add_dependencies(exploration_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 target_link_libraries(exploration_planner_node ${OCTOMAP_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(drone_commander src/drone_commander.cpp)
-target_link_libraries(drone_commander ${catkin_LIBRARIES} )
-add_dependencies(drone_commander ${catkin_EXPORTED_TARGETS})
+add_dependencies(drone_commander ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(drone_commander ${catkin_LIBRARIES})
