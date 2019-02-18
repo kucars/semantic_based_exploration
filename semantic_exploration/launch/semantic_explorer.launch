@@ -39,7 +39,7 @@
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris_depth_camera"/>
     <arg name="world_file_name"    default="simple_obstacle" />
-    <arg name="world" default="$(find semantic_exploration)/worlds/new_world.world"/>
+    <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/>
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 
     <param name="use_sim_time" value="true" />
