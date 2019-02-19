@@ -21,7 +21,7 @@
 #include "sensor_msgs/PointCloud.h"
 #include "tf/message_filter.h"
 #include "tf/transform_listener.h"
-//PCL
+
 #include <pcl/common/eigen.h>
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
@@ -30,16 +30,13 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <iostream>
-//#include <voxel_grid_occlusion_estimation.h>
-//#include "fcl_utility.h"
-#include <pcl/filters/voxel_grid.h>
-//#include <usar_exploration/occlusion_culling.h>
-// octomap
+
 #include <octomap/ColorOcTree.h>
 #include <octomap/OcTree.h>
 #include <octomap/octomap.h>
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
+#include <pcl/filters/voxel_grid.h>
 #include <tf/transform_broadcaster.h>
 #include <string>
 
@@ -160,13 +157,22 @@ void ExplorationPlanner::RunStateMachine()
 
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
-    tf::Transform transform;
+    tf::StampedTransform transform;
+    tf::TransformListener listener;
+    std::string targetFrame = "local_origin";
+    geometry_msgs::PoseStamped transformedPose;
 
     // Start planning: The planner is called and the computed path sent to the controller.
     ros::Time startTime = ros::Time::now();
     while (ros::ok())
     {
         ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
+
+        /* TODO: handling the frames need improvement. 
+         * Either the service call should pass the target frame and recieved the already transformed
+         * target frames back, or make target frame something that could be modified in a yaml file.
+         * Currently it's hard coded above
+         */
 
         geometry_msgs::PoseStamped poseMsg_;
         semantic_exploration::GetPath planSrv;
@@ -198,6 +204,7 @@ void ExplorationPlanner::RunStateMachine()
                 poseMsg_.pose.position.x = planSrv.response.path[i].position.x;
                 poseMsg_.pose.position.y = planSrv.response.path[i].position.y;
                 poseMsg_.pose.position.z = planSrv.response.path[i].position.z;
+
                 tf::Pose pose;
                 tf::poseMsgToTF(planSrv.response.path[i], pose);
                 double yaw = tf::getYaw(pose.getRotation());
@@ -206,11 +213,29 @@ void ExplorationPlanner::RunStateMachine()
                 poseMsg_.pose.orientation.y = quat[1];
                 poseMsg_.pose.orientation.z = quat[2];
                 poseMsg_.pose.orientation.w = quat[3];
-                explorationViewpointPub.publish(poseMsg_);
-                ROS_INFO("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,
+                try
+                {
+                    listener.lookupTransform(poseMsg_.header.frame_id, targetFrame, ros::Time(0),
+                                             transform);
+                }
+                catch (tf::TransformException ex)
+                {
+                    ROS_ERROR("%s", ex.what());
+                    continue;
+                }
+                listener.transformPose("local_origin", poseMsg_, transformedPose);
+
+                ROS_DEBUG("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,
+                          poseMsg_.pose.position.y, poseMsg_.pose.position.z,
+                          poseMsg_.pose.orientation.x, poseMsg_.pose.orientation.y,
+                          poseMsg_.pose.orientation.z, poseMsg_.pose.orientation.w);
+
+                ROS_INFO("Received: %f %f %f Transformed: %f %f %f", poseMsg_.pose.position.x,
                          poseMsg_.pose.position.y, poseMsg_.pose.position.z,
-                         poseMsg_.pose.orientation.x, poseMsg_.pose.orientation.y,
-                         poseMsg_.pose.orientation.z, poseMsg_.pose.orientation.w);
+                         transformedPose.pose.position.x, transformedPose.pose.position.y,
+                         transformedPose.pose.position.z);
+
+                explorationViewpointPub.publish(transformedPose);
                 ros::spinOnce();
                 //ros::Duration(params_.dt).sleep();
             }

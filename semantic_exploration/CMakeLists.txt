@@ -108,3 +108,18 @@ target_link_libraries(exploration_planner_node ${OCTOMAP_LIBRARIES} ${catkin_LIB
 add_executable(drone_commander src/drone_commander.cpp)
 add_dependencies(drone_commander ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(drone_commander ${catkin_LIBRARIES})
+
+#############
+## Testing ##
+#############
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  find_package(roslaunch REQUIRED)
+  find_package(roslint REQUIRED)
+  #roslint_cpp()
+  #roslint_python()
+  #roslint_add_test()
+  add_rostest(test/navigation.test)
+endif()
+
