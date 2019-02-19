@@ -12,8 +12,9 @@
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>
     <arg name="Y" default="1.57079632679"/>
+    <arg name="mavros_transformation" default="0" />
 
-    <!-- Whether to use perfect gazebo position of PX4 LPE/EKF2 Position  -->
+    <!-- Whether to use perfect gazebo position of PX4 Lpe/EKF2 Position  -->
     <arg name="use_gazebo_ground_truth" default="true"/>
 
     <!-- Ros transformation -->
@@ -86,18 +87,6 @@
         args="-sdf -database $(arg vehicle) -model iris -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)">
     </node>
 
-    <!--arg name="pcl_topic" default="/camera/depth/points" /-->
-    <arg name="pcl_topic" default="/semantic_pcl/semantic_pcl"/>
-    <arg name="stl_file_path" default="" />
-
-    <rosparam command="load" file="$(arg param_file)" />
-    <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen">
-        <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
-        <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
-        <remap from="poseStamped" to="/current_pose"/>
-        <remap from="semantic_exploration" to="/semantic_exploration"/>
-    </node>
-    
     <group if="$(arg use_gazebo_ground_truth)">
         <!-- Send transformation between the gazebo ground truth and world -->
         <node pkg="semantic_exploration" name="send_transform" type="send_transform.py" output="$(arg screen)"/>
@@ -107,13 +96,7 @@
         <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic.rviz"/>
     </group>
 
-    <rosparam file="$(find semantic_cloud)/config/semantic_cloud.yaml" command="load"/>
-    <node pkg="semantic_cloud" type="semantic_cloud.py" name="semantic_cloud"/>
-
-    <node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/> <!--output="screen"/-->
-    <!--node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/-->
-
-    <!--node pkg="orb_slam2" type="rgbd" name="rgbd" output="screen" args="$(find orb_slam2)../../../Vocabulary/ORBvoc.txt $(find semantic_exploration)/config/orb_slam.yaml"/>
-    <node pkg="topic_tools" type="relay" name="depth_registered_relay" args="/camera/depth/image_raw /camera/depth_registered/image_raw" /-->
+    <!--node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/-->
+    <!--test test-name="navigation_test" pkg="semantic_exploration" type="navigation_test.py" name="navigation_test" retry="0" time-limit="180" /-->
 
 </launch>
