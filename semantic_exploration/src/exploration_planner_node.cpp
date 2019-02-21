@@ -168,7 +168,7 @@ void ExplorationPlanner::RunStateMachine()
     {
         ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
 
-        /* TODO: handling the frames need improvement. 
+        /* TODO: handling the frames need improvement.
          * Either the service call should pass the target frame and recieved the already transformed
          * target frames back, or make target frame something that could be modified in a yaml file.
          * Currently it's hard coded above
@@ -237,7 +237,7 @@ void ExplorationPlanner::RunStateMachine()
 
                 explorationViewpointPub.publish(transformedPose);
                 ros::spinOnce();
-                //ros::Duration(params_.dt).sleep();
+                ros::Duration(params_.dt).sleep();
             }
         }
         else

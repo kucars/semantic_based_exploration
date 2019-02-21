@@ -63,10 +63,10 @@ nbvp/log/throttle: 0.25 # ??
 nbvp/log/on: true
 
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -5.0
-bbx/maxX: 5.0
-bbx/minY: -5.0
-bbx/maxY: 5.0
+bbx/minX: -10.0
+bbx/maxX: 10.0
+bbx/minY: -10.0
+bbx/maxY: 10.0
 bbx/minZ: -0.1
 bbx/maxZ: 3.0
 bbx/softBounds: false

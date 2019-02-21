@@ -585,12 +585,13 @@ bool rrtNBV::RrtTree::getObjectFlag()
 
 std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string targetFrame)
 {
+
     ROS_INFO("return best Edge");
+    std::vector<geometry_msgs::Pose> ret;
     outfile.open("path.txt", std::ios_base::app);
     //TODO: What is this oneViewObjectFound
     if (!oneViewObjectFound)
     {
-        std::vector<geometry_msgs::Pose> ret;
         rrtNBV::Node *current = bestNode_;
         if (current->parent_ != nullptr)
         {
@@ -598,30 +599,31 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             {
                 current = current->parent_;
             }
-            geometry_msgs::Pose ret_egde;
-            ret_egde.position.x = current->state_[0];
-            ret_egde.position.y = current->state_[1];
-            ret_egde.position.z = current->state_[2];
-            float yaw = current->state_[3];
-            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-            ret_egde.orientation.x = q[0];
-            ret_egde.orientation.y = q[1];
-            ret_egde.orientation.z = q[2];
-            ret_egde.orientation.w = q[3];
-            ret.push_back(ret_egde);
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
 
-            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-                     current->state_[2], q[0], q[1], q[2], q[3]);
-            ROS_INFO("ret size %d", ret.size());
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
+//            geometry_msgs::Pose ret_egde;
+//            ret_egde.position.x = current->state_[0];
+//            ret_egde.position.y = current->state_[1];
+//            ret_egde.position.z = current->state_[2];
+//            float yaw = current->state_[3];
+//            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
+//            ret_egde.orientation.x = q[0];
+//            ret_egde.orientation.y = q[1];
+//            ret_egde.orientation.z = q[2];
+//            ret_egde.orientation.w = q[3];
+//            ret.push_back(ret_egde);
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
 
+//            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
+//                     current->state_[2], q[0], q[1], q[2], q[3]);
+//            ROS_INFO("ret size %d", ret.size());
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
+//            ROS_INFO("**************************************");
+            ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -637,37 +639,39 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             {
                 current = current->parent_;
             }
-            geometry_msgs::Pose ret_egde;
-            ret_egde.position.x = current->state_[0];
-            ret_egde.position.y = current->state_[1];
-            ret_egde.position.z = current->state_[2];
-            float yaw = current->state_[3];
-            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-            ret_egde.orientation.x = q[0];
-            ret_egde.orientation.y = q[1];
-            ret_egde.orientation.z = q[2];
-            ret_egde.orientation.w = q[3];
-            ret.push_back(ret_egde);
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-                     current->state_[2], q[0], q[1], q[2], q[3]);
-            ROS_INFO("ret size %d", ret.size());
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            filePath_ << current->state_[0] << ",";
-            filePath_ << current->state_[1] << ",";
-            filePath_ << current->state_[2] << ",";
-            filePath_ << current->state_[3] << "\n";
-            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
-                    << "," << current->state_[3] << "\n";
-            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
-                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
 
+//            geometry_msgs::Pose ret_egde;
+//            ret_egde.position.x = current->state_[0];
+//            ret_egde.position.y = current->state_[1];
+//            ret_egde.position.z = current->state_[2];
+//            float yaw = current->state_[3];
+//            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
+//            ret_egde.orientation.x = q[0];
+//            ret_egde.orientation.y = q[1];
+//            ret_egde.orientation.z = q[2];
+//            ret_egde.orientation.w = q[3];
+//            ret.push_back(ret_egde);
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
+//                     current->state_[2], q[0], q[1], q[2], q[3]);
+//            ROS_INFO("ret size %d", ret.size());
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+//            filePath_ << current->state_[0] << ",";
+//            filePath_ << current->state_[1] << ",";
+//            filePath_ << current->state_[2] << ",";
+//            filePath_ << current->state_[3] << "\n";
+//            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
+//                    << "," << current->state_[3] << "\n";
+//            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
+//                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
+
+            ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -2884,11 +2888,11 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     p.scale.x = std::max(node->gain_ / 20.0, 0.05);
     p.scale.y = 0.1;
     p.scale.z = 0.1;
-    p.color.r = 0;
-    p.color.g = 1.0;
-    p.color.b = 0;  // blue
+    p.color.r = 167.0 / 255.0;;
+    p.color.g = 167.0 / 255.0;;
+    p.color.b = 0.0;  // blue
     p.color.a = 1.0;
-    p.lifetime = ros::Duration(10);
+    p.lifetime = ros::Duration(20);
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
 
@@ -2896,6 +2900,7 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     {
         return;
     }
+
     p.id = g_ID_;
     g_ID_++;
     p.ns = "vp_branches";
@@ -2918,33 +2923,14 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     p.scale.x = dir.norm();
     p.scale.y = 0.03;
     p.scale.z = 0.03;
-    p.color.r = 1;  //red
-    p.color.g = 0;
-    p.color.b = 0;
+    p.color.r = 100.0 / 255.0;;  //red
+    p.color.g = 100.0 / 255.0;;
+    p.color.b = 0.7;
     p.color.a = 1.0;
-    p.lifetime = ros::Duration(2);
+    p.lifetime = ros::Duration(20);
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
 
-    //     p.id = g_ID_;
-    //     g_ID_++;
-    //     p.ns = "branch_test";
-    //     p.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //     p.action = visualization_msgs::Marker::ADD;
-    //     p.pose.position.x = node->parent_->state_[0];
-    //     p.pose.position.y = node->parent_->state_[1];
-    //     p.pose.position.z = node->parent_->state_[2]+1;
-    //     p.scale.x = 1;
-    //     p.scale.y = 1;
-    //     p.scale.z = 1;
-    //     p.color.r = 1; // red
-    //     p.color.g = 1;
-    //     p.color.b = 1;
-    //     p.color.a = 1.0;
-    //     p.text = g_ID_;
-    //     p.lifetime = ros::Duration(2);
-    //     p.frame_locked = false;
-    //     params_.inspectionPath_.publish(p);
 
     if (params_.log_)
     {

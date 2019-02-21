@@ -36,7 +36,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     params_.inspectionPath_ = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_ = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
     params_.transfromedPoseDebug =
-        nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
+       nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
     params_.rootNodeDebug = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 100);
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_ = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
@@ -115,6 +115,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     rrtTree->setParams(params_);
     // Not yet ready. need a position msg first.
     ready_ = false;
+
 }
 
 rrtNBV::RRTPlanner::~RRTPlanner()

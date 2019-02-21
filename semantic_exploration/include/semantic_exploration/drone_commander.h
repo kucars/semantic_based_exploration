@@ -19,6 +19,7 @@
 #include <chrono>
 #include <thread>
 
+
 class DroneCommander
 {
   public:
@@ -66,6 +67,7 @@ class DroneCommander
     bool isGoalReceived = false;
     ros::ServiceServer service;
     int droneCommanderState;
+
 };
 
 #endif
