@@ -111,31 +111,104 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
     return VoxelStatus::kFree;
 }
 
+template <>
+double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
+{
+    octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+    bool isSemantic = false;
+    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
+    // I don't understand the logic, think carefully and explain in a flow chart
+    if (node == NULL)
+    {
+        return 0.5;
+    }
+    else
+    {
+        if(octomap_.isNodeOccupied(node))
+        {
+            // This is a normal color voxel, so not semantically labelled
+            isSemantic = false;
+            if(!isSemantic)
+                return 0.5 ;
+            else
+                return 0.8;
+        }
+        else
+        {
+            return 0.2;
+        }
+    }
+    return 0.5;
+}
+
+template <>
+double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGain(const Eigen::Vector3d& point)
+{
+    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+    bool isSemantic = false;
+    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
+    // I don't understand the logic, think carefully and explain in a flow chart
+    if (node == NULL)
+    {
+        return 0.5;
+    }
+    else
+    {
+        if(octomap_.isNodeOccupied(node))
+        {
+            // Check if the voxel has been semantically labelled (visited)
+            isSemantic = node->isSemanticsSet();
+            if(!isSemantic)
+                return 0.5 ;
+            else
+                return 0.8;
+        }
+        else
+        {
+            return 0.2;
+        }
+    }
+    return 0.5;
+}
+
+template <>
+double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellIneterestGain(const Eigen::Vector3d& point)
+{
+    SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
+    bool isSemantic = false;
+    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
+    // I don't understand the logic, think carefully and explain in a flow chart
+    if (node == NULL)
+    {
+        return 0.5;
+    }
+    else
+    {
+        if(octomap_.isNodeOccupied(node))
+        {
+            // Check if the voxel has been semantically labelled (visited)
+            isSemantic = node->isSemanticsSet();
+            if(!isSemantic)
+                return 0.5 ;
+            else
+                return 0.8;
+        }
+        else
+        {
+            return 0.2;
+        }
+    }
+    return 0.5;
+}
+
+/*
 // returns an interest value for the different voxels type.
 template <class CLOUD, class OCTREE>
 double OctomapGenerator<CLOUD, OCTREE>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
-    //TODO: this has to be re-written
-    /*
-    octomap::LabelOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
-    if (node == NULL) {
-        return 0.5;
-    }
-    else {
-        if (octomap_.isNodeOccupied(node)) {
-            octomap::LabelOcTreeNode::Label& label = node->getLabel() ;
-            if(label.type == octomap::LabelOcTreeNode::Label::VOXEL_OCCUPIED_INTEREST_NOT_VISITED)
-                return 0.5  ;
-            else
-                return 0.8;
-        }
-        else {
-            return 0.2;
-        }
-    }
-    */
-    return 0.5;
+
 }
+*/
 
 // returns a number that indicates the proposed type from octomap
 template <class CLOUD, class OCTREE>
