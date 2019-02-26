@@ -49,6 +49,7 @@ struct SemanticsBayesian
 {
     ColorWithConfidence
         data[NUM_SEMANTICS];  ///<Semantic colors and confidences, ordered by confidences
+    uint  numVisits;
 
     SemanticsBayesian()
     {
@@ -89,6 +90,16 @@ struct SemanticsBayesian
                 return true;
         }
         return false;
+    }
+
+    uint incrementNumVisits()
+    {
+        return ++numVisits;
+    }
+
+    uint getNumVisits()
+    {
+        return numVisits;
     }
 
     /// Perform bayesian fusion

@@ -55,6 +55,15 @@ class SemanticsOcTreeNode : public ColorOcTreeNode
         semantics = from;
     }
 
+    /// Increment numVisits
+    inline uint incrementNumVisits() const
+    {
+        return semantics.incrementNumVisits();
+    }
+
+    /// Get numVisits
+    uint getNumVisits();
+
     /// Is semantics set: not set if colors are all zeros
     inline bool isSemanticsSet() const;
 
@@ -86,6 +95,12 @@ template <class SEMANTICS>
 void SemanticsOcTreeNode<SEMANTICS>::updateSemanticsChildren()
 {
     semantics = getFusedChildSemantics();
+}
+
+template <class SEMANTICS>
+uint SemanticsOcTreeNode<SEMANTICS>::getNumVisits()
+{
+    return this->semantics.getNumVisits();
 }
 
 template <class SEMANTICS>

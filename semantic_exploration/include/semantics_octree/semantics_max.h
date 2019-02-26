@@ -14,7 +14,7 @@ struct SemanticsMax
 {
     ColorOcTreeNode::Color semantic_color;  ///<Semantic color
     float confidence;
-
+    uint  numVisits;
     SemanticsMax() : semantic_color(), confidence(0.)
     {
     }
@@ -39,6 +39,16 @@ struct SemanticsMax
         if (semantic_color != ColorOcTreeNode::Color(255, 255, 255))
             return true;
         return false;
+    }
+
+    uint incrementNumVisits()
+    {
+        return ++numVisits;
+    }
+
+    uint getNumVisits()
+    {
+        return numVisits;
     }
 
     /// Perform max fusion

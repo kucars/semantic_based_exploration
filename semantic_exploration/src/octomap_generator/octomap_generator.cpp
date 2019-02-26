@@ -114,11 +114,11 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
 template <>
 double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
+    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
     octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
     bool isSemantic = false;
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
     // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == NULL)
+    if (node == nullptr)
     {
         return 0.5;
     }
@@ -148,12 +148,13 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     bool isSemantic = false;
     // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
     // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == NULL)
+    if (node == nullptr)
     {
         return 0.5;
     }
     else
     {
+        node->getNumVisits();
         if(octomap_.isNodeOccupied(node))
         {
             // Check if the voxel has been semantically labelled (visited)
@@ -178,7 +179,7 @@ double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellI
     bool isSemantic = false;
     // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
     // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == NULL)
+    if (node == nullptr)
     {
         return 0.5;
     }
