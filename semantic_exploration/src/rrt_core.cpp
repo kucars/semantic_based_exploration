@@ -762,15 +762,19 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
             gainValue = gain_rses(state, objectGainFound);
             break;
         case PURE_ENTROPY:
+            ROS_INFO("Pure ENTROPY");
             gainValue = gain_pure_entropy(state, objectGainFound);
             break;
         case AVERAGE_ENTROPY:
+            ROS_INFO("AVG ENTROPY");
             gainValue = gain_avg_entropy(state, objectGainFound);
             break;
         case OCCLUSION_AWARE:
+            ROS_INFO("occlusion aware ENTROPY");
             gainValue = gain_occlusion_aware(state, objectGainFound);
             break;
         case UNOBSERVED_VOXEL:
+            ROS_INFO("unobserved voxel");
             gainValue = gain_unobserved_voxel(state, objectGainFound);
             break;
         case SEMANTIC_VISIBLE_VOXEL:
@@ -778,7 +782,7 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
             gainValue = gain_svv(state, objectGainFound);
             break;
         case SEMANTIC_OCCLUSION_AWARE:
-            ROS_INFO("Semantic Occlusion aware  Visible Voxels");
+            ROS_INFO("Semantic Occlusion aware VVoxels");
             gainValue = gain_semantic_occlusion_aware(state, objectGainFound);
             break;
         default:
@@ -2553,13 +2557,14 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        // int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
-                        // if (voxelType == 2)
-                        // {
-                        double s_gain = manager_->getCellIneterestGain(vec);
-                        if (s_gain == 0.5)
+
+                        double semantic_gain = manager_->getCellIneterestGain(vec);
+                        //double semantic_gain = manager_->getCellNumOfVisits(vec);
+
+                        // for debugging
+                        if (semantic_gain == 1)
                         {
-                            ROS_ERROR("OBJECT OF INTEREST FOUND");
+                            ROS_INFO("OBJECT OF INTEREST FOUND");
                             gainObjOfInt++;
                         }
 
