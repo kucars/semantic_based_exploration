@@ -91,6 +91,7 @@ latch_topics: false
 max_free_space: 0
 min_height_free_space: 0
 change_detection_enabled: false
+objects_of_interest: ["book", "person"]
 
 # Planning Methods
 # Volumetric 0

@@ -174,4 +174,9 @@ vision_speed:
 vibration:
   frame_id: "vibration"
 
+   # setpoint_raw
+
+setpoint_raw:
+  thrust_scaling: 1.8 # specify thrust scaling (normalized, 0 to 1) for thrust (like PX4)
+
 # vim:set ts=2 sw=2 et:

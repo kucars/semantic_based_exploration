@@ -176,7 +176,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     root_[2] = position.z();
     root_[3] = tf::getYaw(quat);
 
-    // debugiing
+    // debug
     geometry_msgs::PoseStamped poseMsg;
     poseMsg.header.stamp = ros::Time::now();
     poseMsg.header.frame_id = params_.navigationFrame_;

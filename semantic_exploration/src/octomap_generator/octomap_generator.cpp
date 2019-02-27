@@ -116,6 +116,19 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen
 {
     // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
     octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+
+    octomap::ColorOcTreeNode::Color interestColor;
+    //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
+    std::vector<std::string>::iterator it;
+    for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
+    {
+        interestColor = semanticColoredLabels[*it];
+        if(node->getColor() == interestColor)
+        {
+            // Do something to the interest color
+        }
+    }
+
     bool isSemantic = false;
     // I don't understand the logic, think carefully and explain in a flow chart
     if (node == nullptr)

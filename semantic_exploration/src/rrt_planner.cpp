@@ -7,6 +7,8 @@
 #include <semantic_exploration/GetDroneState.h>
 #include <semantic_exploration/rrt_planner.h>
 #include <semantic_exploration/rrt_tree.h>
+#include <semantic_cloud/GetSemanticColoredLabels.h>
+#include <semantic_cloud/SemanticColoredLabels.h>
 
 #include <std_srvs/Empty.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
@@ -86,6 +88,15 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
         octomap_generator_ = new OctomapGenerator<PCLColor, ColorOcTree>();
     }
 
+    fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
+    pointcloud_sub_ =
+        nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
+
+    area_marker_ = explorationAreaInit();
+    computeCameraFOV();
+    setupLog();
+    getSemanticLabelledColors();
+
     octomap_generator_->setClampingThresMin(params_.clampingThresMin_);
     octomap_generator_->setClampingThresMax(params_.clampingThresMax_);
     octomap_generator_->setResolution(params_.octomapResolution_);
@@ -94,15 +105,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     octomap_generator_->setProbMiss(params_.probMiss_);
     octomap_generator_->setRayCastRange(params_.rayCastRange_);
     octomap_generator_->setMaxRange(params_.maxRange_);
-
-    fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
-    pointcloud_sub_ =
-        nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
-
-    area_marker_ = explorationAreaInit();
-    computeCameraFOV();
-    setupLog();
-
+    octomap_generator_->setSematicColoredLabels(semanticColoredLabels);
+    octomap_generator_->setObjectsOfInterest(objectsOfInterest);
     //debug
     //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
     //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
@@ -129,6 +133,32 @@ rrtNBV::RRTPlanner::~RRTPlanner()
     {
         file_path_.close();
     }
+}
+
+void rrtNBV::RRTPlanner::getSemanticLabelledColors()
+{
+    semantic_cloud::GetSemanticColoredLabels getSemanticColoredLabels;
+    ROS_INFO("Getting Semantic Colored Labels");
+
+    ros::service::waitForService("get_semantic_colored_labels",ros::Duration(5.0));
+    if(ros::service::call("get_semantic_colored_labels", getSemanticColoredLabels))
+    {
+        semantic_cloud::SemanticColoredLabels res = getSemanticColoredLabels.response.semantic_colored_labels;
+        for(auto i = res.semantic_colored_labels.begin(); i != res.semantic_colored_labels.end(); i++ )
+        {
+            octomap::ColorOcTreeNode::Color color = octomap::ColorOcTreeNode::Color((*i).color_r,
+                                                                                    (*i).color_g,
+                                                                                    (*i).color_b);
+            semanticColoredLabels.insert(std::make_pair((*i).label,color));
+        }
+    }
+    else
+    {
+        ROS_WARN("Failed to get Semantic Colored Labels");
+    }
+
+    octomap::ColorOcTreeNode::Color bookColor = semanticColoredLabels["book"];
+    ROS_INFO("Book Colors are:%d %d %d",bookColor.r,bookColor.g,bookColor.b);
 }
 
 void rrtNBV::RRTPlanner::computeCameraFOV()
@@ -903,6 +933,12 @@ bool rrtNBV::RRTPlanner::setParams()
     {
         ROS_WARN("No option for function. Looking for %s. Default is 0.4",
                  (ns + "/octomap/prob_miss").c_str());
+    }
+
+    if (!ros::param::get(ns + "/objects_of_interest", objectsOfInterest))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is empty",
+                 (ns + "/objects_of_interest").c_str());
     }
 
     return ret;

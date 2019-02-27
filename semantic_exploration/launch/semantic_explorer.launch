@@ -108,7 +108,7 @@
     </group>
 
     <rosparam file="$(find semantic_cloud)/config/semantic_cloud.yaml" command="load"/>
-    <node pkg="semantic_cloud" type="semantic_cloud.py" name="semantic_cloud"/>
+    <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud"/>
 
     <node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/> <!--output="screen"/-->
     <!--node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/-->

@@ -3,6 +3,7 @@
 
 #include <kindr/minimal/quat-transformation.h>
 #include <octomap/octomap.h>
+#include <octomap/ColorOcTree.h>
 #include <pcl/PCLPointCloud2.h>
 #include <ros/time.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -120,6 +121,10 @@ class OctomapGeneratorBase
 
     virtual bool lookupTransformation(const std::string& from_frame, const std::string& to_frame,
                                       const ros::Time& timestamp, Transformation* transform) = 0;
+
+    virtual void setSematicColoredLabels(std::map<std::string,octomap::ColorOcTreeNode::Color> scl) = 0;
+
+    virtual void setObjectsOfInterest(std::vector<std::string> ooi) =0;
 };
 
 #endif  //OCTOMAP_GENERATOR_BASE
