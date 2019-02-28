@@ -10,3 +10,6 @@
 - git:
     local-name: culling
     uri: https://github.com/kucars/culling
+- git:
+    local-name: semantic_cloud
+    uri: https://github.com/TarekTaha/semantic_cloud
