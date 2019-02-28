@@ -74,6 +74,7 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="rrt_explorer"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
