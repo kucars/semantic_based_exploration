@@ -145,10 +145,19 @@ class OctomapGenerator : public OctomapGeneratorBase
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point);
 
-    virtual double getCellNumOfVisits(const Eigen::Vector3d& point);
+    virtual uint getCellNumOfVisits(const Eigen::Vector3d& point);
 
     virtual bool lookupTransformation(const std::string& from_frame, const std::string& to_frame,
                                       const ros::Time& timestamp, Transformation* transform);
+    virtual void setSematicColoredLabels(std::map<std::string,octomap::ColorOcTreeNode::Color> scl)
+    {
+        this->semanticColoredLabels = scl;
+    }
+
+    virtual void setObjectsOfInterest(std::vector<std::string> ooi)
+    {
+        this->objectsOfInterest = ooi;
+    }
 
   protected:
     OCTREE octomap_;       ///<Templated octree instance
@@ -157,5 +166,7 @@ class OctomapGenerator : public OctomapGeneratorBase
     void updateColorAndSemantics(CLOUD* pcl_cloud);
     tf::TransformListener tf_listener_;
     octomap::KeyRay key_ray;
+    std::map<std::string,octomap::ColorOcTreeNode::Color> semanticColoredLabels;
+    std::vector<std::string> objectsOfInterest;
 };
 #endif  //OCTOMAP_GENERATOR

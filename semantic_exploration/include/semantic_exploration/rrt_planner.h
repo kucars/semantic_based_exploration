@@ -49,6 +49,7 @@ class RRTPlanner
     void setHandlers(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     bool setParams();
     void setupLog();
+    void getSemanticLabelledColors();
     rrtNBV::Params getParams();
     void MaxGainPose(geometry_msgs::Pose p, int id);
 
@@ -87,7 +88,8 @@ class RRTPlanner
     geometry_msgs::PoseArray viewpoints2;
     double accumulativeGain = 0;
     octomap_msgs::Octomap map_msg_;  ///<ROS octomap message
-
+    std::map<std::string,octomap::ColorOcTreeNode::Color> semanticColoredLabels;
+    std::vector<std::string> objectsOfInterest;
     double globalObjectGain;
     double globalVolumetricGain;
 };

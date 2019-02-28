@@ -114,38 +114,31 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
 template <>
 double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
+    // Not implemented yet (cannot access the getNumvisits())
     octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
     std::cout << "Color: " << node->getColor()<< std::endl;
-    bool isSemantic = false;
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
+    octomap::ColorOcTreeNode::Color interestColor;
+    //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
+    std::vector<std::string>::iterator it;
+    for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
     {
-        return 0.5;
-    }
-    else
-    {
-        if(octomap_.isNodeOccupied(node))
+        interestColor = semanticColoredLabels[*it];
+        if(node->getColor() == interestColor)
         {
-            // This is a normal color voxel, so not semantically labelled
-            isSemantic = false;
-            if(!isSemantic)
-                return 0.5 ;
-            else
-                return 0.8;
-        }
-        else
-        {
-            return 0.2;
+            return 1;
+            // Do something to the interest color
         }
     }
-    return 0.5;
+
+    return 0 ;
+
 }
 
 template <>
 double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+
     bool isSemantic = false;
     std::cout << "Color: " << node->getColor()<< std::endl;
     std::cout << "Semantics: " << node->getSemantics().confidence << std::endl;
@@ -171,7 +164,7 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
             }
             else
             {
-               return 0; // not semantically labeled
+                return 0; // not semantically labeled
             }
         }
         else
@@ -184,31 +177,11 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
 template <>
 double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
+    // Not implemented yet
     SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
+    std::cout << "Number of visits: " << node->getNumVisits()<< std::endl;
     bool isSemantic = false;
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
-    {
-        return 0.5;
-    }
-    else
-    {
-        if(octomap_.isNodeOccupied(node))
-        {
-            // Check if the voxel has been semantically labelled (visited)
-            isSemantic = node->isSemanticsSet();
-            if(!isSemantic)
-                return 0.5 ;
-            else
-                return 0.8;
-        }
-        else
-        {
-            return 0.2;
-        }
-    }
-    return 0.5;
+
 }
 
 /*
@@ -221,8 +194,9 @@ double OctomapGenerator<CLOUD, OCTREE>::getCellIneterestGain(const Eigen::Vector
 */
 
 template <>
-double OctomapGenerator<PCLColor, ColorOcTree>::getCellNumOfVisits(const Eigen::Vector3d& point)
+uint OctomapGenerator<PCLColor, ColorOcTree>::getCellNumOfVisits(const Eigen::Vector3d& point)
 {
+    // Not implemented yet
     octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
     bool isSemantic = false;
     std::cout << "Color: " << node->getColor().r<< std::endl;
@@ -231,63 +205,38 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellNumOfVisits(const Eigen::
 }
 
 template <>
-double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(const Eigen::Vector3d& point)
+uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(const Eigen::Vector3d& point)
 {
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
-    bool isSemantic = false;
-    std::cout << "Color: " << node->getColor().r << "  "  << node->getColor().g << "   "  << node->getColor().b << std::endl;
-
-    // Objects of interset colors are
-    // person  64 0 128
-    // desk    128 0 64
-    // monitor 192 160 128
-    // cabinet 64 128 0
-    // sofa    128 192 128
-    // Vase    128 160 128
-    // book    160 128 0
-
-    if (node == nullptr)
+    //bool isSemantic = false;
+    SemanticsOcTreeNodeMax::Color interestColor;
+    //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
+    std::vector<std::string>::iterator it;
+    for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
     {
-        return 0; // unknown
-    }
-    else
-    {
-        if(octomap_.isNodeOccupied(node))
+        interestColor = semanticColoredLabels[*it];
+        if(node->getColor() == interestColor)
         {
-            // Check the semantic color
-            if (
-                    (node->getColor().r == 64 && node->getColor().g == 0 && node->getColor().b == 128) ||
-                    (node->getColor().r == 128 && node->getColor().g == 0 && node->getColor().b == 64) ||
-                    (node->getColor().r == 192 && node->getColor().g == 160 && node->getColor().b == 128) ||
-                    (node->getColor().r == 64 && node->getColor().g == 128 && node->getColor().b == 0) ||
-                    (node->getColor().r == 128 && node->getColor().g == 192 && node->getColor().b == 128) ||
-                    (node->getColor().r == 128 && node->getColor().g == 160 && node->getColor().b == 128) ||
-                    (node->getColor().r == 160 && node->getColor().g == 128 && node->getColor().b == 0)
-                 )
+            if (node->getNumVisits() < 10)
             {
-                // check number of visits
-                std::cout << " voxel number of visits " << node->getNumVisits() << std::endl << std::flush ;
-                if (node->getNumVisits() < 10)
-                    return 1 ; // Obj of intrest  + not visited + occupied
-                else
-                    return 0 ; // Obj of intrest  + visited + occupied
-            }
-            else
-                return 0 ; // Not object of interest + occupied
-        }
-        else
-            return 0 ; // Free
-    }
+                ROS_INFO("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b);
 
+                std::cout << "Number of visits: " << node->getNumVisits()<< std::endl <<std::flush;
+                return 1;
+            }
+            // Do something to the interest color
+        }
+    }
+    return 0 ;
 }
 
 
 template <>
-double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellNumOfVisits(const Eigen::Vector3d& point)
+uint OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellNumOfVisits(const Eigen::Vector3d& point)
 {
+    // Not implemented yet
     SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
     bool isSemantic = false;
-    // Not Implementes yet
     return 0 ;
 
 }

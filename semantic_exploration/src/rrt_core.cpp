@@ -176,7 +176,7 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     root_[2] = position.z();
     root_[3] = tf::getYaw(quat);
 
-    // debugiing
+    // debug
     geometry_msgs::PoseStamped poseMsg;
     poseMsg.header.stamp = ros::Time::now();
     poseMsg.header.frame_id = params_.navigationFrame_;
@@ -600,30 +600,30 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
                 current = current->parent_;
             }
 
-//            geometry_msgs::Pose ret_egde;
-//            ret_egde.position.x = current->state_[0];
-//            ret_egde.position.y = current->state_[1];
-//            ret_egde.position.z = current->state_[2];
-//            float yaw = current->state_[3];
-//            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-//            ret_egde.orientation.x = q[0];
-//            ret_egde.orientation.y = q[1];
-//            ret_egde.orientation.z = q[2];
-//            ret_egde.orientation.w = q[3];
-//            ret.push_back(ret_egde);
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
+            geometry_msgs::Pose ret_egde;
+            ret_egde.position.x = current->state_[0];
+            ret_egde.position.y = current->state_[1];
+            ret_egde.position.z = current->state_[2];
+            float yaw = current->state_[3];
+            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
+            ret_egde.orientation.x = q[0];
+            ret_egde.orientation.y = q[1];
+            ret_egde.orientation.z = q[2];
+            ret_egde.orientation.w = q[3];
+            ret.push_back(ret_egde);
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
 
-//            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-//                     current->state_[2], q[0], q[1], q[2], q[3]);
-//            ROS_INFO("ret size %d", ret.size());
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
-//            ROS_INFO("**************************************");
-            ret = samplePath(current->parent_->state_, current->state_, targetFrame);
+            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
+                     current->state_[2], q[0], q[1], q[2], q[3]);
+            ROS_INFO("ret size %d", ret.size());
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            ROS_INFO("**************************************");
+            //ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -640,38 +640,38 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
                 current = current->parent_;
             }
 
-//            geometry_msgs::Pose ret_egde;
-//            ret_egde.position.x = current->state_[0];
-//            ret_egde.position.y = current->state_[1];
-//            ret_egde.position.z = current->state_[2];
-//            float yaw = current->state_[3];
-//            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-//            ret_egde.orientation.x = q[0];
-//            ret_egde.orientation.y = q[1];
-//            ret_egde.orientation.z = q[2];
-//            ret_egde.orientation.w = q[3];
-//            ret.push_back(ret_egde);
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-//                     current->state_[2], q[0], q[1], q[2], q[3]);
-//            ROS_INFO("ret size %d", ret.size());
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-//            filePath_ << current->state_[0] << ",";
-//            filePath_ << current->state_[1] << ",";
-//            filePath_ << current->state_[2] << ",";
-//            filePath_ << current->state_[3] << "\n";
-//            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
-//                    << "," << current->state_[3] << "\n";
-//            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
-//                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
+            geometry_msgs::Pose ret_egde;
+            ret_egde.position.x = current->state_[0];
+            ret_egde.position.y = current->state_[1];
+            ret_egde.position.z = current->state_[2];
+            float yaw = current->state_[3];
+            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
+            ret_egde.orientation.x = q[0];
+            ret_egde.orientation.y = q[1];
+            ret_egde.orientation.z = q[2];
+            ret_egde.orientation.w = q[3];
+            ret.push_back(ret_egde);
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
+                     current->state_[2], q[0], q[1], q[2], q[3]);
+            ROS_INFO("ret size %d", ret.size());
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            filePath_ << current->state_[0] << ",";
+            filePath_ << current->state_[1] << ",";
+            filePath_ << current->state_[2] << ",";
+            filePath_ << current->state_[3] << "\n";
+            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
+                    << "," << current->state_[3] << "\n";
+            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
+                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
 
-            ret = samplePath(current->parent_->state_, current->state_, targetFrame);
+           // ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -2542,8 +2542,6 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        //voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                        //gain+=voxelEntropy ;
                         numOfUnknownVisibleVoxels++;
                         gainUnknown += +1;
                     }
@@ -2551,23 +2549,20 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                         numOfUnknownInvisibleVoxels++;
                 }
 
-                else if (node == VoxelStatus::kOccupied)
+                else if (node == VoxelStatus::kOccupied) // Here we check for semantic voxels
                 {
                     numOfOccupiedVoxels++;
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-
-                        double semantic_gain = manager_->getCellIneterestGain(vec);
-                        //double semantic_gain = manager_->getCellNumOfVisits(vec);
-
+                        //double semantic_gain = manager_->getCellIneterestGain(vec);
+                        int semantic_gain = manager_->getCellNumOfVisits(vec);
                         // for debugging
                         if (semantic_gain == 1)
                         {
                             ROS_INFO("OBJECT OF INTEREST FOUND");
                             gainObjOfInt++;
                         }
-
                         numOfOccupiedVisibleVoxels++;
                     }
                     else
@@ -2592,35 +2587,36 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
 
     int traversedVoxels =
         numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
-    gain = gain / traversedVoxels;
+
+
+
     std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
               << std::endl
               << std::flush;
     std::cout << " number Of Voxels In One View is "
               << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
               << std::flush;
-    ;
     std::cout << " number Of Accepted visible Voxels In One View is "
               << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
               << std::endl
               << std::flush;
-    ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
-              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
-    ;
+
 
     if (gainObjOfInt > 0)
     {
         gain = gainObjOfInt;
+        gain = gain / traversedVoxels;
         objectGainFound = true;
         std::cout << "Object Gain FOUND" << gain << std::endl;
     }
     else
     {
         gain = gainUnknown;
+        gain = gain / traversedVoxels;
         std::cout << "Volumetric Gain " << gain << std::endl;
     }
 
