@@ -56,7 +56,7 @@ nbvp/dt: 0.1
 # Exploration Loop: exploration_planner_node.cpp
 exploration/log/on: true
 exploration/dt: 2.0
-exploration/num_iterations: 100
+exploration/num_iterations: 500
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 

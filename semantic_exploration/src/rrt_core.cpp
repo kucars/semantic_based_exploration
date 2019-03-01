@@ -782,7 +782,7 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
             gainValue = gain_svv(state, objectGainFound);
             break;
         case SEMANTIC_OCCLUSION_AWARE:
-            ROS_INFO("Semantic Occlusion aware VVoxels");
+            ROS_INFO("Semantic Occlusion aware Voxels");
             gainValue = gain_semantic_occlusion_aware(state, objectGainFound);
             break;
         default:
@@ -2555,12 +2555,12 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        //double semantic_gain = manager_->getCellIneterestGain(vec);
-                        int semantic_gain = manager_->getCellNumOfVisits(vec);
+                        double semantic_gain = manager_->getCellIneterestGain(vec);
+                        //int semantic_gain = manager_->getCellNumOfVisits(vec);
                         // for debugging
                         if (semantic_gain == 1)
                         {
-                            ROS_INFO("OBJECT OF INTEREST FOUND");
+                            //ROS_INFO("OBJECT OF INTEREST FOUND");
                             gainObjOfInt++;
                         }
                         numOfOccupiedVisibleVoxels++;
@@ -2622,8 +2622,8 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
 
     // Scale with volume
     std::cout << "gain before scaling " << gain << std::endl << std::flush;
-    gain *= pow(disc, 3.0);
-    std::cout << "gain after scaling " << gain << std::endl << std::flush;
+    //gain *= pow(disc, 3.0);
+    //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 
     ROS_INFO("GAIN %f ", gain);
     return gain;
@@ -2636,9 +2636,8 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
     // gain variables
     double gain = 0.0;
     double gainUnknown = 0.0;
-    double gainFree = 0.0;
-    double gainOccupied = 0.0;
     double gainObjOfInt = 0.0;
+
     // counting variables
     int numberOfAcceptedVoxelInOneView = 0;
     int numOfFreeVoxels = 0;
@@ -2655,6 +2654,7 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
 
     const double disc = manager_->getResolution();
     std::cout << "RESOLUTION " << disc << std::endl << std::flush;
+
     Eigen::Vector3d origin(state[0], state[1], state[2]);
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
@@ -2720,8 +2720,6 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        //voxelEntropy= -probability * std::log(probability) - ((1-probability) * std::log(1-probability));
-                        //gain+=voxelEntropy ;
                         numOfUnknownVisibleVoxels++;
                         gainUnknown += +1;
                     }
@@ -2735,18 +2733,18 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        // int voxelType =  manager_->getCellIneterestCellType(vec[0], vec[1], vec[2]) ;
-                        // if (voxelType == 2)
-                        // {
+
                         double s_gain = manager_->getCellIneterestGain(vec);
-                        if (s_gain == 0.5)
+                        //int s_gain = manager_->getCellNumOfVisits(vec);
+
+                        if (s_gain == 1)
                         {
                             double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                             double entropy = -probability * std::log(probability) -
                                              ((1 - probability) * std::log(1 - probability));
                             double Iv = Pv * entropy;
                             gainObjOfInt += Iv;
-                            ROS_ERROR("OBJECT OF INTEREST FOUND");
+                            //ROS_ERROR("OBJECT OF INTEREST FOUND");
                         }
 
                         numOfOccupiedVisibleVoxels++;
@@ -2773,24 +2771,24 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
     int traversedVoxels =
         numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
     gain = gain / traversedVoxels;
-    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-              << std::endl
-              << std::flush;
-    std::cout << " number Of Voxels In One View is "
-              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-              << std::flush;
-    ;
-    std::cout << " number Of Accepted visible Voxels In One View is "
-              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-              << std::endl
-              << std::flush;
-    ;
-    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
-              << std::endl
-              << std::flush;
-    ;
+//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+//              << std::endl
+//              << std::flush;
+//    std::cout << " number Of Voxels In One View is "
+//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+//              << std::flush;
+//    ;
+//    std::cout << " number Of Accepted visible Voxels In One View is "
+//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+//              << std::endl
+//              << std::flush;
+//    ;
+//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
+//                     numOfUnknownInvisibleVoxels
+//              << std::endl
+//              << std::flush;
+//    ;
 
     if (gainObjOfInt > 0)
     {
@@ -2806,8 +2804,8 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
 
     // Scale with volume
     std::cout << "gain before scaling " << gain << std::endl << std::flush;
-    gain *= pow(disc, 3.0);
-    std::cout << "gain after scaling " << gain << std::endl << std::flush;
+    //gain *= pow(disc, 3.0);
+    //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 
     ROS_INFO("GAIN %f ", gain);
     return gain;

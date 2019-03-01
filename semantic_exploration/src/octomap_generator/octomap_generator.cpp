@@ -140,38 +140,30 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
 
     bool isSemantic = false;
-    std::cout << "Color: " << node->getColor()<< std::endl;
-    std::cout << "Semantics: " << node->getSemantics().confidence << std::endl;
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
+    //std::cout << "Color: " << node->getColor()<< std::endl;
+    //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl;
+
+    // Check if the voxel has been semantically labelled (visited)
+    isSemantic = node->isSemanticsSet();
+    //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl << std::flush;
+
+    if(isSemantic)
     {
-        return 0; // unknown
+
+        if (node->getSemantics().confidence < 0.7) // hardcoded, will be changed later
+        {
+            return 1 ; // low confidance  + occupied
+        }
+        else
+            return 0; // high confidance + occupied
     }
     else
     {
-        //node->getNumVisits();
-        if(octomap_.isNodeOccupied(node))
-        {
-            // Check if the voxel has been semantically labelled (visited)
-            isSemantic = node->isSemanticsSet();
-            if(!isSemantic)
-            {
-                if (node->getSemantics().confidence < 0.8)
-                    return 1 ; // low confidance  + occupied
-                else
-                    return 0; // high confidance + occupied
-            }
-            else
-            {
-                return 0; // not semantically labeled
-            }
-        }
-        else
-        {
-            return 0; // free
-        }
+        std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
+
+        return 0; // not semantically labeled
     }
+
 }
 
 template <>
@@ -208,19 +200,24 @@ template <>
 uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(const Eigen::Vector3d& point)
 {
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
-    //bool isSemantic = false;
+    octomap::ColorOcTreeNode::Color color ;
+    color = node->getSemantics().semantic_color;
+    ROS_INFO("node colors are :%d %d %d",node->getSemantics().semantic_color.r,node->getSemantics().semantic_color.g,node->getSemantics().semantic_color.b);
+
+
     SemanticsOcTreeNodeMax::Color interestColor;
+
     //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
     std::vector<std::string>::iterator it;
     for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
     {
         interestColor = semanticColoredLabels[*it];
-        if(node->getColor() == interestColor)
+        //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b);
+        if(color == interestColor)
         {
+            // Not done yet
             if (node->getNumVisits() < 10)
             {
-                ROS_INFO("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b);
-
                 std::cout << "Number of visits: " << node->getNumVisits()<< std::endl <<std::flush;
                 return 1;
             }
@@ -238,7 +235,6 @@ uint OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellNum
     SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
     bool isSemantic = false;
     return 0 ;
-
 }
 
 
@@ -334,7 +330,7 @@ double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(
 
     const octomap::OcTreeKey& voxel_to_test_key =
             octomap_.coordToKey(pointEigenToOctomap(voxel_to_test));
-    std::cout << "Before the loop " << std::endl << std::flush;
+    //std::cout << "Before the loop " << std::endl << std::flush;
 
     // Now check if there are any unknown or occupied nodes in the ray,
     // except for the voxel_to_test key.
@@ -352,7 +348,7 @@ double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(
             double probabilityBar = 1 - probability;
             visibilityLikelihood =
                     visibilityLikelihood * probabilityBar;  // 1 - node->getOccupancy();
-            std::cout << "visibilityLikelihood" << visibilityLikelihood << std::endl << std::flush;
+            //std::cout << "visibilityLikelihood" << visibilityLikelihood << std::endl << std::flush;
         }
     }
     return visibilityLikelihood;
@@ -696,7 +692,9 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
     {
         if (!std::isnan(it->x) && !std::isnan(it->y) && !std::isnan(it->z))
         {
+            // T: did we consider converting from brg to rgb ??
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
+
             // Get semantics
             octomap::SemanticsMax sem;
             uint32_t rgb;
@@ -704,6 +702,34 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             sem.semantic_color.r = (rgb >> 16) & 0x0000ff;
             sem.semantic_color.g = (rgb >> 8) & 0x0000ff;
             sem.semantic_color.b = (rgb)&0x0000ff;
+
+            //ROS_INFO("1- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
+            // Not finished yet
+            std::vector<int> data_r = {0,32,64,128,160,192,224};
+            std::vector<int> data_g = {0,32,64,128,160,192,224};
+            std::vector<int> data_b = {0,32,64,128,160,192,224};
+
+            std::vector<int> dataNew = {0,32,64,128,160,192,224};
+
+            for(auto& element : data_r)
+                element -= sem.semantic_color.r;
+            for (auto& f : data_r) { f = f < 0 ? -f : f;}
+            int minElementIndexR = std::min_element(data_r.begin(),data_r.end()) - data_r.begin();
+            sem.semantic_color.r = dataNew[minElementIndexR] ;
+
+            for(auto& element : data_g)
+                element -= sem.semantic_color.g;
+            for (auto& f : data_g) { f = f < 0 ? -f : f;}
+            int minElementIndexG = std::min_element(data_g.begin(),data_g.end()) - data_g.begin();
+            sem.semantic_color.g = dataNew[minElementIndexG] ;
+
+            for(auto& element : data_b)
+                element -= sem.semantic_color.b;
+            for (auto& f : data_b) { f = f < 0 ? -f : f;}
+            int minElementIndexB = std::min_element(data_b.begin(),data_b.end()) - data_b.begin();
+            sem.semantic_color.b = dataNew[minElementIndexB] ;
+
+            //ROS_INFO("2- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
             sem.confidence = it->confidence;
             octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
         }
