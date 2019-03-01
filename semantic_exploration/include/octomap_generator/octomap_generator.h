@@ -145,6 +145,8 @@ class OctomapGenerator : public OctomapGeneratorBase
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point);
 
+    virtual uint getCellNumOfVisits(const Eigen::Vector3d& point);
+
     virtual bool lookupTransformation(const std::string& from_frame, const std::string& to_frame,
                                       const ros::Time& timestamp, Transformation* transform);
     virtual void setSematicColoredLabels(std::map<std::string,octomap::ColorOcTreeNode::Color> scl)

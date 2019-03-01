@@ -56,17 +56,17 @@ nbvp/dt: 0.1
 # Exploration Loop: exploration_planner_node.cpp
 exploration/log/on: true
 exploration/dt: 2.0
-exploration/num_iterations: 100
+exploration/num_iterations: 500
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -5.0
-bbx/maxX: 5.0
-bbx/minY: -5.0
-bbx/maxY: 5.0
+bbx/minX: -10.0
+bbx/maxX: 10.0
+bbx/minY: -10.0
+bbx/maxY: 10.0
 bbx/minZ: -0.1
 bbx/maxZ: 3.0
 bbx/softBounds: false
@@ -91,15 +91,21 @@ latch_topics: false
 max_free_space: 0
 min_height_free_space: 0
 change_detection_enabled: false
-objects_of_interest: ["book", "person"]
+objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 
 # Planning Methods
 # Volumetric 0
-# Semantic Rear Side Voxel 1
-# Pure_Entropy 2
-# Average Entropy 3
-# Semantic Rear side entropy 4 
+# Rear side voxel  1 
+# Semantic rear side voxel  2 
+# rear side entropy 3 
+# Semantic rear side entropy 4 
+# Pure entropy 5
+# Avg entropy 6 
+# occlusion aware 7 
+# unobserved voxel 8 
+# semantic Visible voxels 9 (proposed 1) 
+# semantic occlusion aware 10  
 
 
-/utility/method: 0
+/utility/method: 9
 /output/file/name: "1.csv"

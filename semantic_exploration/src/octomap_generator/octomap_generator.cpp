@@ -46,16 +46,16 @@ bool OctomapGenerator<PCLColor, ColorOcTree>::isUseSemanticColor()
 
 template <class CLOUD, class OCTREE>
 VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getBoundingBoxStatus(
-    const Eigen::Vector3d& center, const Eigen::Vector3d& bounding_box_size,
-    bool stop_at_unknown_voxel)
+        const Eigen::Vector3d& center, const Eigen::Vector3d& bounding_box_size,
+        bool stop_at_unknown_voxel)
 {
     return VoxelStatus::kFree;
 }
 
 template <class CLOUD, class OCTREE>
 VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
-    const Eigen::Vector3d& start, const Eigen::Vector3d& end,
-    const Eigen::Vector3d& bounding_box_size)
+        const Eigen::Vector3d& start, const Eigen::Vector3d& end,
+        const Eigen::Vector3d& bounding_box_size)
 {
     // Probably best way would be to get all the coordinates along
     // the line, then make a set of all the OcTreeKeys in all the bounding boxes
@@ -114,9 +114,9 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
 template <>
 double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
+    // Not implemented yet (cannot access the getNumvisits())
     octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
-
+    std::cout << "Color: " << node->getColor()<< std::endl;
     octomap::ColorOcTreeNode::Color interestColor;
     //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
     std::vector<std::string>::iterator it;
@@ -125,94 +125,55 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen
         interestColor = semanticColoredLabels[*it];
         if(node->getColor() == interestColor)
         {
+            return 1;
             // Do something to the interest color
         }
     }
 
-    bool isSemantic = false;
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
-    {
-        return 0.5;
-    }
-    else
-    {
-        if(octomap_.isNodeOccupied(node))
-        {
-            // This is a normal color voxel, so not semantically labelled
-            isSemantic = false;
-            if(!isSemantic)
-                return 0.5 ;
-            else
-                return 0.8;
-        }
-        else
-        {
-            return 0.2;
-        }
-    }
-    return 0.5;
+    return 0 ;
+
 }
 
 template <>
 double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+
     bool isSemantic = false;
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
+    //std::cout << "Color: " << node->getColor()<< std::endl;
+    //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl;
+
+    // Check if the voxel has been semantically labelled (visited)
+    isSemantic = node->isSemanticsSet();
+    //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl << std::flush;
+
+    if(isSemantic)
     {
-        return 0.5;
+
+        if (node->getSemantics().confidence < 0.7) // hardcoded, will be changed later
+        {
+            return 1 ; // low confidance  + occupied
+        }
+        else
+            return 0; // high confidance + occupied
     }
     else
     {
-        node->getNumVisits();
-        if(octomap_.isNodeOccupied(node))
-        {
-            // Check if the voxel has been semantically labelled (visited)
-            isSemantic = node->isSemanticsSet();
-            if(!isSemantic)
-                return 0.5 ;
-            else
-                return 0.8;
-        }
-        else
-        {
-            return 0.2;
-        }
+        std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
+
+        return 0; // not semantically labeled
     }
-    return 0.5;
+
 }
 
 template <>
 double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
+    // Not implemented yet
     SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
+    std::cout << "Number of visits: " << node->getNumVisits()<< std::endl;
     bool isSemantic = false;
-    // R: What is this check for? if the node is null, it means we don't have it in the tree, so it's not visited.
-    // I don't understand the logic, think carefully and explain in a flow chart
-    if (node == nullptr)
-    {
-        return 0.5;
-    }
-    else
-    {
-        if(octomap_.isNodeOccupied(node))
-        {
-            // Check if the voxel has been semantically labelled (visited)
-            isSemantic = node->isSemanticsSet();
-            if(!isSemantic)
-                return 0.5 ;
-            else
-                return 0.8;
-        }
-        else
-        {
-            return 0.2;
-        }
-    }
-    return 0.5;
+
 }
 
 /*
@@ -223,6 +184,59 @@ double OctomapGenerator<CLOUD, OCTREE>::getCellIneterestGain(const Eigen::Vector
 
 }
 */
+
+template <>
+uint OctomapGenerator<PCLColor, ColorOcTree>::getCellNumOfVisits(const Eigen::Vector3d& point)
+{
+    // Not implemented yet
+    octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+    bool isSemantic = false;
+    std::cout << "Color: " << node->getColor().r<< std::endl;
+    return 0 ;
+
+}
+
+template <>
+uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(const Eigen::Vector3d& point)
+{
+    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+    octomap::ColorOcTreeNode::Color color ;
+    color = node->getSemantics().semantic_color;
+    ROS_INFO("node colors are :%d %d %d",node->getSemantics().semantic_color.r,node->getSemantics().semantic_color.g,node->getSemantics().semantic_color.b);
+
+
+    SemanticsOcTreeNodeMax::Color interestColor;
+
+    //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
+    std::vector<std::string>::iterator it;
+    for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
+    {
+        interestColor = semanticColoredLabels[*it];
+        //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b);
+        if(color == interestColor)
+        {
+            // Not done yet
+            if (node->getNumVisits() < 10)
+            {
+                std::cout << "Number of visits: " << node->getNumVisits()<< std::endl <<std::flush;
+                return 1;
+            }
+            // Do something to the interest color
+        }
+    }
+    return 0 ;
+}
+
+
+template <>
+uint OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellNumOfVisits(const Eigen::Vector3d& point)
+{
+    // Not implemented yet
+    SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
+    bool isSemantic = false;
+    return 0 ;
+}
+
 
 // returns a number that indicates the proposed type from octomap
 template <class CLOUD, class OCTREE>
@@ -250,6 +264,7 @@ int OctomapGenerator<CLOUD, OCTREE>::getCellIneterestCellType(double x, double y
     return 0;
 }
 
+
 // returns true if the last voxel in the ray was unknown(rear side).
 template <class CLOUD, class OCTREE>
 bool OctomapGenerator<CLOUD, OCTREE>::getRearSideVoxel(const Eigen::Vector3d& view_point,
@@ -264,7 +279,7 @@ bool OctomapGenerator<CLOUD, OCTREE>::getRearSideVoxel(const Eigen::Vector3d& vi
                             key_ray);
 
     const octomap::OcTreeKey& voxel_to_test_key =
-        octomap_.coordToKey(pointEigenToOctomap(voxel_to_test));
+            octomap_.coordToKey(pointEigenToOctomap(voxel_to_test));
     int i = 1;
     int s = key_ray.size();
     for (octomap::OcTreeKey key : key_ray)
@@ -301,7 +316,7 @@ bool OctomapGenerator<CLOUD, OCTREE>::getRearSideVoxel(const Eigen::Vector3d& vi
 //returns the visibility likelihood for a ray from voxel 1 to n-1
 template <class CLOUD, class OCTREE>
 double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(
-    const Eigen::Vector3d& view_point, const Eigen::Vector3d& voxel_to_test)
+        const Eigen::Vector3d& view_point, const Eigen::Vector3d& voxel_to_test)
 {
     // Get all node keys for this line.
     // This is actually a typedef for a vector of OcTreeKeys.
@@ -314,8 +329,8 @@ double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(
                             key_ray);
 
     const octomap::OcTreeKey& voxel_to_test_key =
-        octomap_.coordToKey(pointEigenToOctomap(voxel_to_test));
-    std::cout << "Before the loop " << std::endl << std::flush;
+            octomap_.coordToKey(pointEigenToOctomap(voxel_to_test));
+    //std::cout << "Before the loop " << std::endl << std::flush;
 
     // Now check if there are any unknown or occupied nodes in the ray,
     // except for the voxel_to_test key.
@@ -332,8 +347,8 @@ double OctomapGenerator<CLOUD, OCTREE>::getVisibilityLikelihood(
 
             double probabilityBar = 1 - probability;
             visibilityLikelihood =
-                visibilityLikelihood * probabilityBar;  // 1 - node->getOccupancy();
-            std::cout << "visibilityLikelihood" << visibilityLikelihood << std::endl << std::flush;
+                    visibilityLikelihood * probabilityBar;  // 1 - node->getOccupancy();
+            //std::cout << "visibilityLikelihood" << visibilityLikelihood << std::endl << std::flush;
         }
     }
     return visibilityLikelihood;
@@ -391,9 +406,9 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getVisibility(const Eigen::Vector3d
     key_ray.reset();
 
     octomap::point3d octoViewPoint =
-        octomap::point3d(view_point.x(), view_point.y(), view_point.z());
+            octomap::point3d(view_point.x(), view_point.y(), view_point.z());
     octomap::point3d octoVoxel2Test =
-        octomap::point3d(voxel_to_test.x(), voxel_to_test.y(), voxel_to_test.z());
+            octomap::point3d(voxel_to_test.x(), voxel_to_test.y(), voxel_to_test.z());
 
     octomap_.computeRayKeys(octoViewPoint, octoVoxel2Test, key_ray);
 
@@ -504,7 +519,7 @@ bool OctomapGenerator<CLOUD, OCTREE>::lookupTransformation(const std::string& fr
 
 template <class CLOUD, class OCTREE>
 void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(
-    const sensor_msgs::PointCloud2::ConstPtr& cloud_in, const std::string& to_frame)
+        const sensor_msgs::PointCloud2::ConstPtr& cloud_in, const std::string& to_frame)
 {
     Transformation sensor_to_world;
     if (lookupTransformation(cloud_in->header.frame_id, to_frame, cloud_in->header.stamp,
@@ -545,20 +560,20 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(
                 {
                     // Check if the point is in the ray casting range
                     if (dist <=
-                        raycast_range_)  // Add to a point cloud and do ray casting later all together
+                            raycast_range_)  // Add to a point cloud and do ray casting later all together
                     {
                         raycast_cloud.push_back(it->x, it->y, it->z);
                     }
                     else  // otherwise update the occupancy of node and transfer the point to the raycast range
                     {
                         octomap::point3d direction =
-                            (octomap::point3d(it->x, it->y, it->z) - origin).normalized();
+                                (octomap::point3d(it->x, it->y, it->z) - origin).normalized();
                         octomap::point3d new_end =
-                            origin + direction * (raycast_range_ + octomap_.getResolution() * 2);
+                                origin + direction * (raycast_range_ + octomap_.getResolution() * 2);
                         raycast_cloud.push_back(new_end);
                         octomap_.updateNode(
-                            it->x, it->y, it->z, true,
-                            false);  // use lazy_eval, run updateInnerOccupancy() when done
+                                    it->x, it->y, it->z, true,
+                                    false);  // use lazy_eval, run updateInnerOccupancy() when done
                     }
                     endpoint_count++;
                 }
@@ -567,8 +582,8 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(
         // Do ray casting for points in raycast_range_
         if (raycast_cloud.size() > 0)
             octomap_.insertPointCloud(
-                raycast_cloud, origin, raycast_range_, false,
-                true);  // use lazy_eval, run updateInnerOccupancy() when done, use discretize to downsample cloud
+                        raycast_cloud, origin, raycast_range_, false,
+                        true);  // use lazy_eval, run updateInnerOccupancy() when done, use discretize to downsample cloud
         // Update colors and semantics, differs between templates
         updateColorAndSemantics(&pcl_cloud);
         // updates inner node occupancy and colors
@@ -622,20 +637,20 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(const pcl::PCLPointCloud2
             {
                 // Check if the point is in the ray casting range
                 if (dist <=
-                    raycast_range_)  // Add to a point cloud and do ray casting later all together
+                        raycast_range_)  // Add to a point cloud and do ray casting later all together
                 {
                     raycast_cloud.push_back(it->x, it->y, it->z);
                 }
                 else  // otherwise update the occupancy of node and transfer the point to the raycast range
                 {
                     octomap::point3d direction =
-                        (octomap::point3d(it->x, it->y, it->z) - origin).normalized();
+                            (octomap::point3d(it->x, it->y, it->z) - origin).normalized();
                     octomap::point3d new_end =
-                        origin + direction * (raycast_range_ + octomap_.getResolution() * 2);
+                            origin + direction * (raycast_range_ + octomap_.getResolution() * 2);
                     raycast_cloud.push_back(new_end);
                     octomap_.updateNode(
-                        it->x, it->y, it->z, true,
-                        false);  // use lazy_eval, run updateInnerOccupancy() when done
+                                it->x, it->y, it->z, true,
+                                false);  // use lazy_eval, run updateInnerOccupancy() when done
                 }
                 endpoint_count++;
             }
@@ -644,8 +659,8 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(const pcl::PCLPointCloud2
     // Do ray casting for points in raycast_range_
     if (raycast_cloud.size() > 0)
         octomap_.insertPointCloud(
-            raycast_cloud, origin, raycast_range_, false,
-            true);  // use lazy_eval, run updateInnerOccupancy() when done, use discretize to downsample cloud
+                    raycast_cloud, origin, raycast_range_, false,
+                    true);  // use lazy_eval, run updateInnerOccupancy() when done, use discretize to downsample cloud
     // Update colors and semantics, differs between templates
     updateColorAndSemantics(&pcl_cloud);
     // updates inner node occupancy and colors
@@ -664,20 +679,22 @@ void OctomapGenerator<PCLColor, ColorOcTree>::updateColorAndSemantics(PCLColor* 
         }
     }
     octomap::ColorOcTreeNode* node =
-        octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
+            octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
     //std::cout << "Example octree node: " << std::endl;
     //std::cout << "Color: " << node->getColor()<< std::endl;
 }
 
 template <>
 void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemantics(
-    PCLSemanticsMax* pcl_cloud)
+        PCLSemanticsMax* pcl_cloud)
 {
     for (PCLSemanticsMax::const_iterator it = pcl_cloud->begin(); it < pcl_cloud->end(); it++)
     {
         if (!std::isnan(it->x) && !std::isnan(it->y) && !std::isnan(it->z))
         {
+            // T: did we consider converting from brg to rgb ??
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
+
             // Get semantics
             octomap::SemanticsMax sem;
             uint32_t rgb;
@@ -685,12 +702,40 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             sem.semantic_color.r = (rgb >> 16) & 0x0000ff;
             sem.semantic_color.g = (rgb >> 8) & 0x0000ff;
             sem.semantic_color.b = (rgb)&0x0000ff;
+
+            //ROS_INFO("1- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
+            // Not finished yet
+            std::vector<int> data_r = {0,32,64,128,160,192,224};
+            std::vector<int> data_g = {0,32,64,128,160,192,224};
+            std::vector<int> data_b = {0,32,64,128,160,192,224};
+
+            std::vector<int> dataNew = {0,32,64,128,160,192,224};
+
+            for(auto& element : data_r)
+                element -= sem.semantic_color.r;
+            for (auto& f : data_r) { f = f < 0 ? -f : f;}
+            int minElementIndexR = std::min_element(data_r.begin(),data_r.end()) - data_r.begin();
+            sem.semantic_color.r = dataNew[minElementIndexR] ;
+
+            for(auto& element : data_g)
+                element -= sem.semantic_color.g;
+            for (auto& f : data_g) { f = f < 0 ? -f : f;}
+            int minElementIndexG = std::min_element(data_g.begin(),data_g.end()) - data_g.begin();
+            sem.semantic_color.g = dataNew[minElementIndexG] ;
+
+            for(auto& element : data_b)
+                element -= sem.semantic_color.b;
+            for (auto& f : data_b) { f = f < 0 ? -f : f;}
+            int minElementIndexB = std::min_element(data_b.begin(),data_b.end()) - data_b.begin();
+            sem.semantic_color.b = dataNew[minElementIndexB] ;
+
+            //ROS_INFO("2- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
             sem.confidence = it->confidence;
             octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
         }
     }
     SemanticsOcTreeNodeMax* node =
-        octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
+            octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
     //std::cout << "Example octree node: " << std::endl;
     //std::cout << "Color: " << node->getColor()<< std::endl;
     //std::cout << "Semantics: " << node->getSemantics() << std::endl;
@@ -698,7 +743,7 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
 
 template <>
 void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::updateColorAndSemantics(
-    PCLSemanticsBayesian* pcl_cloud)
+        PCLSemanticsBayesian* pcl_cloud)
 {
     for (PCLSemanticsBayesian::const_iterator it = pcl_cloud->begin(); it < pcl_cloud->end(); it++)
     {
@@ -720,7 +765,7 @@ void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::updateColo
         }
     }
     SemanticsOcTreeNodeBayesian* node =
-        octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
+            octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
     //std::cout << "Example octree node: " << std::endl;
     //std::cout << "Color: " << node->getColor()<< std::endl;
     //std::cout << "Semantics: " << node->getSemantics() << std::endl;

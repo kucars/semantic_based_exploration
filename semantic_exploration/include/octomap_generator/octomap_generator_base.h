@@ -119,6 +119,8 @@ class OctomapGeneratorBase
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point) = 0;
 
+    virtual uint getCellNumOfVisits(const Eigen::Vector3d& point) =0 ; 
+
     virtual bool lookupTransformation(const std::string& from_frame, const std::string& to_frame,
                                       const ros::Time& timestamp, Transformation* transform) = 0;
 

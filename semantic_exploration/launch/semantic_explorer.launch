@@ -6,8 +6,8 @@
     <arg name="enable_ground_truth" default="true" />
     <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
 
-    <arg name="x" default="-1.0"/>
-    <arg name="y" default="1.0"/>
+    <arg name="x" default="7.0"/>
+    <arg name="y" default="4.0"/>
     <arg name="z" default="0.25"/>
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>
@@ -111,7 +111,7 @@
     <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud"/>
 
     <node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/> <!--output="screen"/-->
-    <!--node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/-->
+    <node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/>
 
     <!--node pkg="orb_slam2" type="rgbd" name="rgbd" output="screen" args="$(find orb_slam2)../../../Vocabulary/ORBvoc.txt $(find semantic_exploration)/config/orb_slam.yaml"/>
     <node pkg="topic_tools" type="relay" name="depth_registered_relay" args="/camera/depth/image_raw /camera/depth_registered/image_raw" /-->
