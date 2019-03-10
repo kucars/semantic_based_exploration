@@ -90,6 +90,12 @@ class RRTPlanner
     octomap_msgs::Octomap map_msg_;  ///<ROS octomap message
     std::map<std::string,octomap::ColorOcTreeNode::Color> semanticColoredLabels;
     std::vector<std::string> objectsOfInterest;
+    float confidenceThreshold;
+    float numOfVisitsThreshold;
+    std::vector<int> semanticColorRange;
+    std::vector<int> semanticColorRangeRed;
+    std::vector<int> semanticColorRangeGreen;
+    std::vector<int> semanticColorRangeBlue;
     double globalObjectGain;
     double globalVolumetricGain;
 };

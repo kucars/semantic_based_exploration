@@ -2555,8 +2555,8 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
-                        double semantic_gain = manager_->getCellIneterestGain(vec);
-                        //int semantic_gain = manager_->getCellNumOfVisits(vec);
+                        //double semantic_gain = manager_->getCellIneterestGain(vec);
+                        int semantic_gain = manager_->getCellNumOfVisits(vec);
                         // for debugging
                         if (semantic_gain == 1)
                         {

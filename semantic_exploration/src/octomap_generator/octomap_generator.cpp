@@ -150,7 +150,8 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     if(isSemantic)
     {
 
-        if (node->getSemantics().confidence < 0.7) // hardcoded, will be changed later
+        //ROS_INFO ("confidenceThreshold %f" , confidenceThreshold ) ;
+        if (node->getSemantics().confidence < confidenceThreshold) // hardcoded, will be changed later
         {
             return 1 ; // low confidance  + occupied
         }
@@ -202,8 +203,7 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
     octomap::ColorOcTreeNode::Color color ;
     color = node->getSemantics().semantic_color;
-    ROS_INFO("node colors are :%d %d %d",node->getSemantics().semantic_color.r,node->getSemantics().semantic_color.g,node->getSemantics().semantic_color.b);
-
+    //ROS_ERROR("node colors are :%d %d %d",node->getSemantics().semantic_color.r,node->getSemantics().semantic_color.g,node->getSemantics().semantic_color.b);
 
     SemanticsOcTreeNodeMax::Color interestColor;
 
@@ -212,16 +212,17 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
     for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
     {
         interestColor = semanticColoredLabels[*it];
-        //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b);
         if(color == interestColor)
         {
-            // Not done yet
-            if (node->getNumVisits() < 10)
+            // for debugging I used ROS_Error
+            ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b); // worked
+            ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
+            //ROS_INFO("numOfVisitsThreshold: %d",numOfVisitsThreshold); // Not initialized
+
+            if (node->getNumVisits() < numOfVisitsThreshold)
             {
-                std::cout << "Number of visits: " << node->getNumVisits()<< std::endl <<std::flush;
                 return 1;
             }
-            // Do something to the interest color
         }
     }
     return 0 ;
@@ -692,7 +693,6 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
     {
         if (!std::isnan(it->x) && !std::isnan(it->y) && !std::isnan(it->z))
         {
-            // T: did we consider converting from brg to rgb ??
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
 
             // Get semantics
@@ -704,33 +704,47 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             sem.semantic_color.b = (rgb)&0x0000ff;
 
             //ROS_INFO("1- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
-            // Not finished yet
-            std::vector<int> data_r = {0,32,64,128,160,192,224};
-            std::vector<int> data_g = {0,32,64,128,160,192,224};
-            std::vector<int> data_b = {0,32,64,128,160,192,224};
 
-            std::vector<int> dataNew = {0,32,64,128,160,192,224};
+            std::vector<int> data_r ,data_g ,data_b, dataNew ;
 
+            data_r = semanticColorRangeRed ;
+            data_g = semanticColorRangeGreen  ;
+            data_b = semanticColorRangeBlue   ;
+            dataNew = semanticColorRange ;
+//            std::vector<int> data_r = {0,32,64,128,160,192,224};
+//            std::vector<int> data_g = {0,32,64,128,160,192,224};
+//            std::vector<int> data_b = {0,32,64,128,160,192,224};
+//            std::vector<int> dataNew = {0,32,64,128,160,192,224};
+
+            // apply subtraction to find the closest range
             for(auto& element : data_r)
                 element -= sem.semantic_color.r;
-            for (auto& f : data_r) { f = f < 0 ? -f : f;}
-            int minElementIndexR = std::min_element(data_r.begin(),data_r.end()) - data_r.begin();
-            sem.semantic_color.r = dataNew[minElementIndexR] ;
-
             for(auto& element : data_g)
                 element -= sem.semantic_color.g;
-            for (auto& f : data_g) { f = f < 0 ? -f : f;}
-            int minElementIndexG = std::min_element(data_g.begin(),data_g.end()) - data_g.begin();
-            sem.semantic_color.g = dataNew[minElementIndexG] ;
-
             for(auto& element : data_b)
                 element -= sem.semantic_color.b;
+
+            // convert all the numbers after subtraction to absolute numbers
+            for (auto& f : data_r) { f = f < 0 ? -f : f;}
+            for (auto& f : data_g) { f = f < 0 ? -f : f;}
             for (auto& f : data_b) { f = f < 0 ? -f : f;}
+
+            // find the location minimum value (the closer to the actual value)
+            int minElementIndexR = std::min_element(data_r.begin(),data_r.end()) - data_r.begin();
+            int minElementIndexG = std::min_element(data_g.begin(),data_g.end()) - data_g.begin();
             int minElementIndexB = std::min_element(data_b.begin(),data_b.end()) - data_b.begin();
+
+
+            // assigne the semantic color 'r , g, b' to the correcponding number in the dataset
+            sem.semantic_color.r = dataNew[minElementIndexR] ;
+            sem.semantic_color.g = dataNew[minElementIndexG] ;            
             sem.semantic_color.b = dataNew[minElementIndexB] ;
 
             //ROS_INFO("2- %d %d %d",sem.semantic_color.r ,sem.semantic_color.g, sem.semantic_color.b );
-            sem.confidence = it->confidence;
+
+            sem.confidence = it->confidence;                
+            sem.numVisits +=1 ; //int x = sem.incrementNumVisits() ;
+            //std::cout << "number of visits " << sem.numVisits  << std::endl << std::flush ;
             octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
         }
     }

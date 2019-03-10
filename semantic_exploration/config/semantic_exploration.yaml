@@ -56,7 +56,7 @@ nbvp/dt: 0.1
 # Exploration Loop: exploration_planner_node.cpp
 exploration/log/on: true
 exploration/dt: 2.0
-exploration/num_iterations: 500
+exploration/num_iterations: 1000
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
@@ -92,7 +92,12 @@ max_free_space: 0
 min_height_free_space: 0
 change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
-
+confidence_threshold: 0.7 
+num_of_visits_threshold: 10 
+semantic_color_range: [0,32,64,128,160,192,224]
+semantic_color_range_red: [0,32,64,128,160,192,224]
+semantic_color_range_green: [0,32,64,128,160,192,224]
+semantic_color_range_blue: [0,32,64,128,160,192,224]
 # Planning Methods
 # Volumetric 0
 # Rear side voxel  1 
@@ -104,7 +109,7 @@ objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 # occlusion aware 7 
 # unobserved voxel 8 
 # semantic Visible voxels 9 (proposed 1) 
-# semantic occlusion aware 10  
+# semantic occlusion aware 10 ( The planner crashes)   
 
 
 /utility/method: 9

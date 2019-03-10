@@ -15,7 +15,7 @@ struct SemanticsMax
     ColorOcTreeNode::Color semantic_color;  ///<Semantic color
     float confidence;
     uint  numVisits;
-    SemanticsMax() : semantic_color(), confidence(0.)
+    SemanticsMax() : semantic_color(), confidence(0.), numVisits(0) 
     {
     }
 
