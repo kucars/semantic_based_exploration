@@ -129,10 +129,7 @@ class OctomapGeneratorBase
     virtual void setObjectsOfInterest(std::vector<std::string> ooi) =0;
     virtual void setConfidenceThreshold(float ooi) =0 ; 
     virtual void setNumOfVisitsThreshold(int ooi) =0 ; 
-    virtual void setSemanticColorRange(std::vector<int> ooi) =0;
-    virtual void setSemanticColorRangeRed(std::vector<int> ooi) =0;
-    virtual void setSemanticColorRangeGreen(std::vector<int> ooi) =0;
-    virtual void setSemanticColorRangeBlue(std::vector<int> ooi) =0;
+
 };
 
 #endif  //OCTOMAP_GENERATOR_BASE

@@ -222,13 +222,13 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /explorationarea
       Name: explorationarea
       Namespaces:
-        workspace: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -318,9 +318,9 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.4571141
-        Y: 3.34329915
-        Z: 2.88175559
+        X: 4.63951874
+        Y: 4.6508913
+        Z: 2.88286114
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

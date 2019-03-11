@@ -94,10 +94,7 @@ change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
 num_of_visits_threshold: 10 
-semantic_color_range: [0,32,64,128,160,192,224]
-semantic_color_range_red: [0,32,64,128,160,192,224]
-semantic_color_range_green: [0,32,64,128,160,192,224]
-semantic_color_range_blue: [0,32,64,128,160,192,224]
+
 # Planning Methods
 # Volumetric 0
 # Rear side voxel  1 
@@ -108,9 +105,9 @@ semantic_color_range_blue: [0,32,64,128,160,192,224]
 # Avg entropy 6 
 # occlusion aware 7 
 # unobserved voxel 8 
-# semantic Visible voxels 9 (proposed 1) 
-# semantic occlusion aware 10 ( The planner crashes)   
+# semantic Visible voxels with confidance 9 (proposed 1) 
+# semantic occlusion aware 10 (proposed 2 - The planner crashes)   
+# semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-
-/utility/method: 9
+/utility/method: 11
 /output/file/name: "1.csv"

@@ -166,23 +166,6 @@ class OctomapGenerator : public OctomapGeneratorBase
     {
         this->numOfVisitsThreshold = ooi;
     }
-    virtual void setSemanticColorRange(std::vector<int> ooi)
-    {
-        this->semanticColorRange = ooi;
-    }
-    virtual void setSemanticColorRangeRed(std::vector<int> ooi)
-    {
-        this->semanticColorRangeRed = ooi;
-    }
-    virtual void setSemanticColorRangeGreen(std::vector<int> ooi)
-    {
-        this->semanticColorRangeGreen = ooi;
-    }
-    virtual void setSemanticColorRangeBlue(std::vector<int> ooi)
-    {
-        this->semanticColorRangeBlue = ooi;
-    }
-
 
   protected:
     OCTREE octomap_;       ///<Templated octree instance
@@ -195,10 +178,6 @@ class OctomapGenerator : public OctomapGeneratorBase
     std::vector<std::string> objectsOfInterest;
     float confidenceThreshold;
     int numOfVisitsThreshold;
-    std::vector<int> semanticColorRange;
-    std::vector<int> semanticColorRangeRed;
-    std::vector<int> semanticColorRangeGreen;
-    std::vector<int> semanticColorRangeBlue;
 };
 
 #endif  //OCTOMAP_GENERATOR

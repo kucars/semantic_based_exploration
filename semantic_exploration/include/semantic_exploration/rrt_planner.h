@@ -92,10 +92,6 @@ class RRTPlanner
     std::vector<std::string> objectsOfInterest;
     float confidenceThreshold;
     float numOfVisitsThreshold;
-    std::vector<int> semanticColorRange;
-    std::vector<int> semanticColorRangeRed;
-    std::vector<int> semanticColorRangeGreen;
-    std::vector<int> semanticColorRangeBlue;
     double globalObjectGain;
     double globalVolumetricGain;
 };
