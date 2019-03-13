@@ -93,7 +93,7 @@ min_height_free_space: 0
 change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
-num_of_visits_threshold: 10 
+num_of_visits_threshold: 3 
 
 # Planning Methods
 # Volumetric 0

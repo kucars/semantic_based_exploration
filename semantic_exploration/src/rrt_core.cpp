@@ -385,8 +385,8 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
         newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);
 
-        ROS_INFO("newParent->gain_:%f", newParent->gain_);
-        ROS_INFO("Branch Gain IS:%f", newNode->gain_);
+        //ROS_INFO("newParent->gain_:%f", newParent->gain_);
+        //ROS_INFO("Branch Gain IS:%f", newNode->gain_);
 
         kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
         // Display new node
@@ -399,7 +399,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             if (newNode->gain_ > bestObjectGain_)
             {
                 std::cout << " ITERATE, OBJECT FOUND " << std::endl << std::flush;
-                std::cout << "  " << std::endl;
                 std::cout << " %%%%%%%%%%%% " << std::endl;
                 bestObjectGain_ = newNode->gain_;
                 bestObjectNode_ = newNode;
@@ -407,8 +406,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         else
         {
-            std::cout << " ITERATE" << std::endl;
-            std::cout << " VOLUMETRIC GAIN ONLY  " << std::endl;
+            std::cout << " ITERATE- VOLUMETRIC GAIN ONLY  " << std::endl;
             // Update best IG and node if applicable
             if (newNode->gain_ > bestGain_)
             {
@@ -562,8 +560,8 @@ void rrtNBV::RrtTree::initialize()
             }
             else
             {
-                std::cout << " INITIALAIZE" << std::endl;
-                std::cout << " OBJECT NOT FOUND " << std::endl;
+                std::cout << " INITIALAIZE - OBJECT NOT FOUND" << std::endl;
+                std::cout << "  " << std::endl;
                 // Update best IG and node if applicable
                 if (newNode->gain_ > bestGain_)
                 {
@@ -786,8 +784,8 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
             gainValue = gain_semantic_occlusion_aware(state, objectGainFound);
             break;
         case SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS:
-            ROS_INFO("Semantic obj of interest depending on Num of visits");
-            gainValue = gain_semantic_obj_Int_num_visits(state, objectGainFound);
+            ROS_INFO("Semantic obj of interest- Num of visits");
+            gainValue = gain_semantic_obj_interest_num_visits(state, objectGainFound);
             break ;
         default:
             ROS_WARN("Utility function type not found!");
@@ -2593,20 +2591,20 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
 
 
 
-    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-              << std::endl
-              << std::flush;
-    std::cout << " number Of Voxels In One View is "
-              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-              << std::flush;
-    std::cout << " number Of Accepted visible Voxels In One View is "
-              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-              << std::endl
-              << std::flush;
-    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
-              << std::endl
-              << std::flush;
+//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+//              << std::endl
+//              << std::flush;
+//    std::cout << " number Of Voxels In One View is "
+//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+//              << std::flush;
+//    std::cout << " number Of Accepted visible Voxels In One View is "
+//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+//              << std::endl
+//              << std::flush;
+//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
+//              << std::endl
+//              << std::flush;
 
 
     if (gainObjOfInt > 0)
@@ -2614,17 +2612,17 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
         gain = gainObjOfInt;
         gain = gain / traversedVoxels;
         objectGainFound = true;
-        std::cout << "Object Gain FOUND" << gain << std::endl;
+        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
     }
     else
     {
         gain = gainUnknown;
         gain = gain / traversedVoxels;
-        std::cout << "Volumetric Gain " << gain << std::endl;
+        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
     }
 
     // Scale with volume
-    std::cout << "gain before scaling " << gain << std::endl << std::flush;
+    //std::cout << "gain before scaling " << gain << std::endl << std::flush;
     //gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 
@@ -2797,27 +2795,27 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
     {
         gain = gainObjOfInt;
         objectGainFound = true;
-        std::cout << "Object Gain FOUND" << gain << std::endl;
+        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
     }
     else
     {
         gain = gainUnknown;
-        std::cout << "Volumetric Gain " << gain << std::endl;
+        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
     }
 
     // Scale with volume
-    std::cout << "gain before scaling " << gain << std::endl << std::flush;
+    //std::cout << "gain before scaling " << gain << std::endl << std::flush;
     //gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 
-    ROS_INFO("GAIN %f ", gain);
+    ROS_INFO("Gain %f ", gain);
     return gain;
 }
 
 // Semantic Visible Voxels Proposed (counting number of obj of interest - not sufficiently visited voxels)
-double rrtNBV::RrtTree::gain_semantic_obj_Int_num_visits(StateVec state, bool &objectGainFound)
+double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bool &objectGainFound)
 {
-    ROS_INFO("SEMANTIC VISIBLE VOXEL OBJ of INTEREST VISITS ");
+    //ROS_INFO("SEMANTIC VISIBLE VOXEL OBJ of INTEREST VISITS ");
 
     // gain variables
     double gain = 0.0;
@@ -2953,20 +2951,20 @@ double rrtNBV::RrtTree::gain_semantic_obj_Int_num_visits(StateVec state, bool &o
 
 
 
-    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-              << std::endl
-              << std::flush;
-    std::cout << " number Of Voxels In One View is "
-              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-              << std::flush;
-    std::cout << " number Of Accepted visible Voxels In One View is "
-              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-              << std::endl
-              << std::flush;
-    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
-              << std::endl
-              << std::flush;
+//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+//              << std::endl
+//              << std::flush;
+//    std::cout << " number Of Voxels In One View is "
+//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+//              << std::flush;
+//    std::cout << " number Of Accepted visible Voxels In One View is "
+//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+//              << std::endl
+//              << std::flush;
+//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
+//              << std::endl
+//              << std::flush;
 
 
     if (gainObjOfInt > 0)
@@ -2974,17 +2972,17 @@ double rrtNBV::RrtTree::gain_semantic_obj_Int_num_visits(StateVec state, bool &o
         gain = gainObjOfInt;
         gain = gain / traversedVoxels;
         objectGainFound = true;
-        std::cout << "Object Gain FOUND" << gain << std::endl;
+        //std::cout << "Object Gain FOUND" << gain << std::endl;
     }
     else
     {
         gain = gainUnknown;
         gain = gain / traversedVoxels;
-        std::cout << "Volumetric Gain " << gain << std::endl;
+        //std::cout << "Volumetric Gain " << gain << std::endl;
     }
 
     // Scale with volume
-    std::cout << "gain before scaling " << gain << std::endl << std::flush;
+    //std::cout << "gain before scaling " << gain << std::endl << std::flush;
     //gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 

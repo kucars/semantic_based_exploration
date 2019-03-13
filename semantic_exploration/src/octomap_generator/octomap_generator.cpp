@@ -10,7 +10,6 @@
 #include <cstring>
 #include <sstream>
 
-int flag = 1 ;
 template <class CLOUD, class OCTREE>
 OctomapGenerator<CLOUD, OCTREE>::OctomapGenerator()
     : octomap_(0.05), max_range_(1.), raycast_range_(1.)
@@ -126,7 +125,7 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen
         interestColor = semanticColoredLabels[*it];
         if(node->getColor() == interestColor)
         {
-            return 1;
+            return 1.0;
             // Do something to the interest color
         }
     }
@@ -152,18 +151,18 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     {
 
         //ROS_INFO ("confidenceThreshold %f" , confidenceThreshold ) ;
-        if (node->getSemantics().confidence < confidenceThreshold) // hardcoded, will be changed later
+        if (node->getSemantics().confidence < confidenceThreshold)
         {
-            return 1 ; // low confidance  + occupied
+            return (1.0 - node->getSemantics().confidence) ; // low confidance  + occupied
         }
         else
-            return 0; // high confidance + occupied
+            return 0.0; // high confidance + occupied
     }
     else
     {
-        std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
+        //std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
 
-        return 0; // not semantically labeled
+        return 0.0; // not semantically labeled
     }
 
 }
@@ -204,9 +203,7 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
     octomap::ColorOcTreeNode::Color color ;
     color = node->getSemantics().semantic_color;
-
     //ROS_INFO("node colors are :%d %d %d",node->getSemantics().semantic_color.r,node->getSemantics().semantic_color.g,node->getSemantics().semantic_color.b);
-
     SemanticsOcTreeNodeMax::Color interestColor;
 
     //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
@@ -217,15 +214,15 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
 
         if(color == interestColor)
         {
+            // for debugging ROS_Error is used
             //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b); // worked
-            // for debugging I used ROS_Error
-            ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
+            //ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
             //ROS_INFO("numOfVisitsThreshold: %d",numOfVisitsThreshold); // Not initialized
-
             if (node->getNumVisits() < numOfVisitsThreshold)
             {
                 return 1;
             }
+
         }
     }
     return 0 ;
@@ -581,6 +578,7 @@ void OctomapGenerator<CLOUD, OCTREE>::insertPointCloud(
                     }
                     endpoint_count++;
                 }
+
             }
         }
         // Do ray casting for points in raycast_range_
@@ -700,24 +698,43 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
         {
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
 
-            octomap::SemanticsMax sem;
-            // Get semantics
-            uint32_t rgb;
-            std::memcpy(&rgb, &it->semantic_color, sizeof(uint32_t));
+            SemanticsOcTreeNodeMax* node = octomap_.search(it->x, it->y, it->z) ;
+            if (node == nullptr)
+            {
+                //ROS_INFO("CellStatus::Unknown") ;
+                continue ;
+            }
+            else if (octomap_.isNodeOccupied(node))
+            {
+                bool isSemantic = false;
+                isSemantic = node->isSemanticsSet();
+                //ROS_INFO("2") ;
+                octomap::SemanticsMax sem = node->getSemantics();
+                if(!isSemantic)
+                    sem.numVisits = 0 ;
+                else
+                {
+                    //ROS_INFO("n->getNumVisits() %d ", n->getNumVisits()) ;
+                    sem.numVisits = sem.numVisits + 1 ; // n->incrementNumVisits();
+                    //ROS_INFO("sem.numVisits %d ", sem.numVisits) ;
+                }
+                // Get semantics
+                uint32_t rgb;
+                std::memcpy(&rgb, &it->semantic_color, sizeof(uint32_t));
 
-            sem.semantic_color.b = (rgb >> 16) & 0x0000ff;
-            sem.semantic_color.g = (rgb >> 8) & 0x0000ff;
-            sem.semantic_color.r = (rgb)&0x0000ff;
-            sem.confidence = it->confidence;
-            // sem.incrementNumVisits();
-            // sem.numVisits +=1 ; // sem.numVisits = it->num_of_visits + 1 ;
-            // I have to add the num_of_visits variable to the point cloud
-            // std::cout << "number of visits " << sem.getNumVisits()  << std::endl << std::flush ;
-            octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
+                sem.semantic_color.b = (rgb >> 16) & 0x0000ff;
+                sem.semantic_color.g = (rgb >> 8) & 0x0000ff;
+                sem.semantic_color.r = (rgb)&0x0000ff;
+                sem.confidence = it->confidence;
+                octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
+
+            }
+            //else
+            //ROS_INFO("CellStatus::kFree") ;
+
         }
     }
-    SemanticsOcTreeNodeMax* node =
-            octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
+    //SemanticsOcTreeNodeMax* node = octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
     //std::cout << "Example octree node: " << std::endl;
     //std::cout << "Color: " << node->getColor()<< std::endl;
     //std::cout << "Semantics: " << node->getSemantics() << std::endl;

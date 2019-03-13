@@ -6,8 +6,8 @@
     <arg name="enable_ground_truth" default="true" />
     <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
 
-    <arg name="x" default="9.0"/> <!-- 7 , 4 , 0.12-->
-    <arg name="y" default="5.0"/>
+    <arg name="x" default="7.0"/> <!-- 9 , 5 , 0.12-->
+    <arg name="y" default="4.0"/>
     <arg name="z" default="0.25"/>
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>

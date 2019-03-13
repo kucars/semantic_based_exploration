@@ -15,14 +15,10 @@ struct SemanticsMax
     ColorOcTreeNode::Color semantic_color;  ///<Semantic color
     float confidence;
     uint  numVisits;
-    SemanticsMax() : semantic_color(), confidence(0.), numVisits(0)
+    SemanticsMax() : semantic_color(), confidence(0.),numVisits(.0)
     {
     }
 
-    void initNumOfVisits() 
-    {
-	numVisits = 0 ; 
-    } 
     bool operator==(const SemanticsMax& rhs) const
     {
         return semantic_color == rhs.semantic_color && confidence == rhs.confidence;
@@ -47,7 +43,7 @@ struct SemanticsMax
 
     uint incrementNumVisits()
     {
-        return ++numVisits;
+       return ++numVisits;
     }
 
     uint getNumVisits()
