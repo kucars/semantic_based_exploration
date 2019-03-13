@@ -21,14 +21,14 @@ struct PointXYZRGBSemanticsMax
     {
         float confidence;
     };
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW  // make sure our new allocators are aligned
 } EIGEN_ALIGN16;                     // enforce SSE padding for correct memory alignment
 
 // here we assume a XYZ + RGB + "sementic_color" + "confidence" (as fields)
 POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZRGBSemanticsMax,
-                                  (float, x, x)(float, y, y)(float, z, z)(float, rgb, rgb)(
-                                      float, semantic_color, semantic_color)(float, confidence,
-                                                                             confidence))
+                                  (float, x, x)(float, y, y)(float, z, z)(float, rgb, rgb)
+				  (float, semantic_color, semantic_color)(float, confidence,confidence))
 
 struct PointXYZRGBSemanticsBayesian
 {

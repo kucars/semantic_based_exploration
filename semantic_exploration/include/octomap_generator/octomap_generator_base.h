@@ -127,6 +127,9 @@ class OctomapGeneratorBase
     virtual void setSematicColoredLabels(std::map<std::string,octomap::ColorOcTreeNode::Color> scl) = 0;
 
     virtual void setObjectsOfInterest(std::vector<std::string> ooi) =0;
+    virtual void setConfidenceThreshold(float ooi) =0 ; 
+    virtual void setNumOfVisitsThreshold(int ooi) =0 ; 
+
 };
 
 #endif  //OCTOMAP_GENERATOR_BASE

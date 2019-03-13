@@ -58,13 +58,13 @@ class SemanticsOcTreeNode : public ColorOcTreeNode
     /// Increment numVisits
     inline uint incrementNumVisits() const
     {
-        return semantics.incrementNumVisits();
+       return semantics.incrementNumVisits();
     }
 
     /// Get numVisits
     uint getNumVisits();
 
-    /// Is semantics set: not set if colors are all zeros
+    /// Is semantics set: not set if colors are all (255, 255 ,
     inline bool isSemanticsSet() const;
 
     /// Update semantics (colors and confidences) from children by doing semantic fusion (using method in template class)

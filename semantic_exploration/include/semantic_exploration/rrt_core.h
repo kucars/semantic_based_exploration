@@ -67,6 +67,7 @@ class RrtTree : public TreeBase
     double gain_avg_entropy(StateVec state, bool &objectGainFound);
     double gain_svv(StateVec state, bool &objectGainFound);                       // Proposed
     double gain_semantic_occlusion_aware(StateVec state, bool &objectGainFound);  // proposed
+    double gain_semantic_obj_interest_num_visits(StateVec state, bool &objectGainFound); // propsoed 
 
     std::vector<geometry_msgs::Pose> samplePath(StateVec start, StateVec end,
                                                 std::string targetFrame);
@@ -93,7 +94,8 @@ class RrtTree : public TreeBase
         OCCLUSION_AWARE,
         UNOBSERVED_VOXEL,
         SEMANTIC_VISIBLE_VOXEL,
-        SEMANTIC_OCCLUSION_AWARE
+        SEMANTIC_OCCLUSION_AWARE ,
+	SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS
     };
 
   protected:

@@ -107,6 +107,9 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     octomap_generator_->setMaxRange(params_.maxRange_);
     octomap_generator_->setSematicColoredLabels(semanticColoredLabels);
     octomap_generator_->setObjectsOfInterest(objectsOfInterest);
+    octomap_generator_->setConfidenceThreshold(confidenceThreshold);
+    octomap_generator_->setNumOfVisitsThreshold(numOfVisitsThreshold);
+
     //debug
     //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
     //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
@@ -941,6 +944,21 @@ bool rrtNBV::RRTPlanner::setParams()
         ROS_WARN("No option for function. Looking for %s. Default is empty",
                  (ns + "/objects_of_interest").c_str());
     }
+
+    if (!ros::param::get(ns + "/confidence_threshold", confidenceThreshold))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is empty",
+                 (ns + "/confidence_threshold").c_str());
+    }
+    //std::cout << "confidence_threshold " << confidenceThreshold<<std::endl ;
+
+    if (!ros::param::get(ns + "/num_of_visits_threshold", numOfVisitsThreshold))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is empty",
+                 (ns + "/num_of_visits_threshold").c_str());
+    }
+    //std::cout << "num_of_visits_threshold " << numOfVisitsThreshold<<std::endl ;
+
 
     return ret;
 }

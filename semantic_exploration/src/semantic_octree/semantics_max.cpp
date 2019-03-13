@@ -3,6 +3,6 @@ namespace octomap
 {
 std::ostream& operator<<(std::ostream& out, SemanticsMax const& s)
 {
-    return out << '(' << s.semantic_color << ", " << s.confidence << ')';
+    return out << '(' << s.semantic_color << ", " << s.confidence <<  ", " << s.numVisits << ')';
 }
 }  // namespace octomap

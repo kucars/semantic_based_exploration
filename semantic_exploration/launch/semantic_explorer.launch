@@ -6,7 +6,7 @@
     <arg name="enable_ground_truth" default="true" />
     <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
 
-    <arg name="x" default="7.0"/>
+    <arg name="x" default="7.0"/> <!-- 9 , 5 , 0.12-->
     <arg name="y" default="4.0"/>
     <arg name="z" default="0.25"/>
     <arg name="R" default="0"/>
@@ -27,6 +27,7 @@
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris_depth_camera"/>
     <arg name="world_file_name"    default="simple_obstacle" />
+    <!--arg name="world" default="$(find semantic_exploration)/worlds/test_semantic_color.world"/-->
     <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/>
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 

@@ -158,6 +158,14 @@ class OctomapGenerator : public OctomapGeneratorBase
     {
         this->objectsOfInterest = ooi;
     }
+    virtual void setConfidenceThreshold(float ooi)
+    {
+        this->confidenceThreshold = ooi;
+    }
+    virtual void setNumOfVisitsThreshold(int ooi)
+    {
+        this->numOfVisitsThreshold = ooi;
+    }
 
   protected:
     OCTREE octomap_;       ///<Templated octree instance
@@ -168,5 +176,8 @@ class OctomapGenerator : public OctomapGeneratorBase
     octomap::KeyRay key_ray;
     std::map<std::string,octomap::ColorOcTreeNode::Color> semanticColoredLabels;
     std::vector<std::string> objectsOfInterest;
+    float confidenceThreshold;
+    int numOfVisitsThreshold;
 };
+
 #endif  //OCTOMAP_GENERATOR
