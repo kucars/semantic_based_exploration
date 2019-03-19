@@ -14,7 +14,7 @@ notifications:
     - tarek.taha@gmail.com
     on_success: change #[always|never|change] # default: change
     on_failure: change #[always|never|change] # default: always
-
+  slack: kuri-workspace:2EosXOtnYzVMjvPTRutfSjlT
 env:
   global:
     # Some Global variables can go here
@@ -77,13 +77,6 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
- #- source devel/setup.bash
- #- rospack profile
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
- - ls ~/catkin_ws/devel/include/semantic_cloud/
- #- source devel/setup.bash
- #- rospack profile
- #- catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
- #- source devel/setup.bash
- #- rospack profile
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
+ - source devel/setup.bash
+ - rospack profile
