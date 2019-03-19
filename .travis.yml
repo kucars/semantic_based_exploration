@@ -74,13 +74,15 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
+ - catkin_make -DCATKIN_BLACKLIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
- - source devel/setup.bash
- - rospack profile
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
+ #- source devel/setup.bash
+ #- rospack profile
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
  - ls ~/catkin_ws/devel/include/semantic_cloud/
- - source devel/setup.bash
- - rospack profile
- - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
- - source devel/setup.bash
- - rospack profile
+ #- source devel/setup.bash
+ #- rospack profile
+ #- catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
+ #- source devel/setup.bash
+ #- rospack profile
