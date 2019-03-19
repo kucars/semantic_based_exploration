@@ -58,6 +58,8 @@ install:
   - cd ~/catkin_ws/Firmware
   - git checkout v1.8.2
   - make posix_sitl_default
+  - cd ~/catkin_ws/src
+  - git clone https://b6eac5cbffb532d36c438b10887cd042603d54b8@github.com/TarekTaha/semantic_cloud.git
 # Use this to prepare your build for testing e.g. copy database configurations, environment variables, etc.
 before_script: 
 - source /opt/ros/$ROS_DISTRO/setup.bash
@@ -74,7 +76,6 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="minkindr_conversions"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="kdtree"
- - catkin_make -DCATKIN_BLACKLIST_PACKAGES="semantic_exploration"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
  - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
  #- source devel/setup.bash
