@@ -77,7 +77,10 @@ script:
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
  - source devel/setup.bash
  - rospack profile
+ - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_cloud"
+ - ls ~/catkin_ws/devel/include/semantic_cloud/
+ - source devel/setup.bash
+ - rospack profile
  - catkin_make -DCATKIN_WHITELIST_PACKAGES="semantic_exploration"
- - catkin_make -DCATKIN_WHITELIST_PACKAGES=""
  - source devel/setup.bash
  - rospack profile
