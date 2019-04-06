@@ -5,8 +5,8 @@
 - git: {local-name: gflags_catkin, uri: 'https://github.com/ethz-asl/gflags_catkin.git'}
 - git: {local-name: minkindr, uri: 'https://github.com/ethz-asl/minkindr.git'}
 - git: {local-name: minkindr_ros, uri: 'https://github.com/ethz-asl/minkindr_ros.git'}
-- git: {local-name: octomap_rviz_plugins, uri: https://github.com/OctoMap/octomap_rviz_plugins }
-#- git: {local-name: semantic_cloud, uri: https://github.com/TarekTaha/semantic_cloud.git }
+- git: {local-name: octomap_rviz_plugins, uri: 'https://github.com/OctoMap/octomap_rviz_plugins' }
+#- git: {local-name: semantic_cloud, uri: 'https://github.com/TarekTaha/semantic_cloud.git' }
 #- git:
 #    local-name: octomap_ros
 #    uri: https://github.com/kucars/octomap_ros.git
