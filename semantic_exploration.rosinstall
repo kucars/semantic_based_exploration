@@ -1,15 +1,21 @@
-- git:
-    local-name: octomap_ros
-    uri: https://github.com/kucars/octomap_ros.git
-- git:
-    local-name: volumetric_mapping
-    uri: https://github.com/reem90/volumetric_mapping.git
-- git:
-    local-name: octomap
-    uri: https://github.com/reem90/octomap.git
-- git:
-    local-name: culling
-    uri: https://github.com/kucars/culling
-- git:
-    local-name: semantic_cloud
-    uri: https://github.com/TarekTaha/semantic_cloud
+
+- git: {local-name: catkin_simple, uri: 'https://github.com/catkin/catkin_simple.git'}
+- git: {local-name: eigen_catkin, uri: 'https://github.com/ethz-asl/eigen_catkin.git'}
+- git: {local-name: eigen_checks, uri: 'https://github.com/ethz-asl/eigen_checks.git'}
+- git: {local-name: glog_catkin, uri: 'https://github.com/ethz-asl/glog_catkin.git'}
+- git: {local-name: gflags_catkin, uri: 'https://github.com/ethz-asl/gflags_catkin.git'}
+- git: {local-name: minkindr, uri: 'https://github.com/ethz-asl/minkindr.git'}
+- git: {local-name: minkindr_ros, uri: 'https://github.com/ethz-asl/minkindr_ros.git'}
+#- git: {local-name: semantic_cloud, uri: https://github.com/TarekTaha/semantic_cloud.git }
+#- git:
+#    local-name: octomap_ros
+#    uri: https://github.com/kucars/octomap_ros.git
+#- git:
+#    local-name: volumetric_mapping
+#    uri: https://github.com/reem90/volumetric_mapping.git
+#- git:
+#    local-name: octomap
+#    uri: https://github.com/reem90/octomap.git
+#- git:
+#    local-name: culling
+# uri: https://github.com/kucars/culling
