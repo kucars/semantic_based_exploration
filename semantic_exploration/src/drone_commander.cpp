@@ -13,15 +13,22 @@ DroneCommander::DroneCommander(const ros::NodeHandle& _nh, const ros::NodeHandle
         droneName + "/mavros/local_position/pose", 10, &DroneCommander::poseCallback, this);
     goalSub = nh.subscribe<geometry_msgs::PoseStamped>(
         droneName + "/semantic_exploration_viewpoint", 100, &DroneCommander::goalCallback, this);
+    goalOriginSub = nh.subscribe<geometry_msgs::PoseStamped>(
+        droneName + "/semantic_exploration_origin_viewpoint", 100, &DroneCommander::goalOriginCallback, this);
+
     localPosePub =
         nh.advertise<geometry_msgs::PoseStamped>(droneName + "/mavros/setpoint_position/local", 10);
     armingClinet = nh.serviceClient<mavros_msgs::CommandBool>(droneName + "/mavros/cmd/arming");
     setModeClient = nh.serviceClient<mavros_msgs::SetMode>(droneName + "/mavros/set_mode");
     rotationDonePub = nh.advertise<std_msgs::Bool>(droneName + "/rotation/done", 10);
     service = nh.advertiseService("get_drone_state", &DroneCommander::droneStateService, this);
+    pathPub = nh.advertise<visualization_msgs::Marker>("path", 1);
+
     std_srvs::Empty srv;
     bool unpaused = false;
     uint i = 0;
+    path_plot_flag = false ;
+    iteration = 0 ;
     // Trying to unpause Gazebo for 10 seconds.
     while (i <= 10 && !unpaused)
     {
@@ -105,6 +112,7 @@ DroneCommander::DroneCommander(const ros::NodeHandle& _nh, const ros::NodeHandle
              * if we receive a goal, then this will be our hovering pose
              * otherwise, use the last one
              */
+
                 ROS_INFO_THROTTLE(1.0, "   - Current Pose  is: [%f %f %f]",
                                   currentPose.pose.position.x, currentPose.pose.position.y,
                                   currentPose.pose.position.z);
@@ -150,6 +158,10 @@ void DroneCommander::goalCallback(const geometry_msgs::PoseStamped::ConstPtr& ms
     isGoalReceived = true;
 }
 
+void DroneCommander::goalOriginCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+    goalOriginReceived.pose = msg->pose;
+}
 bool DroneCommander::takeOff()
 {
     ROS_INFO("Starting the planner: Performing initialization motion -- Take off ");
@@ -271,6 +283,32 @@ bool DroneCommander::droneStateService(semantic_exploration::GetDroneState::Requ
     response.success = true;
     return true;
 }
+
+void DroneCommander::drawPath(geometry_msgs::PoseStamped p, int id)
+{
+    lineStrip.header.frame_id = "world";
+    lineStrip.header.stamp = ros::Time::now();
+    lineStrip.ns = "points_and_lines";
+    lineStrip.id = id;
+    lineStrip.action = visualization_msgs::Marker::ADD;
+    lineStrip.type = visualization_msgs::Marker::LINE_STRIP;
+    geometry_msgs::Point p1;
+    p1.x = p.pose.position.x;
+    p1.y = p.pose.position.y;
+    p1.z = p.pose.position.z;
+    lineStrip.points.push_back(p1);
+    lineStrip.pose.orientation.w = 1.0;
+    lineStrip.scale.x = 0.05;
+    lineStrip.color.a = 1;
+    lineStrip.color.g = 1;
+    lineStrip.lifetime = ros::Duration();
+    pathPub.publish(lineStrip);
+    //pathPoints.poses.push_back(p);
+    //pathPoints.header.frame_id = "world";
+    //pathPoints.header.stamp = ros::Time::now();
+    //params_.sensor_pose_pub_.publish(viewpoints2);
+}
+
 
 int main(int argc, char** argv)
 {

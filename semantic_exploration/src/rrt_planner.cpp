@@ -37,15 +37,15 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     // Set up the topics and services
     params_.inspectionPath_ = nh_.advertise<visualization_msgs::Marker>("inspectionPath", 100);
     params_.explorationarea_ = nh_.advertise<visualization_msgs::Marker>("explorationarea", 100);
-    params_.transfromedPoseDebug =
-       nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
+    //params_.transfromedPoseDebug =
+    //        nh_.advertise<geometry_msgs::PoseStamped>("transformed_pose", 100);
     params_.rootNodeDebug = nh_.advertise<geometry_msgs::PoseStamped>("root_node", 100);
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_ = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
     params_.sensor_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_ =
-        nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
+            nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
 
     // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
     if (params_.use_gazebo_ground_truth_)
@@ -65,6 +65,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     iteration_num = 0;
     accumulativeGain = 0;
 
+    // Visualization
+    path_plot_flag =0 ;
     // Initiate octree
     if (params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN || params_.treeType_ == SEMANTICS_OCTREE_MAX)
     {
@@ -72,7 +74,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
         {
             ROS_INFO("Semantic octomap generator [bayesian fusion]");
             octomap_generator_ =
-                new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>();
+                    new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>();
         }
         else
         {
@@ -80,7 +82,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
             octomap_generator_ = new OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>();
         }
         toggleSemanticService = nh_.advertiseService(
-            "toggle_use_semantic_color", &rrtNBV::RRTPlanner::toggleUseSemanticColor, this);
+                    "toggle_use_semantic_color", &rrtNBV::RRTPlanner::toggleUseSemanticColor, this);
     }
     else
     {
@@ -90,7 +92,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
 
     fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
     pointcloud_sub_ =
-        nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
+            nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
 
     area_marker_ = explorationAreaInit();
     computeCameraFOV();
@@ -204,16 +206,18 @@ void rrtNBV::RRTPlanner::setupLog()
         time(&rawtime);
         ptm = gmtime(&rawtime);
         logFilePathName_ = ros::package::getPath("semantic_exploration") + "/data/" +
-                           std::to_string(ptm->tm_year + 1900) + "_" +
-                           std::to_string(ptm->tm_mon + 1) + "_" + std::to_string(ptm->tm_mday) +
-                           "_" + std::to_string(ptm->tm_hour) + "_" + std::to_string(ptm->tm_min) +
-                           "_" + std::to_string(ptm->tm_sec);
+                std::to_string(ptm->tm_year + 1900) + "_" +
+                std::to_string(ptm->tm_mon + 1) + "_" + std::to_string(ptm->tm_mday) +
+                "_" + std::to_string(ptm->tm_hour) + "_" + std::to_string(ptm->tm_min) +
+                "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + logFilePathName_).c_str());
         logFilePathName_ += "/";
         file_path_.open((logFilePathName_ + params_.output_file_name_).c_str(), std::ios::out);
         file_path_ << "iteration_num"
                    << ","
                    << "volumetric_coverage"
+                   << ","
+                   << "traveled_distance"
                    << ","
                    << "information_gain_entropy"
                    << ","
@@ -227,21 +231,7 @@ void rrtNBV::RRTPlanner::setupLog()
                    << ","
                    << "unknown_cells_counter"
                    << ","
-                   << "known_cells_counter"
-                   << ","
                    << "all_cells_counter"
-                   << ","
-                   << "traveled_distance"
-                   << ","
-                   << "free_type_counter"
-                   << ","
-                   << "unknown_type_count"
-                   << ","
-                   << "occ_intr_not_vis_type_count"
-                   << ","
-                   << "occ_intr_vis_type_count"
-                   << ","
-                   << "occ_not_intr_type_count"
                    << ","
                    << "position.x"
                    << ","
@@ -261,8 +251,17 @@ void rrtNBV::RRTPlanner::setupLog()
                    << ","
                    << "rrt_gain"
                    << ","
-                   << "objectFound"
+                   << "freeCells"
+                   << ","
+                   << "UnknownCells"
+                   << ","
+                   << "occupiedCellsNotLabeled"
+                   << ","
+                   << "occupiedCellsLowConfidance"
+                   << ","
+                   << "occupiedCellsHighConfidance"
                    << "\n";
+
     }
 }
 
@@ -427,30 +426,39 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain();
-    bool ObjectFoundFlag = rrtTree->getObjectFlag();
+    //bool ObjectFoundFlag = rrtTree->getObjectFlag();
     std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain() << std::endl
               << std::flush;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl << std::flush;
     rrtTree->memorizeBestBranch();
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
-
     MaxGainPose(res.path[res.path.size() - 1], iteration_num);
 
     ros::Time tic_log = ros::Time::now();
     //**************** logging results ************************************************************************** //
     double res_map = octomap_generator_->getResolution();
+    ROS_INFO("octomap_generator_->getResolution() %f",res_map);
+
     Eigen::Vector3d vec;
     double x, y, z;
     double all_cells_counter = 0, free_cells_counter = 0, unknown_cells_counter = 0,
-           occupied_cells_counter = 0;
+            occupied_cells_counter = 0;
     int free_type_counter = 0, unknown_type_count = 0, occ_intr_not_vis_type_count = 0,
-        occ_intr_vis_type_count = 0, occ_not_intr_type_count = 0;
+            occ_intr_vis_type_count = 0, occ_not_intr_type_count = 0;
     double information_gain_entropy = 0, occupancy_entropy = 0;
     double semantic_gain_entropy = 0, semantic_entropy = 0;
     double total_gain = 0;
     double probability;
     double maxThreshold = -0.5 * std::log(0.5) - ((1 - 0.5) * std::log(1 - 0.5));
     double rrt_gain = 0;
+    double cGain = 0 ;
+    int freeCells = 0 ;
+    int UnknownCells = 0 ;
+    int occupiedCellsNotLabeled = 0 ;
+    int occupiedCellsLowConfidance = 0 ;
+    int occupiedCellsHighConfidance =0 ;
+    ROS_INFO("1");
+
     for (x = params_.minX_; x <= params_.maxX_ - res_map; x += res_map)
     {
         for (y = params_.minY_; y <= params_.maxY_ - res_map; y += res_map)
@@ -461,27 +469,6 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 vec[0] = x;
                 vec[1] = y;
                 vec[2] = z;
-
-                // Counting Cell Types
-                int cellType = octomap_generator_->getCellIneterestCellType(x, y, z);
-                switch (cellType)
-                {
-                    case 0:
-                        free_type_counter++;
-                        break;
-                    case 1:
-                        unknown_type_count++;
-                        break;
-                    case 2:
-                        occ_intr_not_vis_type_count++;
-                        break;
-                    case 3:
-                        occ_intr_vis_type_count++;
-                        break;
-                    case 4:
-                        occ_not_intr_type_count++;
-                        break;
-                }
 
                 all_cells_counter++;
 
@@ -494,6 +481,42 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                     // ROS_INFO("probability %f \n", p);
                 }
 
+               // ROS_INFO("2");
+                int conf = octomap_generator_->getCellConfidence(vec); ;
+               // ROS_INFO("3");
+
+                switch (conf)
+                {
+                case 0:
+                   // ROS_INFO("4.0");
+                    freeCells++ ;
+                    break ;
+                case 1:
+                   // ROS_INFO("4.1");
+                    UnknownCells++;
+                    break;
+                case 2:  //  occupied not semantically labeled
+                   // ROS_INFO("4.2");
+                    occupiedCellsNotLabeled++ ;
+                    break ;
+                case 3:
+                   // ROS_INFO("4.3");
+                    occupiedCellsLowConfidance++ ;
+                    break ;
+                case 4:
+                   // ROS_INFO("4.4");
+                    occupiedCellsHighConfidance++ ;
+                    break ;
+                default:
+                    ROS_INFO("4.5");
+                }
+
+                if ((occupiedCellsLowConfidance+ occupiedCellsHighConfidance) == 0)
+                    semantic_gain_entropy = semantic_gain_entropy ;
+                else
+                    semantic_gain_entropy = occupiedCellsLowConfidance / (occupiedCellsLowConfidance+ occupiedCellsHighConfidance) ;
+
+                //ROS_INFO("4");
                 // TODO: Revise the equation
                 //                occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
                 //                occupancy_entropy = occupancy_entropy / maxThreshold ;
@@ -507,65 +530,74 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 
                 //                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
 
+                // *************** RRT IG + cell counter  *********************************** //
+
                 if (node == VoxelStatus::kUnknown)
                 {
+                    rrt_gain += params_.igUnmapped_;
                     unknown_cells_counter++;
                 }
                 if (node == VoxelStatus::kFree)
                 {
                     free_cells_counter++;
+                    rrt_gain += params_.igFree_;
+
                 }
                 if (node == VoxelStatus::kOccupied)
                 {
+                    rrt_gain += params_.igOccupied_;
                     occupied_cells_counter++;
                 }
 
-                // *************** RRT IG *********************************** //
-
-                if (node == VoxelStatus::kUnknown)
-                {
-                    rrt_gain += params_.igUnmapped_;
-                }
-                else if (node == VoxelStatus::kOccupied)
-                {
-                    rrt_gain += params_.igOccupied_;
-                }
-                else
-                {
-                    rrt_gain += params_.igFree_;
-                }
             }
         }
     }
+    ROS_INFO("4");
 
-    double theoretical_cells_value =
-        ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
-         (params_.maxZ_ - params_.minZ_)) /
-        (res_map * res_map * res_map);
-    double known_cells_counter = free_cells_counter + occupied_cells_counter;
+
+    //    double theoretical_cells_value =
+    //            ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
+    //             (params_.maxZ_ - params_.minZ_)) /
+    //            (res_map * res_map * res_map);
+    //    double known_cells_counter = free_cells_counter + occupied_cells_counter;
     double volumetric_coverage =
-        ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
+            ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
+
     iteration_num++;
-    file_path_ << iteration_num << "," << volumetric_coverage << "," << information_gain_entropy
-               << "," << semantic_gain_entropy << "," << total_gain << "," << free_cells_counter
-               << "," << occupied_cells_counter << "," << unknown_cells_counter << ","
-               << known_cells_counter << "," << all_cells_counter << "," << traveled_distance << ","
-               << free_type_counter << "," << unknown_type_count << ","
-               << occ_intr_not_vis_type_count << "," << occ_intr_vis_type_count << ","
-               << occ_not_intr_type_count << ",";
-    file_path_ << res.path[0].position.x << ",";
-    file_path_ << res.path[0].position.y << ",";
-    file_path_ << res.path[0].position.z << ",";
-    file_path_ << res.path[0].orientation.x << ",";
-    file_path_ << res.path[0].orientation.y << ",";
-    file_path_ << res.path[0].orientation.z << ",";
-    file_path_ << res.path[0].orientation.w << ",";
-    file_path_ << accumulativeGain << ",";
-    file_path_ << rrt_gain << "\n";
+    file_path_ << iteration_num << ","
+               << volumetric_coverage << ","
+               << traveled_distance << ","
+               << information_gain_entropy<< ","
+               << semantic_gain_entropy << ","
+               << total_gain << ","
+               << free_cells_counter << ","
+               << occupied_cells_counter << ","
+               << unknown_cells_counter << ","
+               << all_cells_counter << ","
+               << res.path[0].position.x << ","
+               << res.path[0].position.y << ","
+               << res.path[0].position.z << ","
+               << res.path[0].orientation.x << ","
+               << res.path[0].orientation.y << ","
+               << res.path[0].orientation.z << ","
+               << res.path[0].orientation.w << ","
+               << accumulativeGain << ","
+               << rrt_gain << ","
+               << freeCells << ","
+               << UnknownCells << ","
+               << occupiedCellsNotLabeled << ","
+               << occupiedCellsLowConfidance << ","
+               << occupiedCellsHighConfidance << "\n";
+
+
+    ROS_INFO("5");
+
     ros::Time toc_log = ros::Time::now();
     std::cout << "logging Filter took:" << toc_log.toSec() - tic_log.toSec() << std::endl
               << std::flush;
     //***********************************************************************************************************//
+    ROS_INFO("6");
+
     return true;
 }
 
@@ -668,7 +700,7 @@ bool rrtNBV::RRTPlanner::setParams()
                  (ns + "/system/localization/use_gazebo_ground_truth").c_str());
     }
     if (params_.camPitch_.size() != params_.camHorizontal_.size() ||
-        params_.camPitch_.size() != params_.camVertical_.size())
+            params_.camPitch_.size() != params_.camVertical_.size())
     {
         ROS_WARN("Specified camera fields of view unclear: Not all parameter vectors have same "
                  "length! Setting to default.");
@@ -696,15 +728,15 @@ bool rrtNBV::RRTPlanner::setParams()
     if (!ros::param::get(ns + "/nbvp/gain/occupied", params_.igOccupied_))
     {
         ROS_WARN(
-            "No gain coefficient for occupied cells specified. Looking for %s. Default is 0.0.",
-            (ns + "/nbvp/gain/occupied").c_str());
+                    "No gain coefficient for occupied cells specified. Looking for %s. Default is 0.0.",
+                    (ns + "/nbvp/gain/occupied").c_str());
     }
     params_.igUnmapped_ = 1.0;
     if (!ros::param::get(ns + "/nbvp/gain/unmapped", params_.igUnmapped_))
     {
         ROS_WARN(
-            "No gain coefficient for unmapped cells specified. Looking for %s. Default is 1.0.",
-            (ns + "/nbvp/gain/unmapped").c_str());
+                    "No gain coefficient for unmapped cells specified. Looking for %s. Default is 1.0.",
+                    (ns + "/nbvp/gain/unmapped").c_str());
     }
     params_.igArea_ = 1.0;
     if (!ros::param::get(ns + "/nbvp/gain/area", params_.igArea_))

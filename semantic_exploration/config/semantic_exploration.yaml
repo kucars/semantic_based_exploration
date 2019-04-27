@@ -26,9 +26,9 @@ system/dyaw_max: 0.5
 system/camera/pitch: [0.0] #sensor_pitch: 0.0
 system/camera/horizontal: [60.0] #sensor_hor_fov: 60
 system/camera/vertical: [45.0] #sensor_ver_fov: 45
-system/bbx/x: 0.1
-system/bbx/y: 0.1
-system/bbx/z: 0.1
+system/bbx/x: 0.2
+system/bbx/y: 0.2
+system/bbx/z: 0.2
 system/bbx/overshoot: 0.5
 system/localization/use_gazebo_ground_truth: true
 
@@ -38,7 +38,7 @@ nbvp/gain/occupied: 0.0
 nbvp/gain/unmapped: 1.0
 nbvp/gain/area: 0.0
 nbvp/gain/probabilistic: 0.0
-nbvp/gain/range: 5 # Maximum distance of volumes to be considered for the gain computation (double, default: 1.0)
+nbvp/gain/range: 5.0 # Maximum distance of volumes to be considered for the gain computation (double, default: 1.0)
 nbvp/gain/zero: 0.0
 nbvp/gain/degressive_coeff: 0.5
 
@@ -47,28 +47,28 @@ pcl_throttle: 0.33 # default 0.33
 output/file/name: "gains.csv"
 
 # Path Planning Parameters: rrt_planner.cpp
-nbvp/tree/extension_range: 3
-nbvp/tree/initial_iterations: 5
-nbvp/tree/cuttoff_iterations: 200
+nbvp/tree/extension_range: 1
+nbvp/tree/initial_iterations: 10
+nbvp/tree/cuttoff_iterations: 300
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
 
 # Exploration Loop: exploration_planner_node.cpp
 exploration/log/on: true
 exploration/dt: 2.0
-exploration/num_iterations: 1000
+exploration/num_iterations: 500
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
 
-# Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -10.0
-bbx/maxX: 10.0
-bbx/minY: -10.0
-bbx/maxY: 10.0
+# Exploration Area 
+bbx/minX:  -6.2 #-10.0
+bbx/maxX: 3.0 #10.0
+bbx/minY: -2.2 #-10.0
+bbx/maxY: 6.6 #10.0
 bbx/minZ: -0.1
-bbx/maxZ: 3.0
+bbx/maxZ: 2.5 #3.0
 bbx/softBounds: false
 
 ############
@@ -109,5 +109,5 @@ num_of_visits_threshold: 3
 # semantic occlusion aware 10 (proposed 2 - The planner crashes)   
 # semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-/utility/method: 11
+/utility/method: 0
 /output/file/name: "1.csv"

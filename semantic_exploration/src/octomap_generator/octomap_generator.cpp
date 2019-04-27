@@ -1,4 +1,4 @@
-#include <minkindr_conversions/kindr_msg.h>
+﻿#include <minkindr_conversions/kindr_msg.h>
 #include <minkindr_conversions/kindr_tf.h>
 #include <minkindr_conversions/kindr_xml.h>
 #include <octomap_generator/octomap_generator.h>
@@ -138,7 +138,6 @@ template <>
 double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
-
     bool isSemantic = false;
     //std::cout << "Color: " << node->getColor()<< std::endl;
     //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl;
@@ -147,21 +146,23 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     isSemantic = node->isSemanticsSet();
     //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl << std::flush;
 
+    if(node == NULL)
+        return 0.0 ;
     if(isSemantic)
     {
-
-        //ROS_INFO ("confidenceThreshold %f" , confidenceThreshold ) ;
+        //ROS_INFO ("confidenceThreshold %f",confidenceThreshold);
         if (node->getSemantics().confidence < confidenceThreshold)
         {
-            return (1.0 - node->getSemantics().confidence) ; // low confidance  + occupied
+            // for debuggig
+            //ROS_ERROR ("confidence low ");
+            return 1.0 ; //(1.0 - node->getSemantics().confidence) ; // low confidance  + occupied
         }
         else
             return 0.0; // high confidance + occupied
     }
     else
     {
-        //std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
-
+        std::cout << "NOT Semanticly labeled: " << std::endl << std::flush;
         return 0.0; // not semantically labeled
     }
 
@@ -208,6 +209,8 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
 
     //std::map<std::string,octomap::ColorOcTreeNode::Color>::iterator it;
     std::vector<std::string>::iterator it;
+
+
     for (it = objectsOfInterest.begin(); it != objectsOfInterest.end(); ++it)
     {
         interestColor = semanticColoredLabels[*it];
@@ -216,10 +219,11 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
         {
             // for debugging ROS_Error is used
             //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b); // worked
-            //ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
+            ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
             //ROS_INFO("numOfVisitsThreshold: %d",numOfVisitsThreshold); // Not initialized
             if (node->getNumVisits() < numOfVisitsThreshold)
             {
+                ROS_ERROR("OBJ Of Interest %d",node->getNumVisits());
                 return 1;
             }
 
@@ -243,6 +247,7 @@ uint OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellNum
 template <class CLOUD, class OCTREE>
 int OctomapGenerator<CLOUD, OCTREE>::getCellIneterestCellType(double x, double y, double z)
 {
+
     //TODO: this has to be re-written
     /*
     octomap::LabelOcTreeNode* node = octree_->search(x, y, z);
@@ -395,6 +400,97 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getCellProbabilityPoint(const Eigen
         }
     }
 }
+
+
+
+
+template <>
+int OctomapGenerator<PCLColor, ColorOcTree>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+    //
+}
+
+template <>
+int OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+
+    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z()) ;
+    //octomap::OcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+    if (node == nullptr)
+    {
+        return 1;
+    }
+    else
+    {
+        if (octomap_.isNodeOccupied(node))
+        {
+
+            bool isSemantic = false;
+            isSemantic = node->isSemanticsSet();
+
+            ROS_ERROR ("conf %f",node->getSemantics().confidence);
+            if(isSemantic)
+            {
+                if (node->getSemantics().confidence < confidenceThreshold)
+                {
+                    return 3; // low confidence
+                }
+                else
+                    return 4; // high confidence + occupied
+            }
+            else
+            {
+                return 2; // occupied not semantically labeled
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+
+
+
+    //    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z()) ;
+
+    //    if (node == nullptr)
+    //    {
+    //        return 1; // unknown
+    //    }
+    //    else if (octomap_.isNodeOccupied(node))
+    //    {
+    //        ROS_INFO ("conf %f",node->getSemantics().confidence);
+
+    //        bool isSemantic = false;
+    //        if(isSemantic)
+    //        {
+    //            if (node->getSemantics().confidence < confidenceThreshold)
+    //            {
+    //                return 3; // low confidence
+    //            }
+    //            else
+    //                return 4; // high confidence + occupied
+    //        }
+    //        else
+    //        {
+    //           return 2; // occupied not semantically labeled
+    //        }
+    //    }
+    //    else
+    //        return 0 ; // free
+}
+
+template <>
+int OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+    //
+}
+
+
 
 template <class CLOUD, class OCTREE>
 VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getVisibility(const Eigen::Vector3d& view_point,
@@ -699,6 +795,7 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
 
             SemanticsOcTreeNodeMax* node = octomap_.search(it->x, it->y, it->z) ;
+
             if (node == nullptr)
             {
                 //ROS_INFO("CellStatus::Unknown") ;
@@ -708,8 +805,9 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             {
                 bool isSemantic = false;
                 isSemantic = node->isSemanticsSet();
-                //ROS_INFO("2") ;
                 octomap::SemanticsMax sem = node->getSemantics();
+
+                //ROS_INFO("2") ;
                 if(!isSemantic)
                     sem.numVisits = 0 ;
                 else
@@ -729,8 +827,13 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
                 octomap_.updateNodeSemantics(it->x, it->y, it->z, sem);
 
             }
-            //else
-            //ROS_INFO("CellStatus::kFree") ;
+            //            else
+            //            {
+            //              sem.numVisits = sem.numVisits + 1 ;
+            //              sem.confidence = it->confidence;
+            //              ROS_INFO("CellStatus::kFree") ;
+            //            }
+
 
         }
     }

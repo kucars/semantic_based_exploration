@@ -53,8 +53,6 @@
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/default_topics.h>
 #include <semantic_exploration/GetPath.h>
-#include <waypoint_navigator/GoToPoseWaypoints.h>
-#include <geometry_msgs/PoseArray.h>
 
 #define SQ(x) ((x) * (x))
 #define SQRT2 0.70711
@@ -76,7 +74,7 @@ class ExplorationPlanner
     ros::NodeHandle nh_private_;
     Params params_;
     geometry_msgs::PoseStamped currentPose, explorationViewPointPose;
-    ros::Publisher explorationViewpointPub;
+    ros::Publisher explorationViewpointPub, explorationViewpointOriginPub;
     ros::Subscriber localPoseSub;
     bool currentPositionUpdated;
 
@@ -103,7 +101,9 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
 
     explorationViewpointPub =
         nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
-    localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(droneNameSpace + 
+    explorationViewpointOriginPub =
+            nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_origin_viewpoint", 10);
+    localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(
         "/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback, this);
     if (!ExplorationPlanner::SetParams())
     {
@@ -175,13 +175,12 @@ void ExplorationPlanner::RunStateMachine()
          * target frames back, or make target frame something that could be modified in a yaml file.
          * Currently it's hard coded above
          */
-        std::vector<geometry_msgs::Pose> waypoints;
+
         geometry_msgs::PoseStamped poseMsg_;
         semantic_exploration::GetPath planSrv;
         planSrv.request.header.stamp = ros::Time::now();
         planSrv.request.header.seq = static_cast<uint>(iteration);
         planSrv.request.header.frame_id = "world";
-        waypoint_navigator::GoToPoseWaypoints gotoPoseWaypointsSrv;
 
         ROS_INFO("Planner Call");
         ros::service::waitForService("rrt_planner", ros::Duration(1.0));
@@ -232,27 +231,15 @@ void ExplorationPlanner::RunStateMachine()
                           poseMsg_.pose.position.y, poseMsg_.pose.position.z,
                           poseMsg_.pose.orientation.x, poseMsg_.pose.orientation.y,
                           poseMsg_.pose.orientation.z, poseMsg_.pose.orientation.w);
+                explorationViewpointOriginPub.publish(poseMsg_);
 
                 ROS_INFO("Received: %f %f %f Transformed: %f %f %f", poseMsg_.pose.position.x,
                          poseMsg_.pose.position.y, poseMsg_.pose.position.z,
                          transformedPose.pose.position.x, transformedPose.pose.position.y,
                          transformedPose.pose.position.z);
-                
-                std_msgs::String mission_id;
-                mission_id.data = "mission_id" + std::to_string(iteration);
-                waypoints.clear();
-                waypoints.push_back(poseMsg_.pose);
-                gotoPoseWaypointsSrv.request.waypoints = waypoints; 
-                gotoPoseWaypointsSrv.request.mission_id = mission_id;
-                
-                ros::service::waitForService("go_to_pose_waypoints", ros::Duration(1.0));
 
-                if(!ros::service::call("go_to_pose_waypoints", gotoPoseWaypointsSrv))
-                {
-                    ROS_WARN("Calling waypoint navigator service failed");
-                }
+                explorationViewpointPub.publish(transformedPose);
 
-                //explorationViewpointPub.publish(transformedPose);
                 ros::spinOnce();
                 ros::Duration(params_.dt).sleep();
             }

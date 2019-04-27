@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2015 Andreas Bircher, ASL, ETH Zurich, Switzerland
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,6 +112,8 @@ void rrtNBV::RrtTree::setStateFromPoseMsg(const geometry_msgs::PoseWithCovarianc
     }
     catch (tf::TransformException ex)
     {
+        ROS_ERROR("HERE");
+
         ROS_ERROR("%s", ex.what());
         return;
     }
@@ -161,6 +163,8 @@ void rrtNBV::RrtTree::setStateFromPoseStampedMsg(const geometry_msgs::PoseStampe
     }
     catch (tf::TransformException ex)
     {
+        ROS_ERROR("HERE1");
+
         ROS_ERROR("%s", ex.what());
         return;
     }
@@ -660,16 +664,16 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            filePath_ << current->state_[0] << ",";
-            filePath_ << current->state_[1] << ",";
-            filePath_ << current->state_[2] << ",";
-            filePath_ << current->state_[3] << "\n";
-            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
-                    << "," << current->state_[3] << "\n";
-            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
-                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
+//            filePath_ << current->state_[0] << ",";
+//            filePath_ << current->state_[1] << ",";
+//            filePath_ << current->state_[2] << ",";
+//            filePath_ << current->state_[3] << "\n";
+//            outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
+//                    << "," << current->state_[3] << "\n";
+//            outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
+//                    << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
 
-           // ret = samplePath(current->parent_->state_, current->state_, targetFrame);
+            //ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -679,10 +683,12 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
 
 double rrtNBV::RrtTree::getBestGain()
 {
-    if (!oneViewObjectFound)
-        return bestGain_;
-    else
-        return bestObjectGain_;
+    return bestGain_;
+
+//    if (!oneViewObjectFound)
+//        return bestGain_;
+//    else
+//        return bestObjectGain_;
 }
 
 Eigen::Vector4d rrtNBV::RrtTree::getRootNode()
@@ -2545,7 +2551,7 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         numOfUnknownVisibleVoxels++;
-                        gainUnknown += +1;
+                        gainUnknown += 1;
                     }
                     else
                         numOfUnknownInvisibleVoxels++;
@@ -2558,8 +2564,11 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         double semantic_gain = manager_->getCellIneterestGain(vec);
+                        //ROS_INFO("semantic_gain %f ",semantic_gain );
+
+
                         // for debugging
-                        if (semantic_gain == 1)
+                        if (semantic_gain == 1.0)
                         {
                             //ROS_INFO("OBJECT OF INTEREST FOUND");
                             gainObjOfInt++;
@@ -2607,26 +2616,29 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
 //              << std::flush;
 
 
-    if (gainObjOfInt > 0)
-    {
-        gain = gainObjOfInt;
-        gain = gain / traversedVoxels;
-        objectGainFound = true;
-        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
-    }
-    else
-    {
-        gain = gainUnknown;
-        gain = gain / traversedVoxels;
-        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
-    }
+gain = gainObjOfInt + gainUnknown ;
+gain = gain / traversedVoxels;
+
+//    if (gainObjOfInt > 0)
+//    {
+//        gain = gainObjOfInt;
+//        gain = gain / traversedVoxels;
+//        objectGainFound = true;
+//        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
+//    }
+//    else
+//    {
+//        gain = gainUnknown;
+//        gain = gain / traversedVoxels;
+//        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
+//    }
 
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
     //gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
 
-    ROS_INFO("GAIN %f ", gain);
+    ROS_INFO("gain %f ", gain);
     return gain;
 }
 
@@ -2949,7 +2961,8 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
     int traversedVoxels =
         numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
 
-
+    gain = gainObjOfInt + gainUnknown ;
+    gain = gain / traversedVoxels;
 
 //    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
 //              << std::endl
@@ -2967,19 +2980,19 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
 //              << std::flush;
 
 
-    if (gainObjOfInt > 0)
-    {
-        gain = gainObjOfInt;
-        gain = gain / traversedVoxels;
-        objectGainFound = true;
-        //std::cout << "Object Gain FOUND" << gain << std::endl;
-    }
-    else
-    {
-        gain = gainUnknown;
-        gain = gain / traversedVoxels;
-        //std::cout << "Volumetric Gain " << gain << std::endl;
-    }
+//    if (gainObjOfInt > 0)
+//    {
+//        gain = gainObjOfInt;
+//        gain = gain / traversedVoxels;
+//        objectGainFound = true;
+//        //std::cout << "Object Gain FOUND" << gain << std::endl;
+//    }
+//    else
+//    {
+//        gain = gainUnknown;
+//        gain = gain / traversedVoxels;
+//        //std::cout << "Volumetric Gain " << gain << std::endl;
+//    }
 
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
@@ -3138,6 +3151,8 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::samplePath(StateVec start, Sta
     }
     catch (tf::TransformException ex)
     {
+        ROS_ERROR("HERE2");
+
         ROS_ERROR("%s", ex.what());
         return ret;
     }
