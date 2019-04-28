@@ -420,6 +420,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         counter_++;
         ROS_INFO("bestGain_ is:%f", bestGain_);
+        // Draw the gain number on the branch
         return true;
     }
     else

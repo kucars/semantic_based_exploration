@@ -102,6 +102,7 @@ struct Params
     //debugging
     visualization_msgs::MarkerArray pa;
     visualization_msgs::Marker camParam;
+
 };
 
 class Node

@@ -66,7 +66,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     accumulativeGain = 0;
 
     // Visualization
-    path_plot_flag =0 ;
+    //path_plot_flag =0 ;
     // Initiate octree
     if (params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN || params_.treeType_ == SEMANTICS_OCTREE_MAX)
     {
