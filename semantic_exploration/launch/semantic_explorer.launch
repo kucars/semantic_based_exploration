@@ -97,8 +97,6 @@
         <remap from="poseStamped" to="/current_pose"/>
         <remap from="semantic_exploration" to="/semantic_exploration"/>
     </node>
-    
-
 
     <rosparam file="$(find semantic_cloud)/config/semantic_cloud.yaml" command="load"/>
     <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud"/>

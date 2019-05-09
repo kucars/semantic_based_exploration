@@ -55,6 +55,11 @@
 #include <semantic_exploration/GetPath.h>
 #include <waypoint_navigator/GoToPoseWaypoints.h>
 #include <geometry_msgs/PoseArray.h>
+#include <controller_msgs/FlatTarget.h>
+
+#include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/State.h>
 
 #define SQ(x) ((x) * (x))
 #define SQRT2 0.70711
@@ -77,19 +82,27 @@ class ExplorationPlanner
     Params params_;
     geometry_msgs::PoseStamped currentPose, explorationViewPointPose;
     ros::Publisher explorationViewpointPub;
+    ros::Publisher rotationPublisher;
     ros::Subscriber localPoseSub;
+    ros::Subscriber odomSub;
+    ros::Subscriber stateSub;
     bool currentPositionUpdated;
+    mavros_msgs::State currentState;
 
   public:
     ExplorationPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private);
     ~ExplorationPlanner();
     void poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
+    void stateCallback(const mavros_msgs::State::ConstPtr& msg);
     bool SetParams();
     void RunStateMachine();
+    void rotateOnSpot(float duration);
+    void odomCallback(const nav_msgs::Odometry& pose);
 };
 
 ExplorationPlanner::~ExplorationPlanner()
 {
+    
 }
 
 ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private)
@@ -103,19 +116,70 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
 
     explorationViewpointPub =
         nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
-    localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(droneNameSpace + 
-        "/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback, this);
+    
+    //TODO: make this a parameter and make it global 
+    bool use_gazebo_ground_truth_ = true;
+
+    // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
+    if (use_gazebo_ground_truth_)
+    {
+        odomSub = nh_.subscribe("odometry", 10, &ExplorationPlanner::odomCallback, this);
+    }
+    else
+    {
+        localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(droneNameSpace + 
+            "/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback, this);
+    }
+    
+    rotationPublisher = nh_.advertise<controller_msgs::FlatTarget>("reference/flatsetpoint", 100);
+    stateSub = nh_.subscribe("/mavros/state", 10, &ExplorationPlanner::stateCallback, this);
+
     if (!ExplorationPlanner::SetParams())
     {
         ROS_ERROR("Could not start. Parameters missing!");
     }
 }
 
+void ExplorationPlanner::rotateOnSpot(float duration)
+{
+    double sleepTime = duration / 360.0f;
+    double lowerAltitude = 0.05;
+    double altitudeIterations = 3.0f;
+    double altitudeSteps = (currentPose.pose.position.z - lowerAltitude) / altitudeIterations;
+    ros::Rate loopRate(1/sleepTime);
+    for(int j=0;j<=altitudeIterations;j++)
+    {
+        for(int i=0; i<360; i++)
+        {
+            double yaw = i * 3.14 / 180.0;
+            controller_msgs::FlatTarget yawCommand;
+            yawCommand.type_mask = 2; 
+            yawCommand.position.x = this->currentPose.pose.position.x + j*0.2;
+            yawCommand.position.y = this->currentPose.pose.position.y - j*0.2;
+            yawCommand.position.z = lowerAltitude + j*altitudeSteps;
+            yawCommand.snap.z     = yaw;
+            ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,yawCommand.position.x ,yawCommand.position.y, yawCommand.position.z);
+            rotationPublisher.publish(yawCommand);
+            loopRate.sleep();
+        }
+    }
+}
+
+void ExplorationPlanner::stateCallback(const mavros_msgs::State::ConstPtr& msg)
+{
+    currentState = *msg;
+}
+
 void ExplorationPlanner::poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-    this->currentPose.pose = msg->pose;
+    this->currentPose = *msg;
     currentPositionUpdated = true;
-    ROS_INFO_THROTTLE(1, "Recieved a Pose");
+}
+
+void ExplorationPlanner::odomCallback(const nav_msgs::Odometry& pose)
+{
+    this->currentPose.pose = pose.pose.pose;
+    currentPositionUpdated = true;
 }
 
 void ExplorationPlanner::RunStateMachine()
@@ -156,6 +220,23 @@ void ExplorationPlanner::RunStateMachine()
              currentPose.pose.position.y, currentPose.pose.position.z);
     int iteration = 0;
     int seqNum = 0;
+    
+    while(currentState.mode != "OFFBOARD" && currentState.system_status !=4)
+    {
+        ROS_INFO_THROTTLE(0.1,"Mode:%s Status:%d",currentState.mode.c_str(), currentState.system_status);
+        ros::spinOnce();
+        loopRate.sleep();
+    }
+    
+    // Dirty hack, please fix Wait for the drone to take off 
+    for(int i=0;i<100;i++)
+    {
+        ros::spinOnce();
+        loopRate.sleep();       
+    }
+    
+    //slowly rotate on the spot for 10 seconds
+    rotateOnSpot(20);
 
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
@@ -226,7 +307,7 @@ void ExplorationPlanner::RunStateMachine()
                     ROS_ERROR("%s", ex.what());
                     continue;
                 }
-                listener.transformPose("local_origin", poseMsg_, transformedPose);
+                listener.transformPose(targetFrame, poseMsg_, transformedPose);
 
                 ROS_DEBUG("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,
                           poseMsg_.pose.position.y, poseMsg_.pose.position.z,

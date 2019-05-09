@@ -39,6 +39,7 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_msgs
   minkindr
   minkindr_conversions
+  controller_msgs
 )
 
 find_package(Eigen REQUIRED)
@@ -78,6 +79,7 @@ include_directories(
   ${OCTOMAP_INCLUDE_DIRS}
   ${rviz_visual_tools_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
+  ${controller_msgs_INCLUDE_DIRS}
 )
 
 set(LINK_LIBS
