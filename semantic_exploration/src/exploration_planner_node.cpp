@@ -97,6 +97,7 @@ class ExplorationPlanner
     bool SetParams();
     void RunStateMachine();
     void rotateOnSpot(float duration);
+    void moveOnSpot(float duration);
     void odomCallback(const nav_msgs::Odometry& pose);
 };
 
@@ -163,6 +164,30 @@ void ExplorationPlanner::rotateOnSpot(float duration)
             loopRate.sleep();
         }
     }
+}
+void ExplorationPlanner::moveOnSpot(float duration)
+{
+    double sleepTime = duration / 360.0f;
+    double lowerAltitude = 1;
+    double altitudeIterations = 3.0f;
+    ros::Rate loopRate(1/sleepTime);
+    for(int j=0;j<=altitudeIterations;j++)
+    {
+        for(int i=0; i<360; i++)
+        {
+            double yaw = 0;
+            controller_msgs::FlatTarget movrCommand;
+            movrCommand.type_mask = 2;
+            movrCommand.position.x = this->currentPose.pose.position.x + j*0.2;
+            movrCommand.position.y = this->currentPose.pose.position.y;
+            movrCommand.position.z = this->currentPose.pose.position.z;
+            movrCommand.snap.z     = yaw;
+            ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
+            rotationPublisher.publish(movrCommand);
+            loopRate.sleep();
+        }
+    }
+    ROS_INFO("####################### DONE ###################################");
 }
 
 void ExplorationPlanner::stateCallback(const mavros_msgs::State::ConstPtr& msg)
@@ -237,6 +262,7 @@ void ExplorationPlanner::RunStateMachine()
     
     //slowly rotate on the spot for 10 seconds
     rotateOnSpot(20);
+    moveOnSpot(5);
 
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;

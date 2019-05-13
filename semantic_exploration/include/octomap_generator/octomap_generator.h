@@ -133,6 +133,8 @@ class OctomapGenerator : public OctomapGeneratorBase
 
     virtual VoxelStatus getCellProbabilityPoint(const Eigen::Vector3d& point, double* probability);
 
+    virtual int getCellConfidence(const Eigen::Vector3d& point) ;
+
     virtual Eigen::Vector3d getMapSize();
 
     virtual double getVisibilityLikelihood(const Eigen::Vector3d& view_point,

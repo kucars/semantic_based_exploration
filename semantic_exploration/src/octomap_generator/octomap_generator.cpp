@@ -146,14 +146,17 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
     // Check if the voxel has been semantically labelled (visited)
     isSemantic = node->isSemanticsSet();
     //std::cout << "Semantics: " << node->getSemantics().confidence << std::endl << std::flush;
-
+    if(node == NULL)
+        return 0.0 ;
     if(isSemantic)
     {
 
         //ROS_INFO ("confidenceThreshold %f" , confidenceThreshold ) ;
         if (node->getSemantics().confidence < confidenceThreshold)
         {
-            return (1.0 - node->getSemantics().confidence) ; // low confidance  + occupied
+            // for debuggig
+            //ROS_ERROR ("confidence low ");
+            return 1.0 ; // (1.0 - node->getSemantics().confidence) ; // low confidance  + occupied
         }
         else
             return 0.0; // high confidance + occupied
@@ -395,6 +398,96 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getCellProbabilityPoint(const Eigen
         }
     }
 }
+
+
+
+
+template <>
+int OctomapGenerator<PCLColor, ColorOcTree>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+    //
+}
+
+template <>
+int OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+
+    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z()) ;
+    //octomap::OcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+    if (node == nullptr)
+    {
+        return 1;
+    }
+    else
+    {
+        if (octomap_.isNodeOccupied(node))
+        {
+
+            bool isSemantic = false;
+            isSemantic = node->isSemanticsSet();
+
+            //ROS_ERROR ("conf %f",node->getSemantics().confidence);
+            if(isSemantic)
+            {
+                if (node->getSemantics().confidence < confidenceThreshold)
+                {
+                    return 3; // low confidence
+                }
+                else
+                    return 4; // high confidence + occupied
+            }
+            else
+            {
+                return 2; // occupied not semantically labeled
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+
+
+
+    //    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z()) ;
+
+    //    if (node == nullptr)
+    //    {
+    //        return 1; // unknown
+    //    }
+    //    else if (octomap_.isNodeOccupied(node))
+    //    {
+    //        ROS_INFO ("conf %f",node->getSemantics().confidence);
+
+    //        bool isSemantic = false;
+    //        if(isSemantic)
+    //        {
+    //            if (node->getSemantics().confidence < confidenceThreshold)
+    //            {
+    //                return 3; // low confidence
+    //            }
+    //            else
+    //                return 4; // high confidence + occupied
+    //        }
+    //        else
+    //        {
+    //           return 2; // occupied not semantically labeled
+    //        }
+    //    }
+    //    else
+    //        return 0 ; // free
+}
+
+template <>
+int OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellConfidence(const Eigen::Vector3d& point)
+
+{
+    //
+}
+
 
 template <class CLOUD, class OCTREE>
 VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getVisibility(const Eigen::Vector3d& view_point,

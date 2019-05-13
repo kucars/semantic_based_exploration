@@ -23,7 +23,8 @@ semantic_pcl:
   point_type: 1
   frame_id: "camera_link"
   dataset: "ade20k" # ade20k
-  model_path: "/home/aaal/catkin_ws/src/semantic_cloud/models_trained/pspnet_50_ade20k.pth"
+  #model_path: "/home/aaal/catkin_ws/src/semantic_cloud/models_trained/pspnet_50_ade20k.pth"
+  model_path: "/home/reem/Desktop/semantic_pre_trained_models/pspnet_50_ade20k.pth"
   throttle_rate: 0.5 # 1/val in hz 
   #dataset: "sunrgbd" # sunrgbd
   #model_path: "/home/tataha/Downloads/semantic_trained_model/pspnet_sunrgbd_best_model180625_5k.pth"

@@ -6,8 +6,8 @@
     <arg name="enable_ground_truth" default="true" />
     <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
 
-    <arg name="x" default="7.0"/> <!-- 9 , 5 , 0.12-->
-    <arg name="y" default="4.0"/>
+    <arg name="x" default="0.0"/> <!-- 9 , 5 , 0.12    (0,1)(-4,5) (-6, 0)-->
+    <arg name="y" default="1.0"/>
     <arg name="z" default="0.25"/>
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>
@@ -27,7 +27,8 @@
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris_depth_camera"/>
     <!--arg name="world" default="$(find semantic_exploration)/worlds/test_semantic_color.world"/-->
-    <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/>
+    <!--arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/-->
+    <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects_small.world"/>
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 
     <param name="use_sim_time" value="true" />
@@ -99,7 +100,7 @@
     </node>
 
     <rosparam file="$(find semantic_exploration)/config/semantic_cloud.yaml" command="load"/>
-    <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud"/>
+    <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud" output="screen" />
 
     <!--node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/-->
 

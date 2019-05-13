@@ -43,6 +43,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("path", 1);
     params_.sampledPoints_ = nh_.advertise<visualization_msgs::Marker>("samplePoint", 1);
     params_.sensor_pose_pub_ = nh_.advertise<geometry_msgs::PoseArray>("PathPoses", 1);
+    params_.gain_pub_ = nh_.advertise<visualization_msgs::Marker>("gainPubText", 1);
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_ =
         nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
@@ -215,6 +216,8 @@ void rrtNBV::RRTPlanner::setupLog()
                    << ","
                    << "volumetric_coverage"
                    << ","
+                   << "traveled_distance"
+                   << ","
                    << "information_gain_entropy"
                    << ","
                    << "semantic_gain_entropy"
@@ -227,21 +230,7 @@ void rrtNBV::RRTPlanner::setupLog()
                    << ","
                    << "unknown_cells_counter"
                    << ","
-                   << "known_cells_counter"
-                   << ","
                    << "all_cells_counter"
-                   << ","
-                   << "traveled_distance"
-                   << ","
-                   << "free_type_counter"
-                   << ","
-                   << "unknown_type_count"
-                   << ","
-                   << "occ_intr_not_vis_type_count"
-                   << ","
-                   << "occ_intr_vis_type_count"
-                   << ","
-                   << "occ_not_intr_type_count"
                    << ","
                    << "position.x"
                    << ","
@@ -261,7 +250,15 @@ void rrtNBV::RRTPlanner::setupLog()
                    << ","
                    << "rrt_gain"
                    << ","
-                   << "objectFound"
+                   << "freeCells"
+                   << ","
+                   << "UnknownCells"
+                   << ","
+                   << "occupiedCellsNotLabeled"
+                   << ","
+                   << "occupiedCellsLowConfidance"
+                   << ","
+                   << "occupiedCellsHighConfidance"
                    << "\n";
     }
 }
@@ -451,6 +448,14 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     double probability;
     double maxThreshold = -0.5 * std::log(0.5) - ((1 - 0.5) * std::log(1 - 0.5));
     double rrt_gain = 0;
+    double cGain = 0 ;
+    int freeCells = 0 ;
+    int UnknownCells = 0 ;
+    int occupiedCellsNotLabeled = 0 ;
+    int occupiedCellsLowConfidance = 0 ;
+    int occupiedCellsHighConfidance =0 ;
+    ROS_INFO("1");
+
     for (x = params_.minX_; x <= params_.maxX_ - res_map; x += res_map)
     {
         for (y = params_.minY_; y <= params_.maxY_ - res_map; y += res_map)
@@ -462,27 +467,6 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 vec[1] = y;
                 vec[2] = z;
 
-                // Counting Cell Types
-                int cellType = octomap_generator_->getCellIneterestCellType(x, y, z);
-                switch (cellType)
-                {
-                    case 0:
-                        free_type_counter++;
-                        break;
-                    case 1:
-                        unknown_type_count++;
-                        break;
-                    case 2:
-                        occ_intr_not_vis_type_count++;
-                        break;
-                    case 3:
-                        occ_intr_vis_type_count++;
-                        break;
-                    case 4:
-                        occ_not_intr_type_count++;
-                        break;
-                }
-
                 all_cells_counter++;
 
                 // calculate information_gain
@@ -493,6 +477,36 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                     p = probability;
                     // ROS_INFO("probability %f \n", p);
                 }
+                // ROS_INFO("2");
+                 int conf = octomap_generator_->getCellConfidence(vec); ;
+                // ROS_INFO("3");
+
+                 switch (conf)
+                 {
+                 case 0:
+                    // ROS_INFO("4.0");
+                     freeCells++ ;
+                     break ;
+                 case 1:
+                    // ROS_INFO("4.1");
+                     UnknownCells++;
+                     break;
+                 case 2:  //  occupied not semantically labeled
+                    // ROS_INFO("4.2");
+                     occupiedCellsNotLabeled++ ;
+                     break ;
+                 case 3:
+                    // ROS_INFO("4.3");
+                     occupiedCellsLowConfidance++ ;
+                     break ;
+                 case 4:
+                    // ROS_INFO("4.4");
+                     occupiedCellsHighConfidance++ ;
+                     break ;
+                 default:
+                     ROS_INFO("4.5");
+                 }
+
 
                 // TODO: Revise the equation
                 //                occupancy_entropy = -p * std::log(p) - ((1-p) * std::log(1-p));
@@ -507,61 +521,66 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 
                 //                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
 
-                if (node == VoxelStatus::kUnknown)
-                {
-                    unknown_cells_counter++;
-                }
-                if (node == VoxelStatus::kFree)
-                {
-                    free_cells_counter++;
-                }
-                if (node == VoxelStatus::kOccupied)
-                {
-                    occupied_cells_counter++;
-                }
+                 if (node == VoxelStatus::kUnknown)
+                 {
+                     rrt_gain += params_.igUnmapped_;
+                     unknown_cells_counter++;
+                 }
+                 if (node == VoxelStatus::kFree)
+                 {
+                     free_cells_counter++;
+                     rrt_gain += params_.igFree_;
 
-                // *************** RRT IG *********************************** //
+                 }
+                 if (node == VoxelStatus::kOccupied)
+                 {
+                     rrt_gain += params_.igOccupied_;
+                     occupied_cells_counter++;
+                 }
 
-                if (node == VoxelStatus::kUnknown)
-                {
-                    rrt_gain += params_.igUnmapped_;
-                }
-                else if (node == VoxelStatus::kOccupied)
-                {
-                    rrt_gain += params_.igOccupied_;
-                }
-                else
-                {
-                    rrt_gain += params_.igFree_;
-                }
+
             }
         }
     }
 
-    double theoretical_cells_value =
-        ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
-         (params_.maxZ_ - params_.minZ_)) /
-        (res_map * res_map * res_map);
-    double known_cells_counter = free_cells_counter + occupied_cells_counter;
+    ROS_INFO("4");
+
+
+    //    double theoretical_cells_value =
+    //            ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
+    //             (params_.maxZ_ - params_.minZ_)) /
+    //            (res_map * res_map * res_map);
+    //    double known_cells_counter = free_cells_counter + occupied_cells_counter;
     double volumetric_coverage =
-        ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
+            ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
+
     iteration_num++;
-    file_path_ << iteration_num << "," << volumetric_coverage << "," << information_gain_entropy
-               << "," << semantic_gain_entropy << "," << total_gain << "," << free_cells_counter
-               << "," << occupied_cells_counter << "," << unknown_cells_counter << ","
-               << known_cells_counter << "," << all_cells_counter << "," << traveled_distance << ","
-               << free_type_counter << "," << unknown_type_count << ","
-               << occ_intr_not_vis_type_count << "," << occ_intr_vis_type_count << ","
-               << occ_not_intr_type_count << ",";
-    file_path_ << res.path[0].position.x << ",";
-    file_path_ << res.path[0].position.y << ",";
-    file_path_ << res.path[0].position.z << ",";
-    file_path_ << res.path[0].orientation.x << ",";
-    file_path_ << res.path[0].orientation.y << ",";
-    file_path_ << res.path[0].orientation.z << ",";
-    file_path_ << res.path[0].orientation.w << ",";
-    file_path_ << accumulativeGain << ",";
-    file_path_ << rrt_gain << "\n";
+    file_path_ << iteration_num << ","
+               << volumetric_coverage << ","
+               << traveled_distance << ","
+               << information_gain_entropy<< ","
+               << semantic_gain_entropy << ","
+               << total_gain << ","
+               << free_cells_counter << ","
+               << occupied_cells_counter << ","
+               << unknown_cells_counter << ","
+               << all_cells_counter << ","
+               << res.path[0].position.x << ","
+               << res.path[0].position.y << ","
+               << res.path[0].position.z << ","
+               << res.path[0].orientation.x << ","
+               << res.path[0].orientation.y << ","
+               << res.path[0].orientation.z << ","
+               << res.path[0].orientation.w << ","
+               << accumulativeGain << ","
+               << rrt_gain << ","
+               << freeCells << ","
+               << UnknownCells << ","
+               << occupiedCellsNotLabeled << ","
+               << occupiedCellsLowConfidance << ","
+               << occupiedCellsHighConfidance << "\n";
+    ROS_INFO("5");
+
     ros::Time toc_log = ros::Time::now();
     std::cout << "logging Filter took:" << toc_log.toSec() - tic_log.toSec() << std::endl
               << std::flush;

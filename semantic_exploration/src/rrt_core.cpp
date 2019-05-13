@@ -71,9 +71,9 @@ void rrtNBV::RrtTree::setup()
         time(&rawtime);
         ptm = gmtime(&rawtime);
         logFilePath_ = ros::package::getPath("semantic_exploration") + "/data/" +
-                       std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) +
-                       "_" + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) +
-                       "_" + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
+                std::to_string(ptm->tm_year + 1900) + "_" + std::to_string(ptm->tm_mon + 1) +
+                "_" + std::to_string(ptm->tm_mday) + "_" + std::to_string(ptm->tm_hour) +
+                "_" + std::to_string(ptm->tm_min) + "_" + std::to_string(ptm->tm_sec);
         system(("mkdir -p " + logFilePath_).c_str());
         logFilePath_ += "/";
         fileResponse_.open((logFilePath_ + "response.txt").c_str(), std::ios::out);
@@ -336,7 +336,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     // Check for collision of new connection plus some overshoot distance.
     Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
     Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
-                              newState[2] - origin[2]);
+            newState[2] - origin[2]);
 
     if (direction.norm() > params_.extensionRange_)
     {
@@ -372,7 +372,8 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         */
         // Sample the new orientation
-        newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
+        //newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
+        newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5);
         // Create new node and insert into tree
         rrtNBV::Node *newNode = new rrtNBV::Node;
         newNode->state_ = newState;
@@ -416,6 +417,34 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         counter_++;
         ROS_INFO("bestGain_ is:%f", bestGain_);
+
+        // Draw the gain number on the branch
+        params_.gainMarker.header.stamp = ros::Time::now();
+        params_.gainMarker.header.seq = g_ID_;
+        params_.gainMarker.header.frame_id = params_.navigationFrame_;
+        params_.gainMarker.id = g_ID_;
+        g_ID_++;
+        params_.gainMarker.ns = "vp_tree";
+        params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        params_.gainMarker.action = visualization_msgs::Marker::ADD;
+        params_.gainMarker.pose.position.x = newNode->state_.x();
+        params_.gainMarker.pose.position.y = newNode->state_.y();
+        params_.gainMarker.pose.position.z = newNode->state_.z();
+        params_.gainMarker.scale.x = 0.1;
+        params_.gainMarker.scale.y = 0.1;
+        params_.gainMarker.scale.z = 0.1;
+        params_.gainMarker.color.r = 1; // red
+        params_.gainMarker.color.g = 0;
+        params_.gainMarker.color.b = 0;
+        params_.gainMarker.color.a = 1.0;
+        params_.gainMarker.lifetime = ros::Duration(30);
+        string s = std::to_string(newNode->gain_) ;
+        std::cout << "##############" ;
+        std::cout << s << std::endl ;
+        //ROS_INFO(s);
+        params_.gainMarker.text= s;
+        params_.gain_pub_.publish(params_.gainMarker);
+        // **********************************************
         return true;
     }
     else
@@ -513,7 +542,7 @@ void rrtNBV::RrtTree::initialize()
         // Check for collision
         Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
         Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
-                                  newState[2] - origin[2]);
+                newState[2] - origin[2]);
 
         if (direction.norm() > params_.extensionRange_)
         {
@@ -525,9 +554,9 @@ void rrtNBV::RrtTree::initialize()
         newState[2] = origin[2] + direction[2];
 
         if (VoxelStatus::kFree ==
-            manager_->getLineStatusBoundingBox(
-                origin, direction + origin + direction.normalized() * params_.dOvershoot_,
-                params_.boundingBox_))
+                manager_->getLineStatusBoundingBox(
+                    origin, direction + origin + direction.normalized() * params_.dOvershoot_,
+                    params_.boundingBox_))
         {
             // Create new node and insert into tree
             rrtNBV::Node *newNode = new rrtNBV::Node;
@@ -615,7 +644,7 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             ROS_INFO("**************************************");
 
             ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-                     current->state_[2], q[0], q[1], q[2], q[3]);
+                    current->state_[2], q[0], q[1], q[2], q[3]);
             ROS_INFO("ret size %d", ret.size());
             ROS_INFO("**************************************");
             ROS_INFO("**************************************");
@@ -654,7 +683,7 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-                     current->state_[2], q[0], q[1], q[2], q[3]);
+                    current->state_[2], q[0], q[1], q[2], q[3]);
             ROS_INFO("ret size %d", ret.size());
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -665,11 +694,11 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             filePath_ << current->state_[2] << ",";
             filePath_ << current->state_[3] << "\n";
             outfile << current->state_[0] << "," << current->state_[1] << "," << current->state_[2]
-                    << "," << current->state_[3] << "\n";
+                                          << "," << current->state_[3] << "\n";
             outfile << ret_egde.position.x << "," << ret_egde.position.y << ","
                     << ret_egde.position.z << "," << current->state_[3] << "," << yaw << "\n";
 
-           // ret = samplePath(current->parent_->state_, current->state_, targetFrame);
+            // ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
         }
@@ -735,60 +764,60 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
     double tic, toc;
     switch (utilityFunction)
     {
-        case VOLUMETRIC:
-            ROS_INFO("Volumetric");
-            tic = ros::Time::now().toSec();
-            gainValue = gain_volumetric(state, objectGainFound);
-            toc = ros::Time::now().toSec();
-            ROS_INFO("Calculating Gain took:%f", toc - tic);
-            break;
-        case REAR_SIDE_VOXEL:
-            ROS_INFO("Iterate Rear side VOXEL");
-            gainValue = gain_rsv(state, objectGainFound);
-            break;
-        case SEMANTIC_REAR_SIDE_VOXEL:
-            // Count the rays that ends up with object of interest
-            ROS_INFO("Semantic rear side VOXEL");
-            gainValue = gain_rsvs(state, objectGainFound);
-            break;
-        case REAR_SIDE_ENTROPY:
-            ROS_INFO("rear side ENTROPY");
-            gainValue = gain_rse(state, objectGainFound);
-            break;
-        case SEMANTIC_REAR_SIDE_ENTROPY:
-            ROS_INFO("Semantic rear side ENTROPY");
-            gainValue = gain_rses(state, objectGainFound);
-            break;
-        case PURE_ENTROPY:
-            ROS_INFO("Pure ENTROPY");
-            gainValue = gain_pure_entropy(state, objectGainFound);
-            break;
-        case AVERAGE_ENTROPY:
-            ROS_INFO("AVG ENTROPY");
-            gainValue = gain_avg_entropy(state, objectGainFound);
-            break;
-        case OCCLUSION_AWARE:
-            ROS_INFO("occlusion aware ENTROPY");
-            gainValue = gain_occlusion_aware(state, objectGainFound);
-            break;
-        case UNOBSERVED_VOXEL:
-            ROS_INFO("unobserved voxel");
-            gainValue = gain_unobserved_voxel(state, objectGainFound);
-            break;
-        case SEMANTIC_VISIBLE_VOXEL:
-            ROS_INFO("Semantic Visible Voxels");
-            gainValue = gain_svv(state, objectGainFound);
-            break;
-        case SEMANTIC_OCCLUSION_AWARE:
-            ROS_INFO("Semantic Occlusion aware Voxels");
-            gainValue = gain_semantic_occlusion_aware(state, objectGainFound);
-            break;
-        case SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS:
-            ROS_INFO("Semantic obj of interest- Num of visits");
-            gainValue = gain_semantic_obj_interest_num_visits(state, objectGainFound);
-            break ;
-        default:
-            ROS_WARN("Utility function type not found!");
+    case VOLUMETRIC:
+        ROS_INFO("Volumetric");
+        tic = ros::Time::now().toSec();
+        gainValue = gain_volumetric(state, objectGainFound);
+        toc = ros::Time::now().toSec();
+        ROS_INFO("Calculating Gain took:%f", toc - tic);
+        break;
+    case REAR_SIDE_VOXEL:
+        ROS_INFO("Iterate Rear side VOXEL");
+        gainValue = gain_rsv(state, objectGainFound);
+        break;
+    case SEMANTIC_REAR_SIDE_VOXEL:
+        // Count the rays that ends up with object of interest
+        ROS_INFO("Semantic rear side VOXEL");
+        gainValue = gain_rsvs(state, objectGainFound);
+        break;
+    case REAR_SIDE_ENTROPY:
+        ROS_INFO("rear side ENTROPY");
+        gainValue = gain_rse(state, objectGainFound);
+        break;
+    case SEMANTIC_REAR_SIDE_ENTROPY:
+        ROS_INFO("Semantic rear side ENTROPY");
+        gainValue = gain_rses(state, objectGainFound);
+        break;
+    case PURE_ENTROPY:
+        ROS_INFO("Pure ENTROPY");
+        gainValue = gain_pure_entropy(state, objectGainFound);
+        break;
+    case AVERAGE_ENTROPY:
+        ROS_INFO("AVG ENTROPY");
+        gainValue = gain_avg_entropy(state, objectGainFound);
+        break;
+    case OCCLUSION_AWARE:
+        ROS_INFO("occlusion aware ENTROPY");
+        gainValue = gain_occlusion_aware(state, objectGainFound);
+        break;
+    case UNOBSERVED_VOXEL:
+        ROS_INFO("unobserved voxel");
+        gainValue = gain_unobserved_voxel(state, objectGainFound);
+        break;
+    case SEMANTIC_VISIBLE_VOXEL:
+        ROS_INFO("Semantic Visible Voxels");
+        gainValue = gain_svv(state, objectGainFound);
+        break;
+    case SEMANTIC_OCCLUSION_AWARE:
+        ROS_INFO("Semantic Occlusion aware Voxels");
+        gainValue = gain_semantic_occlusion_aware(state, objectGainFound);
+        break;
+    case SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS:
+        ROS_INFO("Semantic obj of interest- Num of visits");
+        gainValue = gain_semantic_obj_interest_num_visits(state, objectGainFound);
+        break ;
+    default:
+        ROS_WARN("Utility function type not found!");
     }
     return gainValue;
 }
@@ -833,16 +862,16 @@ double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
                 tic = ros::Time::now().toSec();
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
                         if (val < SQRT2 * disc)
                         {
@@ -909,7 +938,7 @@ double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
     // Scale with volume
     gain *= pow(disc, 3.0);
     //* exp(-params_.degressiveCoeff_ * newNode->distance_);
-    ROS_INFO("GAIN ", gain);
+    ROS_INFO("GAIN %f ", gain);
     ROS_INFO_THROTTLE(1.0, "Getting Cell FOV Check took:%f", fovCheckTotalTime);
     ROS_INFO_THROTTLE(1.0, "Getting Cell Probabilities took:%f", cellProbTotalTime);
     ROS_INFO_THROTTLE(1.0, "Getting Cell Visibility took:%f", cellVisTotalTime);
@@ -967,16 +996,16 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -1062,7 +1091,7 @@ double rrtNBV::RrtTree::gain_rsv(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Visibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -1148,16 +1177,16 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -1252,7 +1281,7 @@ double rrtNBV::RrtTree::gain_rsvs(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Visibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -1338,16 +1367,16 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -1398,13 +1427,13 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool &objectGainFound)
                         bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
 
                         ROS_INFO(
-                            "The result is %d ",
-                            rearSideVoxel);  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
+                                    "The result is %d ",
+                                    rearSideVoxel);  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
                         if (rearSideVoxel)
                         {
                             double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                             double entropy = -probability * std::log(probability) -
-                                             ((1 - probability) * std::log(1 - probability));
+                                    ((1 - probability) * std::log(1 - probability));
                             double Iv = Pv * entropy;
                             std::cout << "**************** Rear Side Entropy *********************"
                                       << std::endl;
@@ -1445,7 +1474,7 @@ double rrtNBV::RrtTree::gain_rse(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -1529,16 +1558,16 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -1591,17 +1620,17 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool &objectGainFound)
                             numOfVisibleInterestVoxels++;
                             bool rearSideVoxel = this->manager_->getRearSideVoxel(origin, vec);
                             ROS_INFO(
-                                "The result is %d ",
-                                rearSideVoxel);  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
+                                        "The result is %d ",
+                                        rearSideVoxel);  // " THE RESUTLS IS ** " << rearSideVoxel << std::endl  ;
                             if (rearSideVoxel)
                             {
                                 double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                                 double entropy = -probability * std::log(probability) -
-                                                 ((1 - probability) * std::log(1 - probability));
+                                        ((1 - probability) * std::log(1 - probability));
                                 double Iv = Pv * entropy;
                                 std::cout
-                                    << "**************** Rear Side Entropy *********************"
-                                    << std::endl;
+                                        << "**************** Rear Side Entropy *********************"
+                                        << std::endl;
                                 //double rearSideEntropy = this->manager_->getRearSideEntropy(origin, vec);
                                 gainObjOfInt = +Iv;
                                 numOfRearSideVoxels++;
@@ -1640,7 +1669,7 @@ double rrtNBV::RrtTree::gain_rses(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -1725,16 +1754,16 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -1768,7 +1797,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
                     {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                         double entropy = -probability * std::log(probability) -
-                                         ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         double Iv = Pv * entropy;
                         gainOcclusionAware += Iv;
                         numOfUnknownVisibleVoxels++;
@@ -1786,7 +1815,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
                     {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                         double entropy = -probability * std::log(probability) -
-                                         ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         double Iv = Pv * entropy;
                         gainOcclusionAware += Iv;
                         numOfOccupiedVisibleVoxels++;
@@ -1802,7 +1831,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
                     {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                         double entropy = -probability * std::log(probability) -
-                                         ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         double Iv = Pv * entropy;
                         gainOcclusionAware += Iv;
                         numOfFreeVisibleVoxels++;
@@ -1827,7 +1856,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -1997,16 +2026,16 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool &objectGainFo
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2040,7 +2069,7 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool &objectGainFo
                     {
                         double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                         double entropy = -probability * std::log(probability) -
-                                         ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         double Iv = Pv * entropy;
                         gainUnobservedVoxel += Iv;
                         numOfUnknownVisibleVoxels++;
@@ -2091,7 +2120,7 @@ double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool &objectGainFo
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -2171,16 +2200,16 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2214,7 +2243,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state, bool &objectGainFound)
                     {
                         numOfUnknownVisibleVoxels++;
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         gainUnknown += +1;
                     }
@@ -2229,7 +2258,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         numOfOccupiedVisibleVoxels++;
                     }
@@ -2243,7 +2272,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         numOfFreeVisibleVoxels++;
                     }
@@ -2270,7 +2299,7 @@ double rrtNBV::RrtTree::gain_pure_entropy(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -2335,16 +2364,16 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2378,7 +2407,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         numOfUnknownVisibleVoxels++;
                         gainUnknown += +1;
@@ -2394,7 +2423,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         numOfOccupiedVisibleVoxels++;
                     }
@@ -2408,7 +2437,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         voxelEntropy = -probability * std::log(probability) -
-                                       ((1 - probability) * std::log(1 - probability));
+                                ((1 - probability) * std::log(1 - probability));
                         gain += voxelEntropy;
                         numOfFreeVisibleVoxels++;
                     }
@@ -2422,7 +2451,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
     }
 
     int traversedVoxels =
-        numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
+            numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
     gain = gain / traversedVoxels;
     std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
               << std::endl
@@ -2438,7 +2467,7 @@ double rrtNBV::RrtTree::gain_avg_entropy(StateVec state, bool &objectGainFound)
     ;
     std::cout << " number Of Accepted Invisibal Voxels In One View is "
               << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-                     numOfUnknownInvisibleVoxels
+                 numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
     ;
@@ -2502,16 +2531,16 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2587,39 +2616,40 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
     }
 
     int traversedVoxels =
-        numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
+            numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
 
 
 
-//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-//              << std::endl
-//              << std::flush;
-//    std::cout << " number Of Voxels In One View is "
-//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-//              << std::flush;
-//    std::cout << " number Of Accepted visible Voxels In One View is "
-//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-//              << std::endl
-//              << std::flush;
-//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
-//              << std::endl
-//              << std::flush;
+    //    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+    //              << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Voxels In One View is "
+    //              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Accepted visible Voxels In One View is "
+    //              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+    //              << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+    //              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
+    //              << std::endl
+    //              << std::flush;
 
-
-    if (gainObjOfInt > 0)
-    {
-        gain = gainObjOfInt;
-        gain = gain / traversedVoxels;
-        objectGainFound = true;
-        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
-    }
-    else
-    {
-        gain = gainUnknown;
-        gain = gain / traversedVoxels;
-        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
-    }
+    gain = gainObjOfInt + gainUnknown ;
+    gain = gain / traversedVoxels;
+    //    if (gainObjOfInt > 0)
+    //    {
+    //        gain = gainObjOfInt;
+    //        gain = gain / traversedVoxels;
+    //        objectGainFound = true;
+    //        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
+    //    }
+    //    else
+    //    {
+    //        gain = gainUnknown;
+    //        gain = gain / traversedVoxels;
+    //        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
+    //    }
 
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
@@ -2679,16 +2709,16 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2742,7 +2772,7 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
                         {
                             double Pv = this->manager_->getVisibilityLikelihood(origin, vec);
                             double entropy = -probability * std::log(probability) -
-                                             ((1 - probability) * std::log(1 - probability));
+                                    ((1 - probability) * std::log(1 - probability));
                             double Iv = Pv * entropy;
                             gainObjOfInt += Iv;
                             //ROS_ERROR("OBJECT OF INTEREST FOUND");
@@ -2770,26 +2800,26 @@ double rrtNBV::RrtTree::gain_semantic_occlusion_aware(StateVec state, bool &obje
         }
     }
     int traversedVoxels =
-        numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
+            numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
     gain = gain / traversedVoxels;
-//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-//              << std::endl
-//              << std::flush;
-//    std::cout << " number Of Voxels In One View is "
-//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-//              << std::flush;
-//    ;
-//    std::cout << " number Of Accepted visible Voxels In One View is "
-//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-//              << std::endl
-//              << std::flush;
-//    ;
-//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
-//                     numOfUnknownInvisibleVoxels
-//              << std::endl
-//              << std::flush;
-//    ;
+    //    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+    //              << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Voxels In One View is "
+    //              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+    //              << std::flush;
+    //    ;
+    //    std::cout << " number Of Accepted visible Voxels In One View is "
+    //              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+    //              << std::endl
+    //              << std::flush;
+    //    ;
+    //    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+    //              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels +
+    //                     numOfUnknownInvisibleVoxels
+    //              << std::endl
+    //              << std::flush;
+    //    ;
 
     if (gainObjOfInt > 0)
     {
@@ -2862,16 +2892,16 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
                 bool insideAFieldOfView = false;
                 // Check that voxel center is inside one of the fields of view.
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
-                         params_.camBoundNormals_.begin();
+                     params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
                 {
                     bool inThisFieldOfView = true;
                     for (typename std::vector<Eigen::Vector3d>::iterator itSingleCBN =
-                             itCBN->begin();
+                         itCBN->begin();
                          itSingleCBN != itCBN->end(); itSingleCBN++)
                     {
                         Eigen::Vector3d normal =
-                            Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
+                                Eigen::AngleAxisd(state[3], Eigen::Vector3d::UnitZ()) * (*itSingleCBN);
                         double val = dir.dot(normal.normalized());
 
                         if (val < SQRT2 * disc)
@@ -2947,39 +2977,40 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
     }
 
     int traversedVoxels =
-        numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
+            numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
 
 
 
-//    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-//              << std::endl
-//              << std::flush;
-//    std::cout << " number Of Voxels In One View is "
-//              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
-//              << std::flush;
-//    std::cout << " number Of Accepted visible Voxels In One View is "
-//              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
-//              << std::endl
-//              << std::flush;
-//    std::cout << " number Of Accepted Invisibal Voxels In One View is "
-//              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
-//              << std::endl
-//              << std::flush;
+    //    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+    //              << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Voxels In One View is "
+    //              << numOfFreeVoxels + numOfOccupiedVoxels + numOfUnknownVoxels << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Accepted visible Voxels In One View is "
+    //              << numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels
+    //              << std::endl
+    //              << std::flush;
+    //    std::cout << " number Of Accepted Invisibal Voxels In One View is "
+    //              << numOfFreeInvisibleVoxels + numOfOccupiedInvisibleVoxels + numOfUnknownInvisibleVoxels
+    //              << std::endl
+    //              << std::flush;
 
-
-    if (gainObjOfInt > 0)
-    {
-        gain = gainObjOfInt;
-        gain = gain / traversedVoxels;
-        objectGainFound = true;
-        //std::cout << "Object Gain FOUND" << gain << std::endl;
-    }
-    else
-    {
-        gain = gainUnknown;
-        gain = gain / traversedVoxels;
-        //std::cout << "Volumetric Gain " << gain << std::endl;
-    }
+    gain = gainObjOfInt + gainUnknown ;
+    gain = gain / traversedVoxels;
+    //    if (gainObjOfInt > 0)
+    //    {
+    //        gain = gainObjOfInt;
+    //        gain = gain / traversedVoxels;
+    //        objectGainFound = true;
+    //        //std::cout << "Object Gain FOUND" << gain << std::endl;
+    //    }
+    //    else
+    //    {
+    //        gain = gainUnknown;
+    //        gain = gain / traversedVoxels;
+    //        //std::cout << "Volumetric Gain " << gain << std::endl;
+    //    }
 
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
@@ -3091,8 +3122,8 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     Eigen::Quaternion<float> q;
     Eigen::Vector3f init(1.0, 0.0, 0.0);
     Eigen::Vector3f dir(node->state_[0] - node->parent_->state_[0],
-                        node->state_[1] - node->parent_->state_[1],
-                        node->state_[2] - node->parent_->state_[2]);
+            node->state_[1] - node->parent_->state_[1],
+            node->state_[2] - node->parent_->state_[2]);
     q.setFromTwoVectors(init, dir);
     q.normalize();
     p.pose.orientation.x = q.x();
@@ -3106,7 +3137,7 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     p.color.g = 100.0 / 255.0;;
     p.color.b = 0.7;
     p.color.a = 1.0;
-    p.lifetime = ros::Duration(20);
+    p.lifetime = ros::Duration(30);
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
 
@@ -3159,7 +3190,7 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::samplePath(StateVec start, Sta
     for (double it = 0.0; it <= 1.0; it += disc)
     {
         tf::Vector3 origin((1.0 - it) * start[0] + it * end[0], (1.0 - it) * start[1] + it * end[1],
-                           (1.0 - it) * start[2] + it * end[2]);
+                (1.0 - it) * start[2] + it * end[2]);
         double yaw = start[3] + yaw_direction * it;
         if (yaw > M_PI)
             yaw -= 2.0 * M_PI;

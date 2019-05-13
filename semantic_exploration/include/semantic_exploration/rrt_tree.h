@@ -98,10 +98,12 @@ struct Params
     ros::Publisher camboundries_;
     ros::Publisher fovHyperplanes;
     std::string navigationFrame_;
+    ros::Publisher gain_pub_;
 
     //debugging
     visualization_msgs::MarkerArray pa;
     visualization_msgs::Marker camParam;
+    visualization_msgs::Marker gainMarker;
 };
 
 class Node
