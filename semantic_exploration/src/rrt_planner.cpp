@@ -996,7 +996,7 @@ void rrtNBV::RRTPlanner::MaxGainPose(geometry_msgs::Pose p, int id)
     p1.z = p.position.z;
     line_strip.points.push_back(p1);
     line_strip.pose.orientation.w = 1.0;
-    line_strip.scale.x = 0.05;
+    line_strip.scale.x = 0.005;
     line_strip.color.a = 1;
     line_strip.color.g = 1;
     line_strip.lifetime = ros::Duration();

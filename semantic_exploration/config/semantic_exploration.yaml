@@ -48,8 +48,8 @@ output/file/name: "gains.csv"
 
 # Path Planning Parameters: rrt_planner.cpp
 nbvp/tree/extension_range: 1
-nbvp/tree/initial_iterations: 5 #10
-nbvp/tree/cuttoff_iterations: 200 #300
+nbvp/tree/initial_iterations: 10 #5
+nbvp/tree/cuttoff_iterations: 300 #200
 nbvp/tree/exact_root: false
 nbvp/dt: 0.1
 
@@ -93,7 +93,9 @@ min_height_free_space: 0
 change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
-num_of_visits_threshold: 3 
+num_of_visits_threshold: 10 
+/alpha_gain: 0.2
+/beta_gain: 0.8
 
 # Planning Methods
 # Volumetric 0
@@ -109,5 +111,5 @@ num_of_visits_threshold: 3
 # semantic occlusion aware 10 (proposed 2 - The planner crashes)   
 # semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-/utility/method: 0
+/utility/method: 7
 /output/file/name: "1.csv"

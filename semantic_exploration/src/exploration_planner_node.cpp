@@ -76,7 +76,7 @@ struct Params
 
 class ExplorationPlanner
 {
-  protected:
+protected:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
     Params params_;
@@ -89,7 +89,7 @@ class ExplorationPlanner
     bool currentPositionUpdated;
     mavros_msgs::State currentState;
 
-  public:
+public:
     ExplorationPlanner(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private);
     ~ExplorationPlanner();
     void poseCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
@@ -116,9 +116,9 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
     ROS_INFO("Drone Name:%s NameSpace:%s", droneName.c_str(), droneNameSpace.c_str());
 
     explorationViewpointPub =
-        nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
+            nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
     
-    //TODO: make this a parameter and make it global 
+    //TODO: make this a parameter and make it global
     bool use_gazebo_ground_truth_ = true;
 
     // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
@@ -128,8 +128,8 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
     }
     else
     {
-        localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(droneNameSpace + 
-            "/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback, this);
+        localPoseSub = nh_.subscribe<geometry_msgs::PoseStamped>(droneNameSpace +
+                                                                 "/mavros/local_position/pose", 10, &ExplorationPlanner::poseCallback, this);
     }
     
     rotationPublisher = nh_.advertise<controller_msgs::FlatTarget>("reference/flatsetpoint", 100);
@@ -143,6 +143,7 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
 
 void ExplorationPlanner::rotateOnSpot(float duration)
 {
+
     double sleepTime = duration / 360.0f;
     double lowerAltitude = 0.05;
     double altitudeIterations = 3.0f;
@@ -154,7 +155,7 @@ void ExplorationPlanner::rotateOnSpot(float duration)
         {
             double yaw = i * 3.14 / 180.0;
             controller_msgs::FlatTarget yawCommand;
-            yawCommand.type_mask = 2; 
+            yawCommand.type_mask = 2;
             yawCommand.position.x = this->currentPose.pose.position.x + j*0.2;
             yawCommand.position.y = this->currentPose.pose.position.y - j*0.2;
             yawCommand.position.z = lowerAltitude + j*altitudeSteps;
@@ -253,16 +254,16 @@ void ExplorationPlanner::RunStateMachine()
         loopRate.sleep();
     }
     
-    // Dirty hack, please fix Wait for the drone to take off 
+    // Dirty hack, please fix Wait for the drone to take off
     for(int i=0;i<100;i++)
     {
         ros::spinOnce();
-        loopRate.sleep();       
+        loopRate.sleep();
     }
     
     //slowly rotate on the spot for 10 seconds
     rotateOnSpot(20);
-    moveOnSpot(5);
+    moveOnSpot(10);
 
     // simulate the camera position publisher by broadcasting the /tf
     tf::TransformBroadcaster br;
@@ -302,66 +303,69 @@ void ExplorationPlanner::RunStateMachine()
                 ros::Duration(1.0).sleep();
             }
             else
+            {
                 ROS_INFO(" #################### Path Found #######################");
 
-            ROS_INFO("planSrv.response.path.size():%zu", planSrv.response.path.size());
+                ROS_INFO("planSrv.response.path.size():%zu", planSrv.response.path.size());
 
-            for (uint i = 0; i < planSrv.response.path.size(); i++)
-            {
-                poseMsg_.header.seq = static_cast<uint>(seqNum);
-                poseMsg_.header.stamp = ros::Time::now();
-                poseMsg_.header.frame_id = "world";
-                poseMsg_.pose.position.x = planSrv.response.path[i].position.x;
-                poseMsg_.pose.position.y = planSrv.response.path[i].position.y;
-                poseMsg_.pose.position.z = planSrv.response.path[i].position.z;
-
-                tf::Pose pose;
-                tf::poseMsgToTF(planSrv.response.path[i], pose);
-                double yaw = tf::getYaw(pose.getRotation());
-                tf::Quaternion quat = tf::Quaternion(tf::Vector3(0.0, 0.0, 1.0), yaw);
-                poseMsg_.pose.orientation.x = quat[0];
-                poseMsg_.pose.orientation.y = quat[1];
-                poseMsg_.pose.orientation.z = quat[2];
-                poseMsg_.pose.orientation.w = quat[3];
-                try
+                for (uint i = 0; i < planSrv.response.path.size(); i++)
                 {
-                    listener.lookupTransform(poseMsg_.header.frame_id, targetFrame, ros::Time(0),
-                                             transform);
+                    poseMsg_.header.seq = static_cast<uint>(seqNum);
+                    poseMsg_.header.stamp = ros::Time::now();
+                    poseMsg_.header.frame_id = "world";
+                    poseMsg_.pose.position.x = planSrv.response.path[i].position.x;
+                    poseMsg_.pose.position.y = planSrv.response.path[i].position.y;
+                    poseMsg_.pose.position.z = planSrv.response.path[i].position.z;
+
+                    tf::Pose pose;
+                    tf::poseMsgToTF(planSrv.response.path[i], pose);
+                    double yaw = tf::getYaw(pose.getRotation());
+                    tf::Quaternion quat = tf::Quaternion(tf::Vector3(0.0, 0.0, 1.0), yaw);
+                    poseMsg_.pose.orientation.x = quat[0];
+                    poseMsg_.pose.orientation.y = quat[1];
+                    poseMsg_.pose.orientation.z = quat[2];
+                    poseMsg_.pose.orientation.w = quat[3];
+                    try
+                    {
+                        listener.lookupTransform(poseMsg_.header.frame_id, targetFrame, ros::Time(0),
+                                                 transform);
+                    }
+                    catch (tf::TransformException ex)
+                    {
+                        ROS_ERROR("%s", ex.what());
+                        continue;
+                    }
+                    listener.transformPose(targetFrame, poseMsg_, transformedPose);
+
+                    ROS_DEBUG("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,
+                              poseMsg_.pose.position.y, poseMsg_.pose.position.z,
+                              poseMsg_.pose.orientation.x, poseMsg_.pose.orientation.y,
+                              poseMsg_.pose.orientation.z, poseMsg_.pose.orientation.w);
+
+                    ROS_INFO("Received: %f %f %f Transformed: %f %f %f", poseMsg_.pose.position.x,
+                             poseMsg_.pose.position.y, poseMsg_.pose.position.z,
+                             transformedPose.pose.position.x, transformedPose.pose.position.y,
+                             transformedPose.pose.position.z);
+
+                    std_msgs::String mission_id;
+                    mission_id.data = "mission_id" + std::to_string(iteration);
+                    waypoints.clear();
+                    waypoints.push_back(poseMsg_.pose);
+                    gotoPoseWaypointsSrv.request.waypoints = waypoints;
+                    gotoPoseWaypointsSrv.request.mission_id = mission_id;
+
+                    ros::service::waitForService("go_to_pose_waypoints", ros::Duration(1.0));
+
+                    if(!ros::service::call("go_to_pose_waypoints", gotoPoseWaypointsSrv))
+                    {
+                        ROS_WARN("Calling waypoint navigator service failed");
+                    }
+
+                    //explorationViewpointPub.publish(transformedPose);
+                    ros::spinOnce();
+                    sleep(10); // An indication that the drone reached the NBV
+                    ros::Duration(params_.dt).sleep();
                 }
-                catch (tf::TransformException ex)
-                {
-                    ROS_ERROR("%s", ex.what());
-                    continue;
-                }
-                listener.transformPose(targetFrame, poseMsg_, transformedPose);
-
-                ROS_DEBUG("Sent In iterate %f %f  %f %f %f %f %f ", poseMsg_.pose.position.x,
-                          poseMsg_.pose.position.y, poseMsg_.pose.position.z,
-                          poseMsg_.pose.orientation.x, poseMsg_.pose.orientation.y,
-                          poseMsg_.pose.orientation.z, poseMsg_.pose.orientation.w);
-
-                ROS_INFO("Received: %f %f %f Transformed: %f %f %f", poseMsg_.pose.position.x,
-                         poseMsg_.pose.position.y, poseMsg_.pose.position.z,
-                         transformedPose.pose.position.x, transformedPose.pose.position.y,
-                         transformedPose.pose.position.z);
-                
-                std_msgs::String mission_id;
-                mission_id.data = "mission_id" + std::to_string(iteration);
-                waypoints.clear();
-                waypoints.push_back(poseMsg_.pose);
-                gotoPoseWaypointsSrv.request.waypoints = waypoints; 
-                gotoPoseWaypointsSrv.request.mission_id = mission_id;
-                
-                ros::service::waitForService("go_to_pose_waypoints", ros::Duration(1.0));
-
-                if(!ros::service::call("go_to_pose_waypoints", gotoPoseWaypointsSrv))
-                {
-                    ROS_WARN("Calling waypoint navigator service failed");
-                }
-
-                //explorationViewpointPub.publish(transformedPose);
-                ros::spinOnce();
-                ros::Duration(params_.dt).sleep();
             }
         }
         else

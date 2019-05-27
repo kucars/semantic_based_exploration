@@ -218,8 +218,8 @@ uint OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellNumOfVisits(c
         if(color == interestColor)
         {
             // for debugging ROS_Error is used
-            //ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b); // worked
-            //ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
+            ROS_ERROR("interest Colors are:%d %d %d",interestColor.r,interestColor.g,interestColor.b); // worked
+            ROS_INFO("Number of visits: %d",node->getNumVisits()); // Not initialized
             //ROS_INFO("numOfVisitsThreshold: %d",numOfVisitsThreshold); // Not initialized
             if (node->getNumVisits() < numOfVisitsThreshold)
             {

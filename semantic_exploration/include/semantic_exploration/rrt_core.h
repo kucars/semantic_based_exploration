@@ -114,6 +114,8 @@ class RrtTree : public TreeBase
     int markerCounter;
     int utilityFunction;
     std::ofstream outfile;
+    float alphaGain;
+    float betaGain;
 };
 }  // namespace rrtNBV
 

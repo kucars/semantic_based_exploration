@@ -94,6 +94,7 @@ class RRTPlanner
     float numOfVisitsThreshold;
     double globalObjectGain;
     double globalVolumetricGain;
+
 };
 
 }  // namespace rrtNBV

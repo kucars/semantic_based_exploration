@@ -57,8 +57,20 @@ void rrtNBV::RrtTree::setup()
     {
         ROS_WARN("No option for utility  function. Looking for /utility/method. Default is 0.");
     }
-
     ROS_INFO("Utility Method %d ", utilityFunction);
+
+    alphaGain = 0.5 ;
+    if (!ros::param::get("/alpha_gain", alphaGain))
+    {
+        ROS_WARN("No option for alphaGain. Looking for alpha_gain. Default is 0.5");
+    }
+    betaGain = 0.5 ;
+    if (!ros::param::get("/beta_gain", betaGain))
+    {
+        ROS_WARN("No option for alphaGain. Looking for beta_gain. Default is 0.5");
+    }
+    ROS_INFO("alphaGain , betaGian %f %f ", alphaGain , betaGain );
+
 
     // If logging is required, set up files here
     bool ifLog = false;
@@ -391,6 +403,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
         kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
         // Display new node
+        ROS_ERROR("iterate NODE");
         publishNode(newNode);
 
         if (objectGainFound)
@@ -572,6 +585,7 @@ void rrtNBV::RrtTree::initialize()
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
 
             // Display new node
+            ROS_ERROR("INITILAIZATION NODE");
             publishNode(newNode);
 
             if (objectGainFound)
@@ -599,6 +613,35 @@ void rrtNBV::RrtTree::initialize()
                 }
             }
             counter_++;
+
+
+            // Draw the gain number on the branch
+            params_.gainMarker.header.stamp = ros::Time::now();
+            params_.gainMarker.header.seq = g_ID_;
+            params_.gainMarker.header.frame_id = params_.navigationFrame_;
+            params_.gainMarker.id = g_ID_;
+            g_ID_++;
+            params_.gainMarker.ns = "vp_tree";
+            params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+            params_.gainMarker.action = visualization_msgs::Marker::ADD;
+            params_.gainMarker.pose.position.x = newNode->state_.x();
+            params_.gainMarker.pose.position.y = newNode->state_.y();
+            params_.gainMarker.pose.position.z = newNode->state_.z();
+            params_.gainMarker.scale.x = 0.1;
+            params_.gainMarker.scale.y = 0.1;
+            params_.gainMarker.scale.z = 0.1;
+            params_.gainMarker.color.r = 0; // red
+            params_.gainMarker.color.g = 0;
+            params_.gainMarker.color.b = 1;
+            params_.gainMarker.color.a = 1.0;
+            params_.gainMarker.lifetime = ros::Duration(30);
+            string s = std::to_string(newNode->gain_) ;
+            std::cout << "##############" ;
+            std::cout << s << std::endl ;
+            //ROS_INFO(s);
+            params_.gainMarker.text= s;
+            params_.gain_pub_.publish(params_.gainMarker);
+            // **********************************************
         }
     }
 }
@@ -2635,7 +2678,7 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
     //              << std::endl
     //              << std::flush;
 
-    gain = gainObjOfInt + gainUnknown ;
+    gain =(alphaGain*gainUnknown) + (betaGain *gainObjOfInt);
     gain = gain / traversedVoxels;
     //    if (gainObjOfInt > 0)
     //    {
@@ -2996,7 +3039,7 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
     //              << std::endl
     //              << std::flush;
 
-    gain = gainObjOfInt + gainUnknown ;
+    gain =(alphaGain*gainUnknown) + (betaGain *gainObjOfInt);
     gain = gain / traversedVoxels;
     //    if (gainObjOfInt > 0)
     //    {
