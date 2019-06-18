@@ -93,6 +93,13 @@ void rrtNBV::RrtTree::setup()
         filePath_.open((logFilePath_ + "path.txt").c_str(), std::ios::out);
     }
     markerCounter = 0;
+
+
+    debugParam = false;
+    if (!ros::param::get("/nbvp/debug", debugParam))
+    {
+        ROS_WARN("Debugging is off by default. Turn on with /nbvp/debug " ) ;
+    }
 }
 
 rrtNBV::RrtTree::~RrtTree()
@@ -388,33 +395,35 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         solutionFound = true;
     }
     
-
     visualization_msgs::Marker marker;
-    marker.header.frame_id = params_.worldFrameId_;
-    marker.header.stamp = ros::Time();
-    marker.ns = "my_namespace";
-    marker.id = params_.marker_id ;
-    params_.marker_id++ ; 
-    marker.type = visualization_msgs::Marker::SPHERE;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = newState.x();
-    marker.pose.position.y = newState.y();
-    marker.pose.position.z = newState.z(); 
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.3;
-    marker.scale.y = 0.3;
-    marker.scale.z = 0.3;
-    marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    marker.lifetime = ros::Duration(0); //tried 0, and 10,0
-    params_.sample_viewpoint_pub_.publish(marker) ; 
-    //sample_points_array.markers.push_back(marker) ; 
-    sleep(1);
+    if (debugParam)
+    {
+        marker.header.frame_id = params_.worldFrameId_;
+        marker.header.stamp = ros::Time();
+        marker.ns = "my_namespace";
+        marker.id = params_.marker_id ;
+        params_.marker_id++ ; 
+        marker.type = visualization_msgs::Marker::SPHERE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = newState.x();
+        marker.pose.position.y = newState.y();
+        marker.pose.position.z = newState.z(); 
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.3;
+        marker.scale.y = 0.3;
+        marker.scale.z = 0.3;
+        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 1.0;
+        marker.lifetime = ros::Duration(0); //tried 0, and 10,0
+        params_.sample_viewpoint_pub_.publish(marker) ; 
+        //sample_points_array.markers.push_back(marker) ; 
+        sleep(1);
+    }
     //*********************** DEBUG ************************** //
     //ROS_INFO("Sample Point genrated inside the exploration aera and NOT in collision with the bounding box -the bounding box is the robot dimensions");
     //ROS_INFO("New Sample: %f %f %f " ,  newState.x() , newState.y() ,  newState.z() );
@@ -431,29 +440,32 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     rrtNBV::Node *newParent = (rrtNBV::Node *)kd_res_item_data(nearest);
     kd_res_free(nearest);
 
-    marker.header.stamp = ros::Time();
-    marker.ns = "my_namespace";
-    marker.id = params_.marker_id ;
-    params_.marker_id++ ; 
-    marker.type = visualization_msgs::Marker::CUBE;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = newParent->state_[0];
-    marker.pose.position.y = newParent->state_[1];
-    marker.pose.position.z = newParent->state_[2];
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.4;
-    marker.scale.y = 0.3;
-    marker.scale.z = 0.3;
-    marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-    marker.lifetime = ros::Duration(0); //tried 0, and 10,0
-    params_.sample_viewpoint_pub_.publish(marker) ; 
-
+   // visualization_msgs::Marker marker;
+    if (debugParam)
+    {
+        marker.header.stamp = ros::Time();
+        marker.ns = "my_namespace";
+        marker.id = params_.marker_id ;
+        params_.marker_id++ ; 
+        marker.type = visualization_msgs::Marker::CUBE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = newParent->state_[0];
+        marker.pose.position.y = newParent->state_[1];
+        marker.pose.position.z = newParent->state_[2];
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.4;
+        marker.scale.y = 0.3;
+        marker.scale.z = 0.3;
+        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.lifetime = ros::Duration(0); //tried 0, and 10,0
+        params_.sample_viewpoint_pub_.publish(marker) ; 
+    }
     // Check for collision of new connection plus some overshoot distance.
     Eigen::Vector3d origin(newParent->state_[0], newParent->state_[1], newParent->state_[2]);
     Eigen::Vector3d direction(newState[0] - origin[0], newState[1] - origin[1],
@@ -468,31 +480,33 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     newState[1] = origin[1] + direction[1];
     newState[2] = origin[2] + direction[2];
 
-    //visualization_msgs::Marker marker;
-    marker.header.frame_id = params_.worldFrameId_;
-    marker.header.stamp = ros::Time();
-    marker.ns = "my_namespace";
-    marker.id = params_.marker_id ;
-    params_.marker_id++ ; 
-    marker.type = visualization_msgs::Marker::CYLINDER;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = newState[0];
-    marker.pose.position.y = newState[1];
-    marker.pose.position.z = newState[2]; 
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.3;
-    marker.scale.y = 0.4;
-    marker.scale.z = 0.3;
-    marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.lifetime = ros::Duration(10); //tried 0, and 10,0
-    params_.sample_viewpoint_pub_.publish(marker) ; 
-
+    if (debugParam)
+    {
+        //visualization_msgs::Marker marker;
+        marker.header.frame_id = params_.worldFrameId_;
+        marker.header.stamp = ros::Time();
+        marker.ns = "my_namespace";
+        marker.id = params_.marker_id ;
+        params_.marker_id++ ; 
+        marker.type = visualization_msgs::Marker::CYLINDER;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = newState[0];
+        marker.pose.position.y = newState[1];
+        marker.pose.position.z = newState[2]; 
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.3;
+        marker.scale.y = 0.4;
+        marker.scale.z = 0.3;
+        marker.color.a = 1.0; // Don't forget to set the alpha!
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.lifetime = ros::Duration(10); //tried 0, and 10,0
+        params_.sample_viewpoint_pub_.publish(marker) ; 
+    }
     // ********************* debug *************************** //
     Eigen::Vector3d startPoint = origin;
     Eigen::Vector3d endPoint = direction + origin + direction.normalized() * params_.dOvershoot_;
@@ -511,32 +525,34 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     {
     
    // visualization_msgs::Marker marker;
-    marker.header.frame_id = params_.worldFrameId_;
-    marker.header.stamp = ros::Time();
-    marker.ns = "my_namespace";
-    marker.id = params_.marker_id ;
-    params_.marker_id++ ; 
-    marker.type = visualization_msgs::Marker::ARROW;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = newState[0];
-    marker.pose.position.y = newState[1];
-    marker.pose.position.z = newState[2]; 
-    float yaw = newState[3];
-    tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-    marker.pose.orientation.x = q[0];
-    marker.pose.orientation.y = q[1];
-    marker.pose.orientation.z = q[2];
-    marker.pose.orientation.w = q[3];
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
-    marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    marker.lifetime = ros::Duration(30); //tried 0, and 10,0
-    params_.sample_viewpoint_pub_.publish(marker) ; 
-    
+        if (debugParam)
+        {
+            marker.header.frame_id = params_.worldFrameId_;
+            marker.header.stamp = ros::Time();
+            marker.ns = "my_namespace";
+            marker.id = params_.marker_id ;
+            params_.marker_id++ ; 
+            marker.type = visualization_msgs::Marker::ARROW;
+            marker.action = visualization_msgs::Marker::ADD;
+            marker.pose.position.x = newState[0];
+            marker.pose.position.y = newState[1];
+            marker.pose.position.z = newState[2]; 
+            float yaw = newState[3];
+            tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
+            marker.pose.orientation.x = q[0];
+            marker.pose.orientation.y = q[1];
+            marker.pose.orientation.z = q[2];
+            marker.pose.orientation.w = q[3];
+            marker.scale.x = 0.5;
+            marker.scale.y = 0.1;
+            marker.scale.z = 0.1;
+            marker.color.a = 1.0; // Don't forget to set the alpha!
+            marker.color.r = 1.0;
+            marker.color.g = 0.0;
+            marker.color.b = 1.0;
+            marker.lifetime = ros::Duration(30); //tried 0, and 10,0
+            params_.sample_viewpoint_pub_.publish(marker) ; 
+        }
         /*
         if(cellStatus == VoxelStatus::kFree)
         {
@@ -595,33 +611,36 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         counter_++;
         ROS_INFO("bestGain_ is:%f", bestGain_);
 
-        // Draw the gain number on the branch
-        params_.gainMarker.header.stamp = ros::Time::now();
-        params_.gainMarker.header.seq = g_ID_;
-        params_.gainMarker.header.frame_id = params_.navigationFrame_;
-        params_.gainMarker.id = g_ID_;
-        g_ID_++;
-        params_.gainMarker.ns = "vp_tree";
-        params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        params_.gainMarker.action = visualization_msgs::Marker::ADD;
-        params_.gainMarker.pose.position.x = newNode->state_.x();
-        params_.gainMarker.pose.position.y = newNode->state_.y();
-        params_.gainMarker.pose.position.z = newNode->state_.z();
-        params_.gainMarker.scale.x = 0.1;
-        params_.gainMarker.scale.y = 0.1;
-        params_.gainMarker.scale.z = 0.1;
-        params_.gainMarker.color.r = 1; // red
-        params_.gainMarker.color.g = 0;
-        params_.gainMarker.color.b = 0;
-        params_.gainMarker.color.a = 1.0;
-        params_.gainMarker.lifetime = ros::Duration(30);
-        string s = std::to_string(newNode->gain_) ;
-        std::cout << "##############" ;
-        std::cout << s << std::endl ;
-        //ROS_INFO(s);
-        params_.gainMarker.text= s;
-        params_.gain_pub_.publish(params_.gainMarker);
-        // **********************************************
+        if (debugParam)
+        {
+                // Draw the gain number on the branch
+                params_.gainMarker.header.stamp = ros::Time::now();
+                params_.gainMarker.header.seq = g_ID_;
+                params_.gainMarker.header.frame_id = params_.navigationFrame_;
+                params_.gainMarker.id = g_ID_;
+                g_ID_++;
+                params_.gainMarker.ns = "vp_tree";
+                params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                params_.gainMarker.action = visualization_msgs::Marker::ADD;
+                params_.gainMarker.pose.position.x = newNode->state_.x();
+                params_.gainMarker.pose.position.y = newNode->state_.y();
+                params_.gainMarker.pose.position.z = newNode->state_.z();
+                params_.gainMarker.scale.x = 0.1;
+                params_.gainMarker.scale.y = 0.1;
+                params_.gainMarker.scale.z = 0.1;
+                params_.gainMarker.color.r = 1; // red
+                params_.gainMarker.color.g = 0;
+                params_.gainMarker.color.b = 0;
+                params_.gainMarker.color.a = 1.0;
+                params_.gainMarker.lifetime = ros::Duration(30);
+                string s = std::to_string(newNode->gain_) ;
+                std::cout << "##############" ;
+                std::cout << s << std::endl ;
+                //ROS_INFO(s);
+                params_.gainMarker.text= s;
+                params_.gain_pub_.publish(params_.gainMarker);
+                // **********************************************
+        }
         return true;
     }
     else
@@ -780,32 +799,35 @@ void rrtNBV::RrtTree::initialize()
 
 
             // Draw the gain number on the branch
-            params_.gainMarker.header.stamp = ros::Time::now();
-            params_.gainMarker.header.seq = g_ID_;
-            params_.gainMarker.header.frame_id = params_.navigationFrame_;
-            params_.gainMarker.id = g_ID_;
-            g_ID_++;
-            params_.gainMarker.ns = "vp_tree";
-            params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-            params_.gainMarker.action = visualization_msgs::Marker::ADD;
-            params_.gainMarker.pose.position.x = newNode->state_.x();
-            params_.gainMarker.pose.position.y = newNode->state_.y();
-            params_.gainMarker.pose.position.z = newNode->state_.z();
-            params_.gainMarker.scale.x = 0.1;
-            params_.gainMarker.scale.y = 0.1;
-            params_.gainMarker.scale.z = 0.1;
-            params_.gainMarker.color.r = 0; // red
-            params_.gainMarker.color.g = 0;
-            params_.gainMarker.color.b = 1;
-            params_.gainMarker.color.a = 1.0;
-            params_.gainMarker.lifetime = ros::Duration(30);
-            string s = std::to_string(newNode->gain_) ;
-            std::cout << "##############" ;
-            std::cout << s << std::endl ;
-            //ROS_INFO(s);
-            params_.gainMarker.text= s;
-            params_.gain_pub_.publish(params_.gainMarker);
-            // **********************************************
+            if (debugParam)
+            {
+                params_.gainMarker.header.stamp = ros::Time::now();
+                params_.gainMarker.header.seq = g_ID_;
+                params_.gainMarker.header.frame_id = params_.navigationFrame_;
+                params_.gainMarker.id = g_ID_;
+                g_ID_++;
+                params_.gainMarker.ns = "vp_tree";
+                params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                params_.gainMarker.action = visualization_msgs::Marker::ADD;
+                params_.gainMarker.pose.position.x = newNode->state_.x();
+                params_.gainMarker.pose.position.y = newNode->state_.y();
+                params_.gainMarker.pose.position.z = newNode->state_.z();
+                params_.gainMarker.scale.x = 0.1;
+                params_.gainMarker.scale.y = 0.1;
+                params_.gainMarker.scale.z = 0.1;
+                params_.gainMarker.color.r = 0; // red
+                params_.gainMarker.color.g = 0;
+                params_.gainMarker.color.b = 1;
+                params_.gainMarker.color.a = 1.0;
+                params_.gainMarker.lifetime = ros::Duration(30);
+                string s = std::to_string(newNode->gain_) ;
+                std::cout << "##############" ;
+                std::cout << s << std::endl ;
+                //ROS_INFO(s);
+                params_.gainMarker.text= s;
+                params_.gain_pub_.publish(params_.gainMarker);
+                // **********************************************
+            }
         }
     }
 }

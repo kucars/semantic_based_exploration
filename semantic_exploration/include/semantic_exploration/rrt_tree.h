@@ -68,7 +68,7 @@ struct Params
     int cuttoffIterations_;
     double dt_;
     int marker_id ;
-
+    bool debug_ ;
     bool log_;
     double log_throttle_;
     double pcl_throttle_;

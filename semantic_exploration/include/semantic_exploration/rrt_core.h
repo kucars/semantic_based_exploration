@@ -118,6 +118,7 @@ class RrtTree : public TreeBase
     float betaGain;
     visualization_msgs::MarkerArray sample_points_array  ; 
     int marker_id ; 
+    bool  debugParam; 
 };
 }  // namespace rrtNBV
 

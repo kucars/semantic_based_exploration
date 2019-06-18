@@ -61,6 +61,7 @@ exploration/num_iterations: 500
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
+nbvp/debug: false
 
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -6.2 #-10.0  
