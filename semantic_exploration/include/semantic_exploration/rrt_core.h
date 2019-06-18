@@ -116,6 +116,9 @@ class RrtTree : public TreeBase
     std::ofstream outfile;
     float alphaGain;
     float betaGain;
+    visualization_msgs::MarkerArray sample_points_array  ; 
+    int marker_id ; 
+    bool  debugParam; 
 };
 }  // namespace rrtNBV
 

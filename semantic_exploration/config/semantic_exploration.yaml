@@ -61,6 +61,7 @@ exploration/num_iterations: 500
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
 nbvp/log/on: true
+nbvp/debug: false
 
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -6.2 #-10.0  
@@ -94,8 +95,8 @@ change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
 num_of_visits_threshold: 10 
-/alpha_gain: 0.2
-/beta_gain: 0.8
+/alpha_gain: 0.1
+/beta_gain: 0.9
 
 # Planning Methods
 # Volumetric 0
@@ -111,5 +112,5 @@ num_of_visits_threshold: 10
 # semantic occlusion aware 10 (proposed 2 - The planner crashes)   
 # semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-/utility/method: 7
+/utility/method: 9
 /output/file/name: "1.csv"

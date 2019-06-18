@@ -4,10 +4,15 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
+        - /Status1
         - /Grid1
+        - /TF1
         - /TF1/Frames1
         - /ColorOccupancyGrid1
         - /MarkerArray1
+        - /Marker4
+        - /MarkerArray2
       Splitter Ratio: 0.5
     Tree Height: 784
   - Class: rviz/Selection
@@ -35,7 +40,7 @@ Visualization Manager:
     - Alpha: 0.5
       Cell Size: 1
       Class: rviz/Grid
-      Color: 160; 160; 164
+      Color: 0; 0; 0
       Enabled: true
       Line Style:
         Line Width: 0.0299999993
@@ -47,7 +52,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 20
+      Plane Cell Count: 10
       Reference Frame: world
       Value: true
     - Class: rviz/Marker
@@ -55,8 +60,7 @@ Visualization Manager:
       Marker Topic: /inspectionPath
       Name: inspectionpath
       Namespaces:
-        vp_branches: true
-        vp_tree: true
+        {}
       Queue Size: 1000
       Value: true
     - Class: rviz/MarkerArray
@@ -87,7 +91,7 @@ Visualization Manager:
       Color: 0; 0; 0
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 85; 0; 127
       Max Intensity: -1.125
@@ -104,7 +108,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.100000001
@@ -131,8 +135,6 @@ Visualization Manager:
           Value: false
         fcu_frd:
           Value: false
-        fcu_utm:
-          Value: false
         local_origin:
           Value: false
         local_origin_ned:
@@ -141,7 +143,7 @@ Visualization Manager:
           Value: true
         world:
           Value: true
-      Marker Scale: 1
+      Marker Scale: 3
       Name: TF
       Show Arrows: true
       Show Axes: true
@@ -152,8 +154,6 @@ Visualization Manager:
             fcu:
               fcu_frd:
                 {}
-            fcu_utm:
-              {}
             local_origin_ned:
               {}
           odom:
@@ -166,7 +166,7 @@ Visualization Manager:
       Marker Topic: /path
       Name: path
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -224,13 +224,13 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /explorationarea
       Name: explorationarea
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -347,12 +347,28 @@ Visualization Manager:
       Marker Topic: /gainPubText
       Name: Marker
       Namespaces:
-        vp_tree: true
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /sample_points_
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /sample_points_array
+      Name: MarkerArray
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 255; 255; 255
+    Background Color: 197; 197; 197
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -375,7 +391,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.6537905
+      Distance: 44.8570709
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -390,10 +406,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.56979632
+      Pitch: 1.26479626
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.0148979938
+      Yaw: 0.00489799399
     Saved: ~
 Window Geometry:
   Displays:
