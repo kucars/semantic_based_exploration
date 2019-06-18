@@ -67,6 +67,7 @@ struct Params
     int initIterations_;
     int cuttoffIterations_;
     double dt_;
+    int marker_id ;
 
     bool log_;
     double log_throttle_;
@@ -99,6 +100,9 @@ struct Params
     ros::Publisher fovHyperplanes;
     std::string navigationFrame_;
     ros::Publisher gain_pub_;
+    ros::Publisher sample_viewpoint_near_pub_;
+    ros::Publisher sample_viewpoint_pub_;
+    ros::Publisher sample_viewpoint_array_pub_;
 
     //debugging
     visualization_msgs::MarkerArray pa;

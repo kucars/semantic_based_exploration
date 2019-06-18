@@ -47,7 +47,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_ =
         nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
-
+    params_.sample_viewpoint_array_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("sample_points_array", 1);
+    params_.sample_viewpoint_pub_ = nh_.advertise<visualization_msgs::Marker>("sample_points_", 1);
     // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
     if (params_.use_gazebo_ground_truth_)
     {
@@ -384,6 +385,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     }
 
     res.path.clear();
+    params_.marker_id = 0 ; 
 
     // Clear old tree and reinitialize.
     rrtTree->clear();
@@ -420,6 +422,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         k++;
     }
     ROS_INFO("Done RRT");
+    sleep(10); // An indication that the drone reached the NBV (remove it later)
 
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);

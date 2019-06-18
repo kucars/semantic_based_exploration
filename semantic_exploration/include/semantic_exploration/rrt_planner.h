@@ -78,6 +78,10 @@ class RRTPlanner
     std::ofstream file_path_;
     visualization_msgs::Marker line_strip;
     ros::Publisher marker_pub_;
+    ros::Publisher sample_viewpoint_array_pub_;
+
+    //visualization_msgs::MarkerArray sample_points_array  ; 
+
     //usar_exploration::extractView srv;
     // Global variables
     double traveled_distance = 0;

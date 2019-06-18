@@ -94,8 +94,8 @@ change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
 num_of_visits_threshold: 10 
-/alpha_gain: 0.5
-/beta_gain: 0.5
+/alpha_gain: 0.1
+/beta_gain: 0.9
 
 # Planning Methods
 # Volumetric 0
