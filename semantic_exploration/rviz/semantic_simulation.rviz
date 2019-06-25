@@ -60,7 +60,8 @@ Visualization Manager:
       Marker Topic: /inspectionPath
       Name: inspectionpath
       Namespaces:
-        {}
+        vp_branches: true
+        vp_tree: true
       Queue Size: 1000
       Value: true
     - Class: rviz/MarkerArray
@@ -135,6 +136,8 @@ Visualization Manager:
           Value: false
         fcu_frd:
           Value: false
+        fcu_utm:
+          Value: true
         local_origin:
           Value: false
         local_origin_ned:
@@ -143,7 +146,7 @@ Visualization Manager:
           Value: true
         world:
           Value: true
-      Marker Scale: 3
+      Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
@@ -154,6 +157,8 @@ Visualization Manager:
             fcu:
               fcu_frd:
                 {}
+            fcu_utm:
+              {}
             local_origin_ned:
               {}
           odom:
@@ -166,7 +171,7 @@ Visualization Manager:
       Marker Topic: /path
       Name: path
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -228,7 +233,7 @@ Visualization Manager:
       Marker Topic: /explorationarea
       Name: explorationarea
       Namespaces:
-        {}
+        workspace: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -391,7 +396,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 44.8570709
+      Distance: 15.3607044
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1

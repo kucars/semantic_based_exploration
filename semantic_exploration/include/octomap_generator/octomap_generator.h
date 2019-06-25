@@ -13,6 +13,9 @@
 #include <tf/message_filter.h>
 #include <tf/transform_listener.h>
 #include <pcl_ros/impl/transforms.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 #define COLOR_OCTREE 0
 #define SEMANTICS_OCTREE_MAX 1
@@ -180,6 +183,23 @@ class OctomapGenerator : public OctomapGeneratorBase
     std::vector<std::string> objectsOfInterest;
     float confidenceThreshold;
     int numOfVisitsThreshold;
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    //ar & octomap_;
+    ar & max_range_;      ///<Max range for points to be inserted into octomap
+    ar & raycast_range_;  ///<Max range for points to perform raycasting to free unoccupied space
+    ar & objectsOfInterest ; 
+    ar & confidenceThreshold;
+    ar & numOfVisitsThreshold;
+  }
+
 };
+
+
+
 
 #endif  //OCTOMAP_GENERATOR

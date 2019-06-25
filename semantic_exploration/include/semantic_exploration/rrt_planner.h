@@ -30,6 +30,9 @@
 #include <pcl_ros/impl/transforms.hpp>
 #include <sstream>
 #include "semantic_exploration/drone_commander.h"
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 namespace rrtNBV
 {
@@ -37,6 +40,8 @@ class RRTPlanner
 {
   public:
     RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    RRTPlanner(){};
+
     ~RRTPlanner();
     void computeCameraFOV();
     void posStampedCallback(const geometry_msgs::PoseStamped& pose);
@@ -98,8 +103,55 @@ class RRTPlanner
     float numOfVisitsThreshold;
     double globalObjectGain;
     double globalVolumetricGain;
+    std::vector<geometry_msgs::Pose> selected_poses;
 
+private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    //ar & octomap_generator_;
+    //ar & rrtTree;
+    ar & ready_;
+    //ar & params_;
+    //ar & logFilePathName_;
+    //ar & file_path_;
+    //ar & line_strip;
+   
+    // Global variables
+    ar & traveled_distance ;
+    ar & information_gain ;
+    ar & firstPoseCalled ;
+    ar & prePose;
+    ar & iteration_num ;
+    //ar & viewpoints2;
+    ar & accumulativeGain;
+    //ar & map_msg_;  ///<ROS octomap message
+    //ar & semanticColoredLabels;
+    ar & objectsOfInterest;
+    ar & confidenceThreshold;
+    ar & numOfVisitsThreshold;
+    ar & globalObjectGain;
+    ar & globalVolumetricGain;
+    ar & selected_poses;
+
+  }
 };
 
 }  // namespace rrtNBV
+
+
+namespace boost {
+namespace serialization {
+
+template<class Archive>
+void serialize(Archive & ar, geometry_msgs::Pose & g, const unsigned int version)
+{
+    ar & g.position.x & g.position.y & g.position.z;
+    ar & g.orientation.x & g.orientation.y & g.orientation.z & g.orientation.w;
+}
+
+} // namespace serialization
+}  // namespace boost
 #endif  // RRT_PLANNER_H

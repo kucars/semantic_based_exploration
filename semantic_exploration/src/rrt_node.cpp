@@ -10,6 +10,10 @@
 #include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <thread>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+//rrtNBV::RRTPlanner* planner ; // (nh, nh_private);
 
 int main(int argc, char** argv)
 {
@@ -17,8 +21,55 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
 
-    rrtNBV::RRTPlanner planner(nh, nh_private);
 
-    ros::spin();
-    return 0;
+    std::string serialization_file = "nbv_serialization.dat";
+    if (!ros::param::get( "/nbv_serialization_file", serialization_file))
+    {
+        ROS_WARN("No serialization_file value specified %s", serialization_file );
+    }
+
+  bool is_save_state , is_load_state;
+  //std::string serialization_file = "~/catkin_ws/src/nbv_serialization.dat";
+  ros::param::param("~debug_save_state", is_save_state, false);
+  ros::param::param("~debug_load_state", is_load_state, false);
+  is_save_state = true ;  
+  /*if (is_load_state)
+  {
+    try
+    {
+      // Create and open an archive for input
+      std::ifstream ifs(serialization_file);
+      boost::archive::text_iarchive ia(ifs);
+      // read class state from archive
+      ia >> planner;
+    }
+    catch (...)
+    {
+    is_load_state = false;
+    planner = new rrtNBV::RRTPlanner(nh, nh_private);
+    }
+  }
+  else
+  {
+    ROS_INFO("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+    planner = new rrtNBV::RRTPlanner(nh, nh_private);
+  }*/
+
+  rrtNBV::RRTPlanner planner(nh, nh_private);
+  //planner = new rrtNBV::RRTPlanner(nh, nh_private);
+
+  ROS_INFO("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+  ros::spin();
+
+  if (is_save_state)
+  {  
+      ROS_INFO("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+      // Save data to archive
+      std::ofstream ofs(serialization_file);
+      boost::archive::text_oarchive oa(ofs);
+      oa << planner;
+  } 
+
+
+  return 0;
 }

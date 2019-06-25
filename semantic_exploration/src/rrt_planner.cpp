@@ -435,7 +435,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
 
     MaxGainPose(res.path[res.path.size() - 1], iteration_num);
-
+    selected_poses.push_back(res.path[0]);
     ros::Time tic_log = ros::Time::now();
     //**************** logging results ************************************************************************** //
     double res_map = octomap_generator_->getResolution();
@@ -844,6 +844,7 @@ bool rrtNBV::RRTPlanner::setParams()
     {
         ROS_WARN("Logging is off by default. Turn on with %s: true", (ns + "/nbvp/log/on").c_str());
     }
+
     params_.log_throttle_ = 0.5;
     if (!ros::param::get(ns + "/nbvp/log/throttle", params_.log_throttle_))
     {

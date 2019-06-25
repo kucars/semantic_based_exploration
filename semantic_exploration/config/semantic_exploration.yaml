@@ -63,6 +63,9 @@ nbvp/log/throttle: 0.25 # ??
 nbvp/log/on: true
 nbvp/debug: false
 
+debug_save_state: true 
+debug_load_state: false
+
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -6.2 #-10.0  
 bbx/maxX: 3.0 #10.0
@@ -98,6 +101,7 @@ num_of_visits_threshold: 10
 /alpha_gain: 0.1
 /beta_gain: 0.9
 
+/nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
 # Planning Methods
 # Volumetric 0
 # Rear side voxel  1 
@@ -112,5 +116,5 @@ num_of_visits_threshold: 10
 # semantic occlusion aware 10 (proposed 2 - The planner crashes)   
 # semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-/utility/method: 9
+/utility/method: 0
 /output/file/name: "1.csv"

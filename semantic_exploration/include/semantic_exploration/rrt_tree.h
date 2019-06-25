@@ -158,6 +158,34 @@ class TreeBase
     int getCounter();
     bool gainFound();
     double getGain();
+
+/*private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    ar & counter_;
+    //ar & bestGain_;
+    //ar & bestObjectGain_;
+    //ar & manager_;
+    //ar & root_;
+    //ar & exact_root_;
+  }
+*/
+
 };
 }  // namespace rrtNBV
+/*namespace boost {
+namespace serialization {
+
+template<class Archive>
+void serialize(Archive & ar, Eigen::Vector4d  & g, const unsigned int version)
+{
+    ar & g[0] & g[1] & g[3] & g[4];
+}
+
+} // namespace serialization
+} // namespace boost
+*/
 #endif
