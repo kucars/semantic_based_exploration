@@ -15,7 +15,8 @@ octomap:
     occupancy_thres: 0.5
     prob_hit: 0.7
     prob_miss: 0.4
-    save_path : "~/map.bt"
+    save_path : "/home/reem/catkin_ws/map.bt"
+    #save_path : "~/map.bt"
 
 #####################
 # System Related Parameters
@@ -63,6 +64,11 @@ nbvp/log/throttle: 0.25 # ??
 nbvp/log/on: true
 nbvp/debug: false
 
+debug_save_state: false 
+debug_load_state: false
+debug_write_file: "/home/reem/catkin_ws/map1.ot"
+debug_read_file: "/home/reem/catkin_ws/map1.ot"
+
 # Exploration Area for the manual Generated Area (CAD)
 bbx/minX: -6.2 #-10.0  
 bbx/maxX: 3.0 #10.0
@@ -98,6 +104,7 @@ num_of_visits_threshold: 10
 /alpha_gain: 0.1
 /beta_gain: 0.9
 
+/nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
 # Planning Methods
 # Volumetric 0
 # Rear side voxel  1 
@@ -112,5 +119,5 @@ num_of_visits_threshold: 10
 # semantic occlusion aware 10 (proposed 2 - The planner crashes)   
 # semantic obj of Interest depending on number of visits 11 (proposed 3) 
 
-/utility/method: 9
+/utility/method: 0
 /output/file/name: "1.csv"

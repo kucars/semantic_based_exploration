@@ -31,6 +31,7 @@ struct SemanticsMax
 
     ColorOcTreeNode::Color getSemanticColor() const
     {
+        //std::cout << "semantic_color" <<  float(semantic_color.r)  << "  " << float(semantic_color.g) << "  " <<  float(semantic_color.b) << std::endl << std::flush ; 
         return semantic_color;
     }
 

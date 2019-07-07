@@ -135,6 +135,8 @@ Visualization Manager:
           Value: false
         fcu_frd:
           Value: false
+        fcu_utm:
+          Value: true
         local_origin:
           Value: false
         local_origin_ned:
@@ -143,7 +145,7 @@ Visualization Manager:
           Value: true
         world:
           Value: true
-      Marker Scale: 3
+      Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
@@ -154,6 +156,8 @@ Visualization Manager:
             fcu:
               fcu_frd:
                 {}
+            fcu_utm:
+              {}
             local_origin_ned:
               {}
           odom:
@@ -391,16 +395,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 44.8570709
+      Distance: 17.203989
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.378162473
-        Y: 0.916121721
-        Z: -5.7250433
+        X: -4.11382866
+        Y: 3.14265585
+        Z: -4.54832077
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

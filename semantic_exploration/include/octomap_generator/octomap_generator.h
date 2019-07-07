@@ -13,6 +13,9 @@
 #include <tf/message_filter.h>
 #include <tf/transform_listener.h>
 #include <pcl_ros/impl/transforms.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 #define COLOR_OCTREE 0
 #define SEMANTICS_OCTREE_MAX 1
@@ -44,8 +47,11 @@ class OctomapGenerator : public OctomapGeneratorBase
      * \param nh The ros node handler to be used in OctomapGenerator
      */
     OctomapGenerator();
+    OctomapGenerator(const char* filename);
 
     virtual ~OctomapGenerator();
+    virtual void readFile(const char* filename) ; 
+    virtual void writeFile(const char* filename) ; 
 
     virtual void setMaxRange(float max_range)
     {
@@ -144,6 +150,8 @@ class OctomapGenerator : public OctomapGeneratorBase
                                   const Eigen::Vector3d& voxel_to_test);
 
     virtual int getCellIneterestCellType(double x, double y, double z);
+  
+    //virtual void octomapReadData( std::ostream& s)  ; 
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point);
 
@@ -180,6 +188,12 @@ class OctomapGenerator : public OctomapGeneratorBase
     std::vector<std::string> objectsOfInterest;
     float confidenceThreshold;
     int numOfVisitsThreshold;
+
+
 };
+
+
+
+
 
 #endif  //OCTOMAP_GENERATOR

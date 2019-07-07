@@ -119,7 +119,27 @@ class RrtTree : public TreeBase
     visualization_msgs::MarkerArray sample_points_array  ; 
     int marker_id ; 
     bool  debugParam; 
+/*private:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    ar & g_ID_;
+    //ar & history_;
+    /*ar & bestBranchMemory_;
+    ar & iterationCount_;
+    ar & oneViewObjectFound;
+    ar & markerCounter;
+    ar & utilityFunction;
+    ar & alphaGain;
+    ar & betaGain;
+    ar & marker_id ; 
+    ar & debugParam; 
+  }
+  */
 };
 }  // namespace rrtNBV
+
 
 #endif
