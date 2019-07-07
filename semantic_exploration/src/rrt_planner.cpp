@@ -67,19 +67,49 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     iteration_num = 0;
     accumulativeGain = 0;
 
+
+    debug_load_state_param = false ; 
+    if (!ros::param::get("debug_load_state", debug_load_state_param))
+    {
+        ROS_WARN("No option for debug_load_state. Looking for debug_load_state");
+    }
+
+    debug_save_state_param = false ; 
+    if (!ros::param::get("debug_save_state", debug_save_state_param))
+    {
+        ROS_WARN("No option for debug_save_state. Looking for debug_load_state");
+    }
+
+
+    output_file_path_ = "~/map.bt";
+    if (!ros::param::get("debug_write_file", output_file_path_))
+    {
+        ROS_WARN("No option for function. Looking for debug_write_file. Default is ~/map.bt.");
+    }
+    input_file_path_ = "~/map.bt";
+    if (!ros::param::get("debug_read_file", input_file_path_))
+    {
+        ROS_WARN("No option for function. Looking for debug_read_file. Default is ~/map.bt.");
+    }
+
     // Initiate octree
     if (params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN || params_.treeType_ == SEMANTICS_OCTREE_MAX)
     {
         if (params_.treeType_ == SEMANTICS_OCTREE_BAYESIAN)
         {
             ROS_INFO("Semantic octomap generator [bayesian fusion]");
-            octomap_generator_ =
-                new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>();
+            if (debug_load_state_param)
+                octomap_generator_ =  new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>(input_file_path_.c_str());
+            else
+                octomap_generator_ =  new OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>();
         }
         else
         {
             ROS_INFO("Semantic octomap generator [max fusion]");
-            octomap_generator_ = new OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>();
+            if (debug_load_state_param)
+                octomap_generator_ =  new OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>(input_file_path_.c_str());
+            else
+                octomap_generator_ = new OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>();
         }
         toggleSemanticService = nh_.advertiseService(
             "toggle_use_semantic_color", &rrtNBV::RRTPlanner::toggleUseSemanticColor, this);
@@ -87,8 +117,13 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     else
     {
         ROS_INFO("Color octomap generator");
-        octomap_generator_ = new OctomapGenerator<PCLColor, ColorOcTree>();
+        if (debug_load_state_param)
+            octomap_generator_ =  new OctomapGenerator<PCLColor, ColorOcTree>(input_file_path_.c_str());
+        else
+            octomap_generator_ = new OctomapGenerator<PCLColor, ColorOcTree>();
+
     }
+
 
     fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
     pointcloud_sub_ =
@@ -129,10 +164,15 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
 
 rrtNBV::RRTPlanner::~RRTPlanner()
 {
+
     if (octomap_generator_)
     {
         octomap_generator_->save(params_.octomapSavePath_.c_str());
         ROS_INFO("OctoMap saved.");
+       
+        if (debug_save_state_param)
+            octomap_generator_->writeFile(output_file_path_.c_str()) ; 
+
         delete octomap_generator_;
     }
     if (file_path_.is_open())
@@ -422,7 +462,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         k++;
     }
     ROS_INFO("Done RRT");
-    sleep(10); // An indication that the drone reached the NBV (remove it later)
+    //sleep(10); // An indication that the drone reached the NBV (remove it later)
 
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);

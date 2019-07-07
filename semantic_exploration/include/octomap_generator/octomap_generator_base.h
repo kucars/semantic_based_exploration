@@ -41,6 +41,9 @@ class OctomapGeneratorBase
     {
     }
 
+    virtual void readFile(const char* filename) =0 ; 
+    virtual void writeFile(const char* filename) =0 ; 
+
     /// Set max range for point cloud insertion
     virtual void setMaxRange(float max_range) = 0;
 
@@ -119,6 +122,8 @@ class OctomapGeneratorBase
 
     virtual int getCellIneterestCellType(double x, double y, double z) = 0;
 
+    //virtual void octomapReadData(std::ostream& s) =0 ; 
+    
     virtual double getCellIneterestGain(const Eigen::Vector3d& point) = 0;
 
     virtual uint getCellNumOfVisits(const Eigen::Vector3d& point) =0 ; 

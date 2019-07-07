@@ -57,6 +57,8 @@ class RRTPlanner
     void getSemanticLabelledColors();
     rrtNBV::Params getParams();
     void MaxGainPose(geometry_msgs::Pose p, int id);
+    //std::istream input_file ; 
+    //std::ostream output_file ; 
 
   protected:
     ros::NodeHandle nh_;
@@ -104,8 +106,13 @@ class RRTPlanner
     double globalObjectGain;
     double globalVolumetricGain;
     std::vector<geometry_msgs::Pose> selected_poses;
-
-private:
+    bool debug_save_state_param ; 
+    bool debug_load_state_param ; 
+    std::ofstream output_file; 
+    std::ifstream input_file; 
+    std::string output_file_path_;
+    std::string  input_file_path_;
+/*private:
   friend class boost::serialization::access;
 
   template<class Archive>
@@ -136,13 +143,13 @@ private:
     ar & globalVolumetricGain;
     ar & selected_poses;
 
-  }
+  }*/
 };
 
 }  // namespace rrtNBV
 
 
-namespace boost {
+/*namespace boost {
 namespace serialization {
 
 template<class Archive>
@@ -153,5 +160,5 @@ void serialize(Archive & ar, geometry_msgs::Pose & g, const unsigned int version
 }
 
 } // namespace serialization
-}  // namespace boost
+}*/  // namespace boost
 #endif  // RRT_PLANNER_H

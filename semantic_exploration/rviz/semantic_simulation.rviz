@@ -60,8 +60,7 @@ Visualization Manager:
       Marker Topic: /inspectionPath
       Name: inspectionpath
       Namespaces:
-        vp_branches: true
-        vp_tree: true
+        {}
       Queue Size: 1000
       Value: true
     - Class: rviz/MarkerArray
@@ -171,7 +170,7 @@ Visualization Manager:
       Marker Topic: /path
       Name: path
       Namespaces:
-        points_and_lines: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -233,7 +232,7 @@ Visualization Manager:
       Marker Topic: /explorationarea
       Name: explorationarea
       Namespaces:
-        workspace: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -396,16 +395,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.3607044
+      Distance: 17.203989
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.378162473
-        Y: 0.916121721
-        Z: -5.7250433
+        X: -4.11382866
+        Y: 3.14265585
+        Z: -4.54832077
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

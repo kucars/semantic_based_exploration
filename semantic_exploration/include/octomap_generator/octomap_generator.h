@@ -47,8 +47,11 @@ class OctomapGenerator : public OctomapGeneratorBase
      * \param nh The ros node handler to be used in OctomapGenerator
      */
     OctomapGenerator();
+    OctomapGenerator(const char* filename);
 
     virtual ~OctomapGenerator();
+    virtual void readFile(const char* filename) ; 
+    virtual void writeFile(const char* filename) ; 
 
     virtual void setMaxRange(float max_range)
     {
@@ -147,6 +150,8 @@ class OctomapGenerator : public OctomapGeneratorBase
                                   const Eigen::Vector3d& voxel_to_test);
 
     virtual int getCellIneterestCellType(double x, double y, double z);
+  
+    //virtual void octomapReadData( std::ostream& s)  ; 
 
     virtual double getCellIneterestGain(const Eigen::Vector3d& point);
 
@@ -183,21 +188,10 @@ class OctomapGenerator : public OctomapGeneratorBase
     std::vector<std::string> objectsOfInterest;
     float confidenceThreshold;
     int numOfVisitsThreshold;
-private:
-  friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
-  {
-    //ar & octomap_;
-    ar & max_range_;      ///<Max range for points to be inserted into octomap
-    ar & raycast_range_;  ///<Max range for points to perform raycasting to free unoccupied space
-    ar & objectsOfInterest ; 
-    ar & confidenceThreshold;
-    ar & numOfVisitsThreshold;
-  }
 
 };
+
 
 
 

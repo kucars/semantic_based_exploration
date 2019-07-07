@@ -134,6 +134,8 @@ std::istream& SemanticsOcTreeNode<SEMANTICS>::readData(std::istream& s)
 {
     s.read((char*)&value, sizeof(value));  // occupancy
     s.read((char*)&color, sizeof(Color));  // color
+    //std::cout << "(char*)&value " << (char*)&value << " sizeof(value) " << sizeof(value) << " (char*)&color "<<  (char*)&color << " sizeof(Color) " <<  sizeof(Color) << std::endl <<std::flush ; 
+    //ROS_ERROR("color %f %f %f" , float(color.r) , float(color.g) , float(color.b)) ; 
     return s;
 }
 
@@ -142,13 +144,17 @@ std::ostream& SemanticsOcTreeNode<SEMANTICS>::writeData(std::ostream& s) const
 {
     //TODO adapt to show semantic colors
     s.write((const char*)&value, sizeof(value));  // occupancy
+    //ROS_ERROR("Value %f " , value) ; 
     if (use_semantic_color)
     {
-        Color sem_color = semantics.getSemanticColor();
+         
+        ColorOcTreeNode::Color sem_color = semantics.getSemanticColor();
+        //ROS_ERROR("sem_color %f %f %f" , float(sem_color.r) , float(sem_color.g) , float(sem_color.b)) ; 
         s.write((const char*)&sem_color, sizeof(Color));  // semantic color
     }
     else
         s.write((const char*)&color, sizeof(Color));  // color
+
     return s;
 }
 }  // namespace octomap

@@ -22,17 +22,17 @@ int main(int argc, char** argv)
     ros::NodeHandle nh_private("~");
 
 
-    std::string serialization_file = "nbv_serialization.dat";
+    /*std::string serialization_file = "nbv_serialization.dat";
     if (!ros::param::get( "/nbv_serialization_file", serialization_file))
     {
         ROS_WARN("No serialization_file value specified %s", serialization_file );
-    }
+    }*/
 
-  bool is_save_state , is_load_state;
+  //bool is_save_state , is_load_state;
   //std::string serialization_file = "~/catkin_ws/src/nbv_serialization.dat";
-  ros::param::param("~debug_save_state", is_save_state, false);
-  ros::param::param("~debug_load_state", is_load_state, false);
-  is_save_state = true ;  
+  //ros::param::param("~debug_save_state", is_save_state, false);
+  //ros::param::param("~debug_load_state", is_load_state, false);
+  //is_save_state = true ;  
   /*if (is_load_state)
   {
     try
@@ -58,18 +58,16 @@ int main(int argc, char** argv)
   rrtNBV::RRTPlanner planner(nh, nh_private);
   //planner = new rrtNBV::RRTPlanner(nh, nh_private);
 
-  ROS_INFO("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-  ros::spin();
+ 
 
-  if (is_save_state)
+  /*if (is_save_state)
   {  
-      ROS_INFO("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
       // Save data to archive
       std::ofstream ofs(serialization_file);
       boost::archive::text_oarchive oa(ofs);
       oa << planner;
-  } 
+  } */
 
-
+  ros::spin();
   return 0;
 }

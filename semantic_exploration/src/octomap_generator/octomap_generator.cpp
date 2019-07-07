@@ -14,12 +14,86 @@ template <class CLOUD, class OCTREE>
 OctomapGenerator<CLOUD, OCTREE>::OctomapGenerator()
     : octomap_(0.05), max_range_(1.), raycast_range_(1.)
 {
+  
 }
+
+template <class CLOUD, class OCTREE>
+OctomapGenerator<CLOUD, OCTREE>::OctomapGenerator(const char* filename)
+    : octomap_(0.05), max_range_(1.), raycast_range_(1.)
+{
+    readFile(filename) ; 
+}
+
+
 
 template <class CLOUD, class OCTREE>
 OctomapGenerator<CLOUD, OCTREE>::~OctomapGenerator()
 {
 }
+
+/*template <>
+void OctomapGenerator<PCLColor, ColorOcTree>::writeFile(const char* filename)
+{
+    ROS_INFO("Saving Data") ;
+    std::ofstream file1("/home/reem/catkin_ws/map1.ot", std::ios_base::out | std::ios_base::binary);
+    octomap_.writeData(file1) ; 
+}*/
+
+//template <>
+//void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::writeFile(const char* filename)
+template <class CLOUD, class OCTREE>
+void OctomapGenerator<CLOUD, OCTREE>::writeFile(const char* filename)
+{
+    ROS_ERROR("Saving Data") ;
+    std::ofstream outfile(filename, std::ios_base::out );
+    //std::ofstream outfile(filename, std::ios_base::out | std::ios_base::binary);
+    if (outfile.is_open())
+    {
+        std::cout << "Writing octomap to " << filename << std::endl;
+        octomap_.writeData(outfile);
+        outfile.close();
+        std::cout << "Color tree written " << filename << std::endl;
+    }
+    else
+    {
+        std::cout << "Could not open " << filename << " for writing" << std::endl;
+    }
+}
+
+/*template <>
+void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::writeFile(const char* filename)
+{
+    ROS_INFO("Saving Data") ;
+    std::ofstream file1("/home/reem/catkin_ws/map1.ot", std::ios_base::out | std::ios_base::binary);
+    octomap_.writeData(file1) ; 
+}
+*/
+
+/*template <>
+void OctomapGenerator<PCLColor, ColorOcTree>::readFile(const char* filename)
+{
+    std::ifstream s("/home/reem/catkin_ws/map1.ot", std::ios_base::in | std::ios_base::binary);
+    octomap_.readData(s) ; 
+}
+*/
+
+//template <>
+//void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::readFile(const char* filename)
+template <class CLOUD, class OCTREE>
+void OctomapGenerator<CLOUD, OCTREE>::readFile(const char* filename)
+{
+    //ROS_ERROR("READING FROM FILE ********************************") ;
+    std::ifstream s("/home/reem/catkin_ws/map1.ot", std::ios_base::in );
+    octomap_.readData(s) ; 
+}
+
+/*template <>
+void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::readFile(const char* filename)
+{
+    std::ifstream s("/home/reem/catkin_ws/map1.ot", std::ios_base::in | std::ios_base::binary);
+    octomap_.readData(s) ; 
+}
+*/
 
 template <class CLOUD, class OCTREE>
 void OctomapGenerator<CLOUD, OCTREE>::setUseSemanticColor(bool use)
@@ -110,7 +184,33 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
     }
     return VoxelStatus::kFree;
 }
+// Read Function 
+/*template <>
+void OctomapGenerator<PCLColor, ColorOcTree>::octomapReadData( std::ostream& s) 
+{
+    octomap::ColorOcTreeNode* node = octomap_.search(0, 0, 0);
+    ROS_INFO("Color") ; 
+    node->readData(s) ; 
+}
 
+template <>
+void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::octomapReadData( std::ostream& s) 
+{
+    SemanticsOcTreeNodeMax* node = octomap_.search(0, 0, 0);
+    ROS_INFO("Semantic Max ") ; 
+   // std::ofstream s("/home/reem/catkin_ws/reem.dat", std::ios_base::out | std::ios_base::binary);
+    node->readData(s) ; 
+}
+
+template <>
+void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::octomapReadData( std::ostream& s) 
+{
+    SemanticsOcTreeNodeBayesian* node =octomap_.search(0, 0, 0); 
+    ROS_INFO("Semantic Bayesian ") ; 
+  //  std::ofstream s("/home/reem/catkin_ws/reem.dat", std::ios_base::out | std::ios_base::binary);
+    node->readData(s) ; 
+}
+*/
 template <>
 double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
@@ -871,7 +971,7 @@ bool OctomapGenerator<CLOUD, OCTREE>::save(const char* filename)
     if (outfile.is_open())
     {
         std::cout << "Writing octomap to " << filename << std::endl;
-        octomap_.write(outfile);
+        octomap_.writeData(outfile);
         outfile.close();
         std::cout << "Color tree written " << filename << std::endl;
         return true;
