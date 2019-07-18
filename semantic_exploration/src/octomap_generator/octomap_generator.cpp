@@ -45,7 +45,7 @@ template <class CLOUD, class OCTREE>
 void OctomapGenerator<CLOUD, OCTREE>::writeFile(const char* filename)
 {
     ROS_ERROR("Saving Data") ;
-    std::ofstream outfile(filename, std::ios_base::out );
+    std::ofstream outfile(filename, std::ios_base::out | std::ios_base::binary );
     //std::ofstream outfile(filename, std::ios_base::out | std::ios_base::binary);
     if (outfile.is_open())
     {
@@ -82,9 +82,22 @@ void OctomapGenerator<PCLColor, ColorOcTree>::readFile(const char* filename)
 template <class CLOUD, class OCTREE>
 void OctomapGenerator<CLOUD, OCTREE>::readFile(const char* filename)
 {
+     ROS_ERROR("Reading Data") ;
+    std::ifstream infile(filename, std::ios_base::in | std::ios_base::binary );
+    if (infile.is_open())
+    {
+        std::cout << "reading  octomap from " << filename << std::endl;
+        octomap_.readData(infile) ; 
+        infile.close();
+        std::cout << "Color tree read " << filename << std::endl;
+    }
+    else
+    {
+        std::cout << "Could not open " << filename << " for writing" << std::endl;
+    }
     //ROS_ERROR("READING FROM FILE ********************************") ;
-    std::ifstream s("/home/reem/catkin_ws/map1.ot", std::ios_base::in );
-    octomap_.readData(s) ; 
+    //std::ifstream s("/home/reem/catkin_ws/map1.ot", std::ios_base::in );
+    //octomap_.readData(s) ; 
 }
 
 /*template <>
@@ -184,33 +197,7 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getLineStatusBoundingBox(
     }
     return VoxelStatus::kFree;
 }
-// Read Function 
-/*template <>
-void OctomapGenerator<PCLColor, ColorOcTree>::octomapReadData( std::ostream& s) 
-{
-    octomap::ColorOcTreeNode* node = octomap_.search(0, 0, 0);
-    ROS_INFO("Color") ; 
-    node->readData(s) ; 
-}
 
-template <>
-void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::octomapReadData( std::ostream& s) 
-{
-    SemanticsOcTreeNodeMax* node = octomap_.search(0, 0, 0);
-    ROS_INFO("Semantic Max ") ; 
-   // std::ofstream s("/home/reem/catkin_ws/reem.dat", std::ios_base::out | std::ios_base::binary);
-    node->readData(s) ; 
-}
-
-template <>
-void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::octomapReadData( std::ostream& s) 
-{
-    SemanticsOcTreeNodeBayesian* node =octomap_.search(0, 0, 0); 
-    ROS_INFO("Semantic Bayesian ") ; 
-  //  std::ofstream s("/home/reem/catkin_ws/reem.dat", std::ios_base::out | std::ios_base::binary);
-    node->readData(s) ; 
-}
-*/
 template <>
 double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
@@ -231,7 +218,6 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen
     }
 
     return 0 ;
-
 }
 
 template <>
@@ -250,7 +236,6 @@ double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGa
         return 0.0 ;
     if(isSemantic)
     {
-
         //ROS_INFO ("confidenceThreshold %f" , confidenceThreshold ) ;
         if (node->getSemantics().confidence < confidenceThreshold)
         {
@@ -277,7 +262,6 @@ double OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getCellI
     SemanticsOcTreeNodeBayesian* node = octomap_.search(point.x(), point.y(), point.z());
     std::cout << "Number of visits: " << node->getNumVisits()<< std::endl;
     bool isSemantic = false;
-
 }
 
 /*
@@ -924,7 +908,6 @@ void OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::updateColorAndSemant
             }
             //else
             //ROS_INFO("CellStatus::kFree") ;
-
         }
     }
     //SemanticsOcTreeNodeMax* node = octomap_.search(pcl_cloud->begin()->x, pcl_cloud->begin()->y, pcl_cloud->begin()->z);
@@ -942,7 +925,6 @@ void OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::updateColo
         if (!std::isnan(it->x) && !std::isnan(it->y) && !std::isnan(it->z))
         {
             octomap_.averageNodeColor(it->x, it->y, it->z, it->r, it->g, it->b);
-
             // Get semantics
             octomap::SemanticsBayesian sem;
             for (int i = 0; i < 3; i++)

@@ -183,7 +183,7 @@ void ExplorationPlanner::moveOnSpot(float duration)
             movrCommand.position.y = this->currentPose.pose.position.y;
             movrCommand.position.z = this->currentPose.pose.position.z;
             movrCommand.snap.z     = yaw;
-            ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
+            ROS_INFO_THROTTLE(0.5,"Pose Yaw 2 sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
             rotationPublisher.publish(movrCommand);
             loopRate.sleep();
         }
@@ -363,7 +363,7 @@ void ExplorationPlanner::RunStateMachine()
 
                     //explorationViewpointPub.publish(transformedPose);
                     ros::spinOnce();
-                    sleep(10); // An indication that the drone reached the NBV
+                    sleep(5); // An indication that the drone reached the NBV
                     ros::Duration(params_.dt).sleep();
                 }
             }

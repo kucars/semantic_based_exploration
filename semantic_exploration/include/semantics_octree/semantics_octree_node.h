@@ -135,7 +135,7 @@ std::istream& SemanticsOcTreeNode<SEMANTICS>::readData(std::istream& s)
     s.read((char*)&value, sizeof(value));  // occupancy
     s.read((char*)&color, sizeof(Color));  // color
     //std::cout << "(char*)&value " << (char*)&value << " sizeof(value) " << sizeof(value) << " (char*)&color "<<  (char*)&color << " sizeof(Color) " <<  sizeof(Color) << std::endl <<std::flush ; 
-    //ROS_ERROR("color %f %f %f" , float(color.r) , float(color.g) , float(color.b)) ; 
+    ROS_ERROR("color %f %f %f" , float(color.r) , float(color.g) , float(color.b)) ; 
     return s;
 }
 
