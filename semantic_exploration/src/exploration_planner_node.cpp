@@ -72,6 +72,7 @@ struct Params
     double dt;
     int numIterations;
     bool iflog;
+    int root_note_delay_indicator ; 
 };
 
 class ExplorationPlanner
@@ -363,7 +364,7 @@ void ExplorationPlanner::RunStateMachine()
 
                     //explorationViewpointPub.publish(transformedPose);
                     ros::spinOnce();
-                    sleep(5); // An indication that the drone reached the NBV
+                    sleep(params_.root_note_delay_indicator); // An indication that the drone reached the NBV
                     ros::Duration(params_.dt).sleep();
                 }
             }
@@ -415,6 +416,13 @@ bool ExplorationPlanner::SetParams()
     if (!ros::param::get(ns + "/exploration/log/on", params_.iflog))
     {
         ROS_WARN("No log is specified. Looking for %s.", (ns + "/exploration/log/on").c_str());
+    }
+
+    params_.root_note_delay_indicator = 5;
+    if (!ros::param::get(ns + "/exploration/root_node_delay_indicator", params_.root_note_delay_indicator))
+    {
+        ROS_WARN("No number of iteration for termination specified. Looking for %s",
+                 (ns + "/exploration/root_node_delay_indicator").c_str());
     }
 
     return ret;

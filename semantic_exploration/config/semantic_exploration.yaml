@@ -58,6 +58,8 @@ nbvp/dt: 0.1
 exploration/log/on: true
 exploration/dt: 2.0
 exploration/num_iterations: 500
+exploration/root_node_delay_indicator: 5
+
 
 # Logging Parameters
 nbvp/log/throttle: 0.25 # ?? 
@@ -106,6 +108,9 @@ num_of_visits_threshold: 10
 
 /orientation_flag: false
 /nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
+/orientation_debugging_file: "/home/reem/catkin_ws/orientationDebugging.txt"
+/number_of_terms: 6.0
+
 # Planning Methods
 # Volumetric 0
 # Rear side voxel  1 
