@@ -548,10 +548,16 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         //sleep(2);
     }
 
+    bool orientationFlag = false  ; 
+    if (!ros::param::get("orientation_flag", orientationFlag))
+    {
+        ROS_WARN("Debugging is off by default. Turn on with /orientationFlag " ) ;
+    }
+
     if (cellStatus == VoxelStatus::kFree)  // || cellStatus == VoxelStatus::kUnknown)
     {
     
-   // visualization_msgs::Marker marker;
+    // visualization_msgs::Marker marker;
         
         /*
         if(cellStatus == VoxelStatus::kFree)
@@ -563,92 +569,97 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             ROS_INFO("   - Ray is Unknown - here");
         }
         */
-        // Sample the new orientation
-        //newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
-        newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5);
-        if (debugParam)
+        if (orientationFlag)
         {
-            marker.header.frame_id = params_.worldFrameId_;
-            marker.header.stamp = ros::Time();
-            marker.ns = "my_namespace";
-            marker.id = params_.marker_id ;
-            params_.marker_id++ ; 
-            marker.type = visualization_msgs::Marker::ARROW;
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.pose.position.x = newState[0];
-            marker.pose.position.y = newState[1];
-            marker.pose.position.z = newState[2]; 
-            tf::Quaternion quat;
-            quat.setEuler(0.0, 0.0, newState[3]);
-            marker.pose.orientation.x = quat.x();
-            marker.pose.orientation.y = quat.y();
-            marker.pose.orientation.z = quat.z();
-            marker.pose.orientation.w = quat.w();
-            //float yaw = newState[3];
-            //tf::Quaternion q = tf::createQuaternionFromYaw(yaw);
-            //marker.pose.orientation.x = q[0];
-            //marker.pose.orientation.y = q[1];
-            //marker.pose.orientation.z = q[2];
-            //marker.pose.orientation.w = q[3];
-            marker.scale.x = 0.2;
-            marker.scale.y = 0.1;
-            marker.scale.z = 0.1;
-            marker.color.a = 1.0; // Don't forget to set the alpha!
-            marker.color.r = 1.0;
-            marker.color.g = 0.0;
-            marker.color.b = 1.0;
-            marker.lifetime = ros::Duration(20); //tried 0, and 10,0
-            params_.sample_viewpoint_pub_.publish(marker) ; 
-           // sleep(2);
-        }
-        
-        // Create new node and insert into tree
-        rrtNBV::Node *newNode = new rrtNBV::Node;
-        newNode->state_ = newState;
-        newNode->parent_ = newParent;
-        newNode->distance_ = newParent->distance_ + direction.norm();
-        newParent->children_.push_back(newNode);
+            rrtNBV::Node *newNode ;//= new rrtNBV::Node;
 
-        // Object found in one view
-        bool objectGainFound = false;
-
-        newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);
-
-        //ROS_INFO("newParent->gain_:%f", newParent->gain_);
-        //ROS_INFO("Branch Gain IS:%f", newNode->gain_);
-
-        kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
-        // Display new node
-        ROS_ERROR("iterate NODE");
-        publishNode(newNode);
-
-        if (objectGainFound)
-        {
-            // Object found in one of the views
-            oneViewObjectFound = true;
-            if (newNode->gain_ > bestObjectGain_)
+            for (int i = 0 ; i < 6 ; i++) 
             {
-                std::cout << " ITERATE, OBJECT FOUND " << std::endl << std::flush;
-                std::cout << " %%%%%%%%%%%% " << std::endl;
-                bestObjectGain_ = newNode->gain_;
-                bestObjectNode_ = newNode;
-            }
-        }
-        else
-        {
-            std::cout << " ITERATE- VOLUMETRIC GAIN ONLY  " << std::endl;
-            // Update best IG and node if applicable
-            if (newNode->gain_ > bestGain_)
-            {
-                bestGain_ = newNode->gain_;
-                bestNode_ = newNode;
-            }
-        }
-        counter_++;
-        ROS_INFO("bestGain_ is:%f", bestGain_);
+                newState[3] = (2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5)) * i;
+                if (debugParam)
+                        {
+                            marker.header.frame_id = params_.worldFrameId_;
+                            marker.header.stamp = ros::Time();
+                            marker.ns = "my_namespace";
+                            marker.id = params_.marker_id ;
+                            params_.marker_id++ ; 
+                            marker.type = visualization_msgs::Marker::ARROW;
+                            marker.action = visualization_msgs::Marker::ADD;
+                            marker.pose.position.x = newState[0];
+                            marker.pose.position.y = newState[1];
+                            marker.pose.position.z = newState[2]; 
+                            tf::Quaternion quat;
+                            quat.setEuler(0.0, 0.0, newState[3]);
+                            marker.pose.orientation.x = quat.x();
+                            marker.pose.orientation.y = quat.y();
+                            marker.pose.orientation.z = quat.z();
+                            marker.pose.orientation.w = quat.w();
+                            marker.scale.x = 0.2;
+                            marker.scale.y = 0.1;
+                            marker.scale.z = 0.1;
+                            marker.color.a = 1.0; // Don't forget to set the alpha!
+                            marker.color.r = 1.0;
+                            marker.color.g = 0.0;
+                            marker.color.b = 1.0;
+                            marker.lifetime = ros::Duration(20); //tried 0, and 10,0
+                            params_.sample_viewpoint_pub_.publish(marker) ; 
+                        }
+                // Create new node and insert into tree
+                //rrtNBV::Node *newNode = new rrtNBV::Node;
+                newNode = new rrtNBV::Node;
+                newNode->state_ = newState;
+                newNode->parent_ = newParent;
+                newNode->distance_ = newParent->distance_ + direction.norm();
+                newParent->children_.push_back(newNode);
+                // Object found in one view
+                bool objectGainFound = false;
+                newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);    
+                
+                if (newNode->gain_ > bestGain_)
+                {
+                    bestGain_ = newNode->gain_;
+                    bestNode_ = newNode;
 
-        if (debugParam)
-        {
+                }
+                if (debugParam)
+                {
+                    // Draw the gain number on the branch
+                    params_.gainMarker.header.stamp = ros::Time::now();
+                    params_.gainMarker.header.seq = g_ID_;
+                    params_.gainMarker.header.frame_id = params_.navigationFrame_;
+                    params_.gainMarker.id = g_ID_;
+                    g_ID_++;
+                    params_.gainMarker.ns = "vp_tree";
+                    params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                    params_.gainMarker.action = visualization_msgs::Marker::ADD;
+                    params_.gainMarker.pose.position.x = newNode->state_.x();
+                    params_.gainMarker.pose.position.y = newNode->state_.y();
+                    params_.gainMarker.pose.position.z = newNode->state_.z();
+                    params_.gainMarker.scale.x = 0.1;
+                    params_.gainMarker.scale.y = 0.1;
+                    params_.gainMarker.scale.z = 0.1;
+                    params_.gainMarker.color.r = 1; // red
+                    params_.gainMarker.color.g = 0;
+                    params_.gainMarker.color.b = 0;
+                    params_.gainMarker.color.a = 1.0;
+                    params_.gainMarker.lifetime = ros::Duration(40);
+                    string s = std::to_string(newNode->gain_) ;
+                    std::cout << "##############" ;
+                    std::cout << s << std::endl ;
+                    //ROS_INFO(s);
+                    params_.gainMarker.text= s;
+                    params_.gain_pub_.publish(params_.gainMarker);
+                    // **********************************************
+                }
+            }
+            // last thing because we want to make sure from the orientation first 
+            kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
+            // Display new node
+            publishNode(newNode);
+            counter_++;
+            ROS_INFO("bestGain_ is:%f", bestGain_);
+            if (debugParam)
+            {
                 // Draw the gain number on the branch
                 params_.gainMarker.header.stamp = ros::Time::now();
                 params_.gainMarker.header.seq = g_ID_;
@@ -676,6 +687,117 @@ bool rrtNBV::RrtTree::iterate(int iterations)
                 params_.gainMarker.text= s;
                 params_.gain_pub_.publish(params_.gainMarker);
                 // **********************************************
+            }
+        }
+        else 
+        {
+            // Sample the new orientation
+            //newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
+            newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5);
+            if (debugParam)
+            {
+                marker.header.frame_id = params_.worldFrameId_;
+                marker.header.stamp = ros::Time();
+                marker.ns = "my_namespace";
+                marker.id = params_.marker_id ;
+                params_.marker_id++ ; 
+                marker.type = visualization_msgs::Marker::ARROW;
+                marker.action = visualization_msgs::Marker::ADD;
+                marker.pose.position.x = newState[0];
+                marker.pose.position.y = newState[1];
+                marker.pose.position.z = newState[2]; 
+                tf::Quaternion quat;
+                quat.setEuler(0.0, 0.0, newState[3]);
+                marker.pose.orientation.x = quat.x();
+                marker.pose.orientation.y = quat.y();
+                marker.pose.orientation.z = quat.z();
+                marker.pose.orientation.w = quat.w();
+                marker.scale.x = 0.2;
+                marker.scale.y = 0.1;
+                marker.scale.z = 0.1;
+                marker.color.a = 1.0; // Don't forget to set the alpha!
+                marker.color.r = 1.0;
+                marker.color.g = 0.0;
+                marker.color.b = 1.0;
+                marker.lifetime = ros::Duration(20); //tried 0, and 10,0
+                params_.sample_viewpoint_pub_.publish(marker) ; 
+            // sleep(2);
+            }
+        
+            // Create new node and insert into tree
+            rrtNBV::Node *newNode = new rrtNBV::Node;
+            newNode->state_ = newState;
+            newNode->parent_ = newParent;
+            newNode->distance_ = newParent->distance_ + direction.norm();
+            newParent->children_.push_back(newNode);
+
+            // Object found in one view
+            bool objectGainFound = false;
+
+            newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);
+
+            //ROS_INFO("newParent->gain_:%f", newParent->gain_);
+            //ROS_INFO("Branch Gain IS:%f", newNode->gain_);
+
+            kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
+            // Display new node
+            ROS_ERROR("iterate NODE");
+            publishNode(newNode);
+
+            if (objectGainFound)
+            {
+                // Object found in one of the views
+                oneViewObjectFound = true;
+                if (newNode->gain_ > bestObjectGain_)
+                {
+                    std::cout << " ITERATE, OBJECT FOUND " << std::endl << std::flush;
+                    std::cout << " %%%%%%%%%%%% " << std::endl;
+                    bestObjectGain_ = newNode->gain_;
+                    bestObjectNode_ = newNode;
+                }
+            }
+            else
+            {
+                std::cout << " ITERATE- VOLUMETRIC GAIN ONLY  " << std::endl;
+                // Update best IG and node if applicable
+                if (newNode->gain_ > bestGain_)
+                {
+                    bestGain_ = newNode->gain_;
+                    bestNode_ = newNode;
+                }
+            }
+            counter_++;
+            ROS_INFO("bestGain_ is:%f", bestGain_);
+            if (debugParam)
+            {
+                // Draw the gain number on the branch
+                params_.gainMarker.header.stamp = ros::Time::now();
+                params_.gainMarker.header.seq = g_ID_;
+                params_.gainMarker.header.frame_id = params_.navigationFrame_;
+                params_.gainMarker.id = g_ID_;
+                g_ID_++;
+                params_.gainMarker.ns = "vp_tree";
+                params_.gainMarker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+                params_.gainMarker.action = visualization_msgs::Marker::ADD;
+                params_.gainMarker.pose.position.x = newNode->state_.x();
+                params_.gainMarker.pose.position.y = newNode->state_.y();
+                params_.gainMarker.pose.position.z = newNode->state_.z();
+                params_.gainMarker.scale.x = 0.1;
+                params_.gainMarker.scale.y = 0.1;
+                params_.gainMarker.scale.z = 0.1;
+                params_.gainMarker.color.r = 1; // red
+                params_.gainMarker.color.g = 0;
+                params_.gainMarker.color.b = 0;
+                params_.gainMarker.color.a = 1.0;
+                params_.gainMarker.lifetime = ros::Duration(40);
+                string s = std::to_string(newNode->gain_) ;
+                std::cout << "##############" ;
+                std::cout << s << std::endl ;
+                //ROS_INFO(s);
+                 params_.gainMarker.text= s;
+                params_.gain_pub_.publish(params_.gainMarker);
+                // **********************************************
+            }
         }
         return true;
     }
@@ -685,6 +807,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
     }
     return false;
 }
+
 
 
 

@@ -104,6 +104,7 @@ num_of_visits_threshold: 10
 /alpha_gain: 0.1
 /beta_gain: 0.9
 
+/orientation_flag: false
 /nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
 # Planning Methods
 # Volumetric 0
