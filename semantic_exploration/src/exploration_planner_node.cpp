@@ -72,6 +72,7 @@ struct Params
     double dt;
     int numIterations;
     bool iflog;
+    int root_note_delay_indicator ; 
 };
 
 class ExplorationPlanner
@@ -183,7 +184,7 @@ void ExplorationPlanner::moveOnSpot(float duration)
             movrCommand.position.y = this->currentPose.pose.position.y;
             movrCommand.position.z = this->currentPose.pose.position.z;
             movrCommand.snap.z     = yaw;
-            ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
+            ROS_INFO_THROTTLE(0.5,"Pose Yaw 2 sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
             rotationPublisher.publish(movrCommand);
             loopRate.sleep();
         }
@@ -363,7 +364,7 @@ void ExplorationPlanner::RunStateMachine()
 
                     //explorationViewpointPub.publish(transformedPose);
                     ros::spinOnce();
-                    sleep(10); // An indication that the drone reached the NBV
+                    sleep(params_.root_note_delay_indicator); // An indication that the drone reached the NBV
                     ros::Duration(params_.dt).sleep();
                 }
             }
@@ -415,6 +416,13 @@ bool ExplorationPlanner::SetParams()
     if (!ros::param::get(ns + "/exploration/log/on", params_.iflog))
     {
         ROS_WARN("No log is specified. Looking for %s.", (ns + "/exploration/log/on").c_str());
+    }
+
+    params_.root_note_delay_indicator = 5;
+    if (!ros::param::get(ns + "/exploration/drone_arrival_duration", params_.root_note_delay_indicator))
+    {
+        ROS_WARN("No number of iteration for termination specified. Looking for %s",
+                 (ns + "/exploration/drone_arrival_duration").c_str());
     }
 
     return ret;

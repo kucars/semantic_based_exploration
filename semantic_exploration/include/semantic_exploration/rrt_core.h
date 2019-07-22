@@ -53,6 +53,10 @@ class RrtTree : public TreeBase
     virtual void memorizeBestBranch();
 
     void publishNode(Node *node);
+    void publishDebugNode(StateVec node , int Nodetype) ;
+    void publishDebugGain(StateVec node ,  double gain, int type) ;
+    void publishDebugStatus(StateVec node , int status) ;
+
     double getGain(StateVec state, bool &objectGainFound);
     double gain_volumetric(StateVec state,
                            bool &objectGainFound);            // Volumetric Infromation Ref [2] RRT
@@ -116,9 +120,15 @@ class RrtTree : public TreeBase
     std::ofstream outfile;
     float alphaGain;
     float betaGain;
+    double numOfOrientations;
+    double OrientationSteps;
+
     visualization_msgs::MarkerArray sample_points_array  ; 
     int marker_id ; 
     bool  debugParam; 
+    
+    std::string orientationDebugFile_;
+
 /*private:
   friend class boost::serialization::access;
 

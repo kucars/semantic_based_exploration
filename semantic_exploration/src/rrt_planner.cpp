@@ -126,8 +126,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
 
 
     fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
-    pointcloud_sub_ =
-        nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
+    pointcloud_sub_ = nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
 
     area_marker_ = explorationAreaInit();
     computeCameraFOV();
@@ -308,10 +307,12 @@ bool rrtNBV::RRTPlanner::toggleUseSemanticColor(std_srvs::Empty::Request& reques
                                                 std_srvs::Empty::Response& response)
 {
     octomap_generator_->setUseSemanticColor(!octomap_generator_->isUseSemanticColor());
+   
     if (octomap_generator_->isUseSemanticColor())
         ROS_INFO("Using semantic color");
     else
         ROS_INFO("Using rgb color");
+
     if (octomap_msgs::fullMapToMsg(*octomap_generator_->getOctree(), map_msg_))
         fullmapPub_.publish(map_msg_);
     else
@@ -462,12 +463,11 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         k++;
     }
     ROS_INFO("Done RRT");
-    //sleep(10); // An indication that the drone reached the NBV (remove it later)
 
     // Extract the best edge.
     res.path = rrtTree->getBestEdge(req.header.frame_id);
     accumulativeGain += rrtTree->getBestGain();
-    bool ObjectFoundFlag = rrtTree->getObjectFlag();
+    //bool ObjectFoundFlag = rrtTree->getObjectFlag();
     std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain() << std::endl
               << std::flush;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl << std::flush;
@@ -477,6 +477,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     MaxGainPose(res.path[res.path.size() - 1], iteration_num);
     selected_poses.push_back(res.path[0]);
     ros::Time tic_log = ros::Time::now();
+    //sleep(15) ; 
     //**************** logging results ************************************************************************** //
     double res_map = octomap_generator_->getResolution();
     Eigen::Vector3d vec;
