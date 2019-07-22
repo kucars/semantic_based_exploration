@@ -58,7 +58,7 @@ nbvp/dt: 0.1
 exploration/log/on: true
 exploration/dt: 2.0
 exploration/num_iterations: 500
-exploration/root_node_delay_indicator: 5
+exploration/drone_arrival_duration: 5
 
 
 # Logging Parameters
