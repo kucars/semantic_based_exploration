@@ -72,10 +72,10 @@ void rrtNBV::RrtTree::setup()
     }
     ROS_INFO("alphaGain , betaGian %f %f ", alphaGain , betaGain );
    
-    numOfTerms = 6.0;
-    if (!ros::param::get("/number_of_terms", numOfTerms))
+    numOfOrientations = 6.0;
+    if (!ros::param::get("/number_of_orientation_intervals", numOfOrientations))
     {
-        ROS_WARN("No option for alphaGain. Looking for beta_gain. Default is 0.5");
+        ROS_WARN("No option for number_of_orientation_intervals. Looking for number_of_orientation_intervals. Default is 6");
     }
 
 
@@ -502,9 +502,9 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         if (orientationFlag)
         {
             rrtNBV::Node *newNode ;//= new rrtNBV::Node;
-            double orientationSteps = 360.0/numOfTerms ; 
+            double orientationSteps = 360.0/numOfOrientations ; 
 
-            for (double i = 0.0 ; i < numOfTerms ; i++) 
+            for (double i = 0.0 ; i < numOfOrientations ; i++) 
             {
                 newState[3] = i * ((orientationSteps*M_PI)/180.0);
 
@@ -549,7 +549,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         {
             // Sample the new orientation
             //newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
-            newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX));
+            newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5) ;
             outfile.open(orientationDebugFile_.c_str(), std::ios_base::app);
             outfile << newState[3] << std::endl ;  
             outfile.close();
@@ -2822,26 +2822,12 @@ double rrtNBV::RrtTree::gain_svv(StateVec state, bool &objectGainFound)
 
     gain =(alphaGain*gainUnknown) + (betaGain *gainObjOfInt);
     gain = gain / traversedVoxels;
-    //    if (gainObjOfInt > 0)
-    //    {
-    //        gain = gainObjOfInt;
-    //        gain = gain / traversedVoxels;
-    //        objectGainFound = true;
-    //        std::cout << "Object Gain Found" << gain << std::endl << std::flush;
-    //    }
-    //    else
-    //    {
-    //        gain = gainUnknown;
-    //        gain = gain / traversedVoxels;
-    //        std::cout << "Volumetric Gain " << gain << std::endl << std::flush;
-    //    }
 
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
-    //gain *= pow(disc, 3.0);
+    gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
     std::cout << "Volumetric Gain" <<  (alphaGain*gainUnknown) << "  Semantic Gain " << betaGain *gainObjOfInt << std::endl << std::flush;
-    gain *= pow(disc, 3.0);
     ROS_INFO("GAIN %f ", gain);
     return gain;
 }
@@ -3109,7 +3095,7 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
                 }
 
                 double probability = 1;
-                //double voxelEntropy = 0 ;
+
                 // Check cell status and add to the gain considering the corresponding factor.
                 VoxelStatus node = manager_->getCellProbabilityPoint(vec, &probability);
                 // Unknown
@@ -3184,26 +3170,13 @@ double rrtNBV::RrtTree::gain_semantic_obj_interest_num_visits(StateVec state, bo
 
     gain =(alphaGain*gainUnknown) + (betaGain *gainObjOfInt);
     gain = gain / traversedVoxels;
-    //    if (gainObjOfInt > 0)
-    //    {
-    //        gain = gainObjOfInt;
-    //        gain = gain / traversedVoxels;
-    //        objectGainFound = true;
-    //        //std::cout << "Object Gain FOUND" << gain << std::endl;
-    //    }
-    //    else
-    //    {
-    //        gain = gainUnknown;
-    //        gain = gain / traversedVoxels;
-    //        //std::cout << "Volumetric Gain " << gain << std::endl;
-    //    }
-
+    
+    ROS_INFO("Volumetric Gain %f Semantic Gain %f ", alphaGain*gainUnknown ,betaGain *gainObjOfInt ) ;
     // Scale with volume
     //std::cout << "gain before scaling " << gain << std::endl << std::flush;
-    //gain *= pow(disc, 3.0);
+    gain *= pow(disc, 3.0);
     //std::cout << "gain after scaling " << gain << std::endl << std::flush;
-
-    ROS_INFO("GAIN %f ", gain);
+    ROS_INFO("object visited gain %f ", gain);
     return gain;
 }
 

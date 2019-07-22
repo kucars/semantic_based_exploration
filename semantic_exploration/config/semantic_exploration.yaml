@@ -102,14 +102,14 @@ min_height_free_space: 0
 change_detection_enabled: false
 objects_of_interest: ["book", "person","desk","monitor","cabinet","sofa","vase"]
 confidence_threshold: 0.7 
-num_of_visits_threshold: 10 
-/alpha_gain: 0.1
-/beta_gain: 0.9
+num_of_visits_threshold: 3 
+/alpha_gain: 0.5
+/beta_gain: 0.5
 
 /orientation_flag: false
 /nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
 /orientation_debugging_file: "/home/reem/catkin_ws/orientationDebugging.txt"
-/number_of_terms: 6.0
+/number_of_orientation_intervals: 6.0
 
 # Planning Methods
 # Volumetric 0

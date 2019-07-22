@@ -120,7 +120,7 @@ class RrtTree : public TreeBase
     std::ofstream outfile;
     float alphaGain;
     float betaGain;
-    double numOfTerms;
+    double numOfOrientations;
     double OrientationSteps;
 
     visualization_msgs::MarkerArray sample_points_array  ; 

@@ -419,10 +419,10 @@ bool ExplorationPlanner::SetParams()
     }
 
     params_.root_note_delay_indicator = 5;
-    if (!ros::param::get(ns + "/exploration/root_node_delay_indicator", params_.root_note_delay_indicator))
+    if (!ros::param::get(ns + "/exploration/drone_arrival_duration", params_.root_note_delay_indicator))
     {
         ROS_WARN("No number of iteration for termination specified. Looking for %s",
-                 (ns + "/exploration/root_node_delay_indicator").c_str());
+                 (ns + "/exploration/drone_arrival_duration").c_str());
     }
 
     return ret;
