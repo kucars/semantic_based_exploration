@@ -277,7 +277,7 @@ void ExplorationPlanner::RunStateMachine()
     ros::Time startTime = ros::Time::now();
     while (ros::ok())
     {
-        ROS_INFO_THROTTLE(0.5, "Planning iteration %i", iteration);
+        ROS_INFO("Planning iteration %i", iteration);
 
         /* TODO: handling the frames need improvement.
          * Either the service call should pass the target frame and recieved the already transformed
@@ -296,6 +296,7 @@ void ExplorationPlanner::RunStateMachine()
         ros::service::waitForService("rrt_planner", ros::Duration(1.0));
         if (ros::service::call("rrt_planner", planSrv))
         {
+            
             ROS_INFO("Planner Call Successfull");
             seqNum++;
             if (planSrv.response.path.size() == 0)

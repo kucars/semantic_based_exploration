@@ -76,6 +76,8 @@ struct Params
     bool use_gazebo_ground_truth_;
 
     std::string output_file_name_;
+    std::string output_objects_file_name_;
+
     int utility_method_;
 
     double minX_;

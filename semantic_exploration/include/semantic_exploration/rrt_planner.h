@@ -83,6 +83,8 @@ class RRTPlanner
     rrtNBV::Params params_;
     std::string logFilePathName_;
     std::ofstream file_path_;
+    std::ofstream objects_file_path_;
+
     visualization_msgs::Marker line_strip;
     ros::Publisher marker_pub_;
     ros::Publisher sample_viewpoint_array_pub_;
@@ -101,6 +103,7 @@ class RRTPlanner
     octomap_msgs::Octomap map_msg_;  ///<ROS octomap message
     std::map<std::string,octomap::ColorOcTreeNode::Color> semanticColoredLabels;
     std::vector<std::string> objectsOfInterest;
+    std::vector<std::string> datasetObjects;
     float confidenceThreshold;
     float numOfVisitsThreshold;
     double globalObjectGain;
@@ -112,6 +115,9 @@ class RRTPlanner
     std::ifstream input_file; 
     std::string output_file_path_;
     std::string  input_file_path_;
+    std::vector<int> Objectarray ; 
+    std::vector<std::array<int, 3> > colorArray ; 
+    int logging_period ; 
 /*private:
   friend class boost::serialization::access;
 

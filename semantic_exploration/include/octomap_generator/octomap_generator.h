@@ -138,6 +138,7 @@ class OctomapGenerator : public OctomapGeneratorBase
                                       bool stop_at_unknown_cell);
 
     virtual VoxelStatus getCellProbabilityPoint(const Eigen::Vector3d& point, double* probability);
+    virtual octomap::ColorOcTreeNode::Color getVoxelColor(const Eigen::Vector3d& point);
 
     virtual int getCellConfidence(const Eigen::Vector3d& point) ;
 

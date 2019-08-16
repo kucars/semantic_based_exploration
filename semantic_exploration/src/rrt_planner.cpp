@@ -46,7 +46,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     params_.gain_pub_ = nh_.advertise<visualization_msgs::Marker>("gainPubText", 1);
     // params_.evaluatedPoints_  = nh_.advertise<visualization_msgs::Marker>("evaluatedPoint", 1);
     plannerService_ =
-        nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
+    nh_.advertiseService("rrt_planner", &rrtNBV::RRTPlanner::plannerCallback, this);
     params_.sample_viewpoint_array_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("sample_points_array", 1);
     params_.sample_viewpoint_pub_ = nh_.advertise<visualization_msgs::Marker>("sample_points_", 1);
     // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
@@ -143,8 +143,10 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     octomap_generator_->setMaxRange(params_.maxRange_);
     octomap_generator_->setSematicColoredLabels(semanticColoredLabels);
     octomap_generator_->setObjectsOfInterest(objectsOfInterest);
+    //octomap_generator_->setDatasetObjects(datasetObjects);
     octomap_generator_->setConfidenceThreshold(confidenceThreshold);
     octomap_generator_->setNumOfVisitsThreshold(numOfVisitsThreshold);
+    
 
     //debug
     //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
@@ -159,6 +161,7 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     // Not yet ready. need a position msg first.
     ready_ = false;
 
+  
 }
 
 rrtNBV::RRTPlanner::~RRTPlanner()
@@ -178,6 +181,12 @@ rrtNBV::RRTPlanner::~RRTPlanner()
     {
         file_path_.close();
     }
+    if (objects_file_path_.is_open())
+    {
+        objects_file_path_.close();
+    }
+
+
 }
 
 void rrtNBV::RRTPlanner::getSemanticLabelledColors()
@@ -189,11 +198,18 @@ void rrtNBV::RRTPlanner::getSemanticLabelledColors()
     if(ros::service::call("get_semantic_colored_labels", getSemanticColoredLabels))
     {
         semantic_cloud::SemanticColoredLabels res = getSemanticColoredLabels.response.semantic_colored_labels;
+        int j = 0 ; 
         for(auto i = res.semantic_colored_labels.begin(); i != res.semantic_colored_labels.end(); i++ )
         {
             octomap::ColorOcTreeNode::Color color = octomap::ColorOcTreeNode::Color((*i).color_r,
                                                                                     (*i).color_g,
                                                                                     (*i).color_b);
+            std::array<int, 3> a = {int(color.b),int(color.g),int(color.r)};
+            colorArray.push_back(a) ;
+            ROS_INFO("%d %d %d ",a[0],a[1],a[2]);                                                                        
+            ROS_WARN("%d %d %d ",colorArray[j][0],colorArray[j][1],colorArray[j][2]);  
+            ROS_ERROR("%d %d %d ",color.b,color.g,color.r ); 
+            j = j + 1;
             semanticColoredLabels.insert(std::make_pair((*i).label,color));
         }
     }
@@ -299,7 +315,31 @@ void rrtNBV::RRTPlanner::setupLog()
                    << "occupiedCellsLowConfidance"
                    << ","
                    << "occupiedCellsHighConfidance"
+                   << ","
+                   << "loggingTime" 
+                   << ","
+                   << "evaluationTime"
+                   << "\n" ; 
+        objects_file_path_.open((logFilePathName_ + params_.output_objects_file_name_).c_str(), std::ios::out);
+        objects_file_path_ << "wall"   << "," << "building" << "," << "sky" << "," << "floor" << "," << "tree" << "," << "ceiling"<< "," << "road"<< "," << "bed "<< "," << "windowpane"<< "," << "grass"<< "," 
+                   << "cabinet"<< "," << "sidewalk" << "," << "person"<< "," << "earth"<< "," << "door"<< "," << "table"<< "," << "mountain"<< "," << "plant"<< "," << "curtain"<< "," << "chair"<< ","
+                   << "car"    << "," << "water"    << "," << "painting"<< "," << "sofa"<< "," << "shelf"<< "," << "house"<< "," << "sea"<< "," << "mirror"<< "," << "rug"<< "," << "field"<< "," 
+                   << "armchair"<< "," << "seat"<< "," << "fence"<< "," << "desk"<< "," << "rock"<< "," << "wardrobe"<< "," << "lamp"<< "," << "bathtub"<< "," << "railing"<< "," << "cushion"<< "," 
+                   << "base"<< "," << "box"<< "," << "column"<< "," << "signboard"<< "," << "chest of drawers"<< "," << "counter"<< "," << "sand"<< "," << "sink"<< "," << "skyscraper"<< "," << "fireplace"<< "," 
+                   << "refrigerator"<< "," << "grandstand"<< "," << "path"<< "," << "stairs"<< "," << "runway"<< "," << "case"<< "," << "pool table"<< "," << "pillow"<< "," << "screen door"<< "," << "stairway"<< ","
+                   << "river"<< "," << "bridge"<< "," << "bookcase"<< "," << "blind"<< "," << "coffee table"<< "," << "toilet"<< "," << "flower"<< "," << "book"<< "," << "hill"<< "," << "bench"<< "," 
+                   << "countertop"<< "," << "stove"<< "," << "palm"<< "," << "kitchen island"<< "," << "computer"<< "," << "swivel chair"<< "," << "boat"<< "," << "bar"<< "," << "arcade machine"<< "," << "hovel"<< "," 
+                   << "bus"<< "," << "towel"<< "," << "light"<< "," << "truck"<< "," << "tower"<< "," << "chandelier"<< "," << "awning"<< "," << "streetlight"<< "," << "booth"<< "," << "television"<< ","
+                   << "airplane"<< "," << "dirt track"<< "," << "apparel"<< "," << "pole"<< "," << "land"<< "," << "bannister"<< "," << "escalator"<< "," << "ottoman"<< "," << "bottle"<< "," << "buffet"<< "," 
+                   << "poster"<< "," << "stage"<< "," << "van"<< "," << "ship"<< "," << "fountain"<< "," << "conveyer belt"<< "," << "canopy"<< "," << "washer"<< "," << "plaything"<< "," << "swimming pool"<< ","
+                   << "stool"<< "," << "barrel"<< "," << "basket"<< "," << "waterfall"<< "," << "tent"<< "," << "bag"<< "," << "minibike"<< "," << "cradle"<< "," << "oven"<< "," << "ball"<< "," 
+                   << "food"<< "," << "step"<< "," << "tank"<< "," << "trade name"<< "," << "microwave"<< "," << "pot"<< "," << "animal"<< "," << "bicycle"<< "," << "lake"<< "," << "dishwasher"<< "," 
+                   << "screen"<< "," << "blanket"<< "," << "sculpture"<< "," << "hood"<< "," << "sconce"<< "," << "vase"<< "," << "traffic light"<< "," << "tray"<< "," << "ashcan"<< "," << "fan"<< "," 
+                   << "pier"<< "," << "crt screen"<< "," << "plate"<< "," << "monitor"<< "," << "bulletin board"<< "," << "shower"<< "," << "radiator"<< "," << "glass"<< "," << "clock" << "," << "flag"
                    << "\n";
+                       // **** logging **** // 
+        for (int i = 0; i < 150 ; i++ ) 
+            Objectarray.push_back(0) ; 
     }
 }
 
@@ -473,12 +513,12 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl << std::flush;
     rrtTree->memorizeBestBranch();
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
-
+    float evaluationTime = (ros::Time::now() - computationTime).toSec() ; 
     MaxGainPose(res.path[res.path.size() - 1], iteration_num);
     selected_poses.push_back(res.path[0]);
-    ros::Time tic_log = ros::Time::now();
     //sleep(15) ; 
     //**************** logging results ************************************************************************** //
+    ros::Time tic_log = ros::Time::now();
     double res_map = octomap_generator_->getResolution();
     Eigen::Vector3d vec;
     double x, y, z;
@@ -496,10 +536,11 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     int freeCells = 0 ;
     int UnknownCells = 0 ;
     int occupiedCellsNotLabeled = 0 ;
-    int occupiedCellsLowConfidance = 0 ;
-    int occupiedCellsHighConfidance =0 ;
+    int occupiedCellsLowConfidance  = 0 ;
+    int occupiedCellsHighConfidance = 0 ;
     ROS_INFO("1");
 
+    
     for (x = params_.minX_; x <= params_.maxX_ - res_map; x += res_map)
     {
         for (y = params_.minY_; y <= params_.maxY_ - res_map; y += res_map)
@@ -519,35 +560,35 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 if (probability != -1)
                 {
                     p = probability;
-                    // ROS_INFO("probability %f \n", p);
+                    //ROS_INFO("probability %f \n", p);
                 }
-                // ROS_INFO("2");
-                 int conf = octomap_generator_->getCellConfidence(vec); ;
-                // ROS_INFO("3");
-
-                 switch (conf)
-                 {
-                 case 0:
-                    // ROS_INFO("4.0");
-                     freeCells++ ;
-                     break ;
-                 case 1:
+                //ROS_INFO("2");
+                /*if (iteration_num % 10 == 0 )*/
+                       
+                //ROS_INFO("3");
+                int conf = octomap_generator_->getCellConfidence(vec); 
+                switch (conf)
+                {
+                    case 0:
+                    freeCells++ ;
+                    break ;
+                    case 1:
                     // ROS_INFO("4.1");
-                     UnknownCells++;
-                     break;
-                 case 2:  //  occupied not semantically labeled
+                    UnknownCells++;
+                    break;
+                    case 2:  //  occupied not semantically labeled
                     // ROS_INFO("4.2");
-                     occupiedCellsNotLabeled++ ;
-                     break ;
-                 case 3:
+                    occupiedCellsNotLabeled++ ;                   
+                    break ;
+                    case 3:
                     // ROS_INFO("4.3");
-                     occupiedCellsLowConfidance++ ;
-                     break ;
-                 case 4:
+                    occupiedCellsLowConfidance++ ;
+                    break ;
+                    case 4:
                     // ROS_INFO("4.4");
-                     occupiedCellsHighConfidance++ ;
-                     break ;
-                 default:
+                    occupiedCellsHighConfidance++ ;                     
+                    break ;
+                    default:
                      ROS_INFO("4.5");
                  }
 
@@ -565,30 +606,57 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 
                 //                total_gain += (information_gain_entropy + semantic_gain_entropy) ;
 
-                 if (node == VoxelStatus::kUnknown)
-                 {
+                if (node == VoxelStatus::kUnknown)
+                {
                      rrt_gain += params_.igUnmapped_;
                      unknown_cells_counter++;
-                 }
-                 if (node == VoxelStatus::kFree)
-                 {
+                }
+                if (node == VoxelStatus::kFree)
+                {
                      free_cells_counter++;
                      rrt_gain += params_.igFree_;
+                }
+                if (node == VoxelStatus::kOccupied)
+                {
+                    rrt_gain += params_.igOccupied_;
+                    occupied_cells_counter++;
 
-                 }
-                 if (node == VoxelStatus::kOccupied)
-                 {
-                     rrt_gain += params_.igOccupied_;
-                     occupied_cells_counter++;
-                 }
-
-
+                    if (iteration_num % logging_period == 0 ) // ******** every 10 iterations log the data ********** // 
+                    {
+                        octomap::ColorOcTreeNode::Color voxelColor = octomap_generator_->getVoxelColor(vec);   
+                        //ROS_INFO("%d %d %d ",int(voxelColor.r) , int(voxelColor.g) ,int(voxelColor.b) ) ;
+                        //ROS_INFO("Color Size %d ", colorArray.size()) ;
+                        if ( voxelColor.r != 255) // ******** Not in the data set ********** //  
+                        {
+                            int iter ; 
+                            for ( iter = 0 ; iter < colorArray.size() ; iter++)
+                            {                    
+                                //ROS_INFO ("iter %d", iter) ; 
+                                if (voxelColor.r == colorArray[iter][0] && voxelColor.g == colorArray[iter][1] && voxelColor.b== colorArray[iter][2]) 
+                                    {
+                                        //ROS_ERROR("%d %d %d ",colorArray[iter][0] , colorArray[iter][1] ,colorArray[iter][2]  ) ;
+                                        //ROS_INFO("%d %d %d ",int(voxelColor.r) , int(voxelColor.g) ,int(voxelColor.b) ) ;
+                                        Objectarray[iter] = Objectarray[iter] + 1 ; 
+                                        break ; 
+                                    }
+                            }
+                            if (iter == 150)
+                            {
+                                ROS_INFO("%d %d %d ",voxelColor.r , voxelColor.g ,voxelColor.b ) ;
+                                ROS_ERROR("ERROR: SEMANTIC COLOR NOT FROM THE DATASET ");
+                            }
+                        }
+                        else 
+                        {
+                            ROS_WARN("FREE - UNKNOWN _ OCCUPIED NOT SEMANTICALLY LABELED ");
+                        }
+                    }
+                }
             }
         }
     }
 
     ROS_INFO("4");
-
 
     //    double theoretical_cells_value =
     //            ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
@@ -598,7 +666,21 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     double volumetric_coverage =
             ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
 
+
+    if (iteration_num % logging_period == 0 ) 
+    {
+        ROS_ERROR("%d" , iteration_num ) ; 
+        for (int k = 0 ; k < 150 ; k++ )
+            objects_file_path_ << Objectarray[k] << "," ; 
+        objects_file_path_ <<  "\n";
+        std::fill(Objectarray.begin(), Objectarray.end(), 0);
+    }
+    
+    
     iteration_num++;
+    ros::Time toc_log = ros::Time::now();
+    std::cout << "logging Filter took:" << toc_log.toSec() - tic_log.toSec() << std::endl << std::flush;
+
     file_path_ << iteration_num << ","
                << volumetric_coverage << ","
                << traveled_distance << ","
@@ -622,11 +704,15 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                << UnknownCells << ","
                << occupiedCellsNotLabeled << ","
                << occupiedCellsLowConfidance << ","
-               << occupiedCellsHighConfidance << "\n";
-    ROS_INFO("5");
+               << occupiedCellsHighConfidance << "," 
+               << toc_log.toSec() - tic_log.toSec() << ","
+               << evaluationTime << "\n" ;
 
-    ros::Time toc_log = ros::Time::now();
-    std::cout << "logging Filter took:" << toc_log.toSec() - tic_log.toSec() << std::endl
+    //for (const auto &e : Objectarray) objects_file_path_ << e << ",";
+    //objects_file_path_ <<  "\n";
+    ROS_INFO("SAVE DONE");
+    ros::Time toc_log_2 = ros::Time::now();
+    std::cout << "logging Filter took:" << toc_log_2.toSec() - tic_log.toSec() << std::endl
               << std::flush;
     //***********************************************************************************************************//
     return true;
@@ -924,6 +1010,12 @@ bool rrtNBV::RRTPlanner::setParams()
         ROS_WARN("No option for output file name. Looking for %s. Default is true.",
                  (ns + "/output/file/name").c_str());
     }
+    params_.output_objects_file_name_ = "gains.csv";
+    if (!ros::param::get(ns + "/output/objects/file/name", params_.output_objects_file_name_))
+    {
+        ROS_WARN("No option for output file name. Looking for %s. Default is true.",
+                 (ns + "/output/objects/file/name").c_str());
+    }
     params_.utility_method_ = 1;
     if (!ros::param::get(ns + "/utility/method", params_.utility_method_))
     {
@@ -1009,6 +1101,12 @@ bool rrtNBV::RRTPlanner::setParams()
                  (ns + "/objects_of_interest").c_str());
     }
 
+   /* if (!ros::param::get(ns + "/dataset_labels_ade20k", datasetObjects))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is empty",
+                 (ns + "/dataset_labels_ade20k").c_str());
+    }*/
+
     if (!ros::param::get(ns + "/confidence_threshold", confidenceThreshold))
     {
         ROS_WARN("No option for function. Looking for %s. Default is empty",
@@ -1022,7 +1120,12 @@ bool rrtNBV::RRTPlanner::setParams()
                  (ns + "/num_of_visits_threshold").c_str());
     }
     //std::cout << "num_of_visits_threshold " << numOfVisitsThreshold<<std::endl ;
-
+    logging_period = 10 ; 
+    if (!ros::param::get(ns + "/logging_iteration", logging_period))
+    {
+        ROS_WARN("No option for function. Looking for %s. Default is empty",
+                 (ns + "/logging_iteration").c_str());
+    }
 
     return ret;
 }
