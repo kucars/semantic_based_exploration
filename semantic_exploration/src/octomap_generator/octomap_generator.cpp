@@ -485,6 +485,74 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getCellProbabilityPoint(const Eigen
 
 
 
+template <>
+octomap::ColorOcTreeNode::Color OctomapGenerator<PCLColor, ColorOcTree>::getVoxelColor(const Eigen::Vector3d& point)
+{
+    octomap::ColorOcTreeNode* node = octomap_.search(point.x(), point.y(), point.z());
+    //SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+    octomap::ColorOcTreeNode::Color color ;
+    color = node->getColor();
+    return color ; 
+}
+
+template <>
+octomap::ColorOcTreeNode::Color OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getVoxelColor(const Eigen::Vector3d& point)
+{
+    //ROS_ERROR("GET VOXEL COLOR FUNCTION");
+    SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+    octomap::ColorOcTreeNode::Color color ;
+    color.r = 255 ; 
+    color.g = 255 ; 
+    color.b = 255 ;
+
+    if (node == nullptr)
+    {
+        ROS_ERROR("%d %d %d ",color.r , color.g ,color.b ) ;
+        ROS_ERROR("NULL ************************************");
+        return color;
+    }
+    else
+    {
+        if (octomap_.isNodeOccupied(node))
+        {
+
+            bool isSemantic = false;
+            isSemantic = node->isSemanticsSet();
+            //ROS_ERROR ("conf %f",node->getSemantics().confidence);
+            if(isSemantic)
+            {
+                //octomap::SemanticsMax sem = node->getSemantics();
+                //color.r = sem.semantic_color.r;
+                //color.g = sem.semantic_color.g;
+                //color.b = sem.semantic_color.b;
+                color = node->getSemantics().semantic_color;
+                return color ;
+            }
+            else
+            {
+                ROS_ERROR("%d %d %d ",color.r , color.g ,color.b ) ;
+                ROS_ERROR("NOT SEMANTICALLY LABELED ************************************");
+                return color;
+            }
+
+        }
+        else
+        {
+            ROS_ERROR("%d %d %d ",color.r , color.g ,color.b ) ;
+            ROS_ERROR("FREE ************************************");
+            return color;
+        }
+    }
+
+}
+
+template <>
+octomap::ColorOcTreeNode::Color OctomapGenerator<PCLSemanticsBayesian, SemanticsOctreeBayesian>::getVoxelColor(const Eigen::Vector3d& point)
+{
+ // 
+}
+
+
 
 template <>
 int OctomapGenerator<PCLColor, ColorOcTree>::getCellConfidence(const Eigen::Vector3d& point)
@@ -529,7 +597,7 @@ int OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellConfidence(con
         }
         else
         {
-            return 0;
+            return 0; // free
         }
     }
 

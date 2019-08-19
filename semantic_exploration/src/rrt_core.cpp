@@ -40,7 +40,9 @@ rrtNBV::RrtTree::RrtTree() : rrtNBV::TreeBase::TreeBase()
 rrtNBV::RrtTree::RrtTree(OctomapGeneratorBase *octomap_generator_)
     : rrtNBV::TreeBase::TreeBase(octomap_generator_)
 {
+    srand(time(0)); 
     setup();
+    
 }
 
 void rrtNBV::RrtTree::setup()
@@ -301,8 +303,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
 
     bool solutionFound = false;
 
-
-  
     while (!solutionFound)
     {
         //ROS_INFO_THROTTLE(1.0,"Finding Root");
@@ -2030,8 +2030,8 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
         }
     }
 
-    std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
-              << std::endl
+    /*std::cout << " number Of Accepted Voxels In One View is " << numberOfAcceptedVoxelInOneView
+    //         << std::endl
               << std::flush;
     ;
     std::cout << " number Of Accepted visible Voxels In One View is "
@@ -2044,27 +2044,20 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
                  numOfUnknownInvisibleVoxels
               << std::endl
               << std::flush;
-    ;
+    ;*/
+     
 
-    // if (gainOcclusionAware > 0 )
-    //  {
     gain = gainOcclusionAware;
+    //int traversedVoxels =
+     //       numOfFreeVisibleVoxels + numOfOccupiedVisibleVoxels + numOfUnknownVisibleVoxels;
+    //gain = gain / traversedVoxels ; 
+
     objectGainFound = false;
-    std::cout << "Occlusion Aware Gain " << gain << std::endl;
-    //  }
-    //   else
-    //  {
-    //      gain = gainUnknown ;
-    //      std::cout << "Volumetric Gain " << gain << std::endl;
-    //   }
-
-    std::cout << "gain before scaling " << gain << std::endl << std::flush;
+    //std::cout << "gain before scaling " << gain << std::endl << std::flush;
     // Scale with volume
-    // TODO: Remove the scaling from the entropy functions
     gain *= pow(disc, 3.0);
-    std::cout << "gain after scaling " << gain << std::endl << std::flush;
-
-    ROS_INFO("GAIN %f ", gain);
+    //std::cout << "gain after scaling " << gain << std::endl << std::flush;
+    ROS_INFO("Occlusion aware gain %f ", gain);
     return gain;
 }
 
@@ -3413,8 +3406,8 @@ void rrtNBV::RrtTree::publishDebugGain(StateVec node , double gain, int type)
     params_.gainMarker.color.a = 1.0;
     params_.gainMarker.lifetime = ros::Duration(30);
     string s = std::to_string(gain) ;
-    std::cout << "##############" ;
-    std::cout << s << std::endl ;
+    //std::cout << "##############" ;
+    //std::cout << s << std::endl ;
     params_.gainMarker.text= s;
     params_.gain_pub_.publish(params_.gainMarker);
     // **********************************************
@@ -3444,8 +3437,8 @@ void rrtNBV::RrtTree::publishDebugStatus(StateVec node , int status)
     params_.gainMarker.color.a = 1.0;
     params_.gainMarker.lifetime = ros::Duration(30);
     string s = std::to_string(status) ;
-    std::cout << "##############" ;
-    std::cout << s << std::endl ;
+    //std::cout << "##############" ;
+    //std::cout << s << std::endl ;
     params_.gainMarker.text= s;
     params_.gain_pub_.publish(params_.gainMarker);
     // **********************************************
