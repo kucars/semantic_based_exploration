@@ -16,6 +16,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include "semantic_exploration/common.h"
 
 #define COLOR_OCTREE 0
 #define SEMANTICS_OCTREE_MAX 1

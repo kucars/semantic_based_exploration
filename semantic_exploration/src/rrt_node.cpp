@@ -13,8 +13,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include "semantic_exploration/common.h"
 //rrtNBV::RRTPlanner* planner ; // (nh, nh_private);
-
+//TimeProfiler timer;
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "semantic_exploration");

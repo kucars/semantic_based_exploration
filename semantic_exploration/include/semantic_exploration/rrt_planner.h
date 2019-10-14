@@ -33,9 +33,12 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include "utilities/time_profiler.h"
+
 
 namespace rrtNBV
 {
+
 class RRTPlanner
 {
   public:
@@ -118,6 +121,7 @@ class RRTPlanner
     std::vector<int> Objectarray ; 
     std::vector<std::array<int, 3> > colorArray ; 
     int logging_period ; 
+ 
 /*private:
   friend class boost::serialization::access;
 

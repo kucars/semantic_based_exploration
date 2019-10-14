@@ -10,6 +10,8 @@
 #include <cstring>
 #include <sstream>
 
+//TimeProfiler timer;
+
 template <class CLOUD, class OCTREE>
 OctomapGenerator<CLOUD, OCTREE>::OctomapGenerator()
     : octomap_(0.05), max_range_(1.), raycast_range_(1.)
@@ -223,7 +225,10 @@ double OctomapGenerator<PCLColor, ColorOcTree>::getCellIneterestGain(const Eigen
 template <>
 double OctomapGenerator<PCLSemanticsMax, SemanticsOctreeMax>::getCellIneterestGain(const Eigen::Vector3d& point)
 {
+    //timer.start("[Octomap]Search"); 
     SemanticsOcTreeNodeMax* node = octomap_.search(point.x(), point.y(), point.z());
+    //timer.stop("[Octomap]Search"); 
+    //timer.dump(); 
 
     bool isSemantic = false;
     //std::cout << "Color: " << node->getColor()<< std::endl;

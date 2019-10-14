@@ -15,6 +15,7 @@
 #include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <iostream>
+#include "semantic_exploration/common.h"
 
 using namespace std;
 using namespace Eigen;
@@ -29,6 +30,7 @@ double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
     : nh_(nh), nh_private_(nh_private)
 {
+  //  timer.start("[NBVLoop]Init");
     if (!setParams())
     {
         ROS_ERROR("Could not start the planner. Parameters missing!");
@@ -160,6 +162,8 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     rrtTree->setParams(params_);
     // Not yet ready. need a position msg first.
     ready_ = false;
+  //  timer.stop("[NBVLoop]Init");
+
 
   
 }
@@ -438,9 +442,12 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
 {
     ROS_INFO("########### New Planning Iteration ###########");
     ros::Time computationTime = ros::Time::now();
-    params_.explorationarea_.publish(area_marker_);
+ //   timer.start("[NBVLoop]Evaluation");
 
+    params_.explorationarea_.publish(area_marker_);
     // Check that planner is ready to compute path.
+    //timer.start("[NBVLoop]PlannerReadyChecks");
+
     if (!ros::ok())
     {
         ROS_INFO_THROTTLE(1, "Exploration finished. Not planning any further moves.");
@@ -464,19 +471,23 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return true;
     }
+    //timer.stop("[NBVLoop]PlannerReadyChecks");
 
     res.path.clear();
     params_.marker_id = 0 ; 
-
     // Clear old tree and reinitialize.
     rrtTree->clear();
+
+    //timer.start("[NBVLoop]initializeTree");
     rrtTree->initialize();
+   // timer.stop("[NBVLoop]initializeTree");
 
     ROS_INFO("Tree Initilization called");
 
     int loopCount = 0;
     int k = 1;
 
+   // timer.start("[NBVLoop]Loop");
     while ((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
         ROS_INFO_THROTTLE(0.1, "Counter:%d Cuttoff Iterations:%d GainFound:%d BestGain:%f",
@@ -492,40 +503,60 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
         {
             ROS_WARN("Exceeding maximum failed iterations, return to previous point!");
+           // timer.start("[NBVLoop]GetPathBackToPrevious");
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
+           // timer.stop("[NBVLoop]GetPathBackToPrevious");
+
             return true;
         }
+       // timer.start("[NBVLoop]Iterate");
         if (rrtTree->iterate(1))
         {
             ROS_INFO("########## BEST GAIN ############## :%f", rrtTree->getBestGain());
         }
+     //   timer.stop("[NBVLoop]Iterate");
+
         loopCount++;
         k++;
     }
+   // timer.stop("[NBVLoop]Loop");
+
+
     ROS_INFO("Done RRT");
 
     // Extract the best edge.
+   // timer.start("[NBVLoop]GetBestEdge");
     res.path = rrtTree->getBestEdge(req.header.frame_id);
-    accumulativeGain += rrtTree->getBestGain();
+  //  timer.stop("[NBVLoop]GetBestEdge");
+
+    //accumulativeGain += rrtTree->getBestGain();
     //bool ObjectFoundFlag = rrtTree->getObjectFlag();
-    std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain() << std::endl
-              << std::flush;
+    std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain() << std::endl<< std::flush;
     std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl << std::flush;
+   // timer.start("[NBVLoop]MemorizeBestBranch");
     rrtTree->memorizeBestBranch();
+   // timer.stop("[NBVLoop]MemorizeBestBranch");
+
     ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
-    float evaluationTime = (ros::Time::now() - computationTime).toSec() ; 
+    float evaluationTime = (ros::Time::now() - computationTime).toSec() ;
+ //   timer.stop("[NBVLoop]Evaluation");
+ 
+  //  timer.start("[NBVLoop]DrawPath");
     MaxGainPose(res.path[res.path.size() - 1], iteration_num);
     selected_poses.push_back(res.path[0]);
+  //  timer.stop("[NBVLoop]DrawPath");
+
     //sleep(15) ; 
     //**************** logging results ************************************************************************** //
     ros::Time tic_log = ros::Time::now();
+  //  timer.start("[NBVLoop]Log");
+
     double res_map = octomap_generator_->getResolution();
     Eigen::Vector3d vec;
     double x, y, z;
-    double all_cells_counter = 0, free_cells_counter = 0, unknown_cells_counter = 0,
-           occupied_cells_counter = 0;
+    double all_cells_counter = 0, free_cells_counter = 0, unknown_cells_counter = 0, occupied_cells_counter = 0;
     int free_type_counter = 0, unknown_type_count = 0, occ_intr_not_vis_type_count = 0,
-        occ_intr_vis_type_count = 0, occ_not_intr_type_count = 0;
+    occ_intr_vis_type_count = 0, occ_not_intr_type_count = 0;
     double information_gain_entropy = 0, occupancy_entropy = 0;
     double semantic_gain_entropy = 0, semantic_entropy = 0;
     double total_gain = 0;
@@ -618,6 +649,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 }
                 if (node == VoxelStatus::kOccupied)
                 {
+                    ROS_ERROR ("LOGGING OCCUPIED");
                     rrt_gain += params_.igOccupied_;
                     occupied_cells_counter++;
 
@@ -715,6 +747,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     std::cout << "logging Filter took:" << toc_log_2.toSec() - tic_log.toSec() << std::endl
               << std::flush;
     //***********************************************************************************************************//
+  //  timer.stop("[NBVLoop]Log");
+  //  timer.dump();
     return true;
 }
 
