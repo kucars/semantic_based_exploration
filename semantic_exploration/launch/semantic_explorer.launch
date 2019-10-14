@@ -29,6 +29,8 @@
     <!--arg name="world" default="$(find semantic_exploration)/worlds/test_semantic_color.world"/-->
     <!--arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/-->
     <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects_small.world"/>
+    <!--arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects_small_unique_obj.world"/-->
+    <!--arg name="world" default="$(find semantic_exploration)/worlds/worlds/office_earthquake.world"/-->
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
 
     <param name="use_sim_time" value="true" />

@@ -95,10 +95,12 @@ add_executable(rrt_planner  src/rrt_node.cpp
                             src/octomap_generator/octomap_generator.cpp
                             src/semantic_octree/semantics_bayesian.cpp
                             src/semantic_octree/semantics_max.cpp
+                            src/utilities/time_profiler.cpp
                             )
 
 target_link_libraries(rrt_planner
   ${LINK_LIBS}
+   ${Boost_DATE_TIME_LIBRARY}
 )
 
 add_dependencies(rrt_planner ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp )

@@ -29,6 +29,7 @@
 #include <semantics_octree/semantics_octree.h>
 #include <eigen3/Eigen/Dense>
 #include <sstream>
+#include "semantic_exploration/common.h"
 
 #define SQ(x) ((x) * (x))
 #define SQRT2 0.70711
