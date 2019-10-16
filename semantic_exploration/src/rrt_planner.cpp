@@ -30,7 +30,6 @@ double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
     : nh_(nh), nh_private_(nh_private)
 {
-  //  timer.start("[NBVLoop]Init");
     if (!setParams())
     {
         ROS_ERROR("Could not start the planner. Parameters missing!");
@@ -126,7 +125,6 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
 
     }
 
-
     fullmapPub_ = nh_.advertise<octomap_msgs::Octomap>("octomap_full", 1, true);
     pointcloud_sub_ = nh_.subscribe(params_.pointCloudTopic_, 1, &rrtNBV::RRTPlanner::insertCloudCallback, this);
 
@@ -149,7 +147,6 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     octomap_generator_->setConfidenceThreshold(confidenceThreshold);
     octomap_generator_->setNumOfVisitsThreshold(numOfVisitsThreshold);
     
-
     //debug
     //params_.camboundries_        getBestEdgeDeep= nh_.advertise<visualization_msgs::Marker>("camBoundries", 10);
     //params_.fovHyperplanes       = nh_.advertise<visualization_msgs::MarkerArray>( "hyperplanes", 100 );
@@ -162,15 +159,10 @@ rrtNBV::RRTPlanner::RRTPlanner(const ros::NodeHandle& nh, const ros::NodeHandle&
     rrtTree->setParams(params_);
     // Not yet ready. need a position msg first.
     ready_ = false;
-  //  timer.stop("[NBVLoop]Init");
-
-
-  
 }
 
 rrtNBV::RRTPlanner::~RRTPlanner()
 {
-
     if (octomap_generator_)
     {
         octomap_generator_->save(params_.octomapSavePath_.c_str());
@@ -189,8 +181,6 @@ rrtNBV::RRTPlanner::~RRTPlanner()
     {
         objects_file_path_.close();
     }
-
-
 }
 
 void rrtNBV::RRTPlanner::getSemanticLabelledColors()
@@ -385,11 +375,11 @@ void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::Con
         return;
     }
     */
-    ROS_INFO("Received PointCloud");
+    //ROS_INFO("Received PointCloud");
     static double last = ros::Time::now().toSec();
     if (ros::Time::now().toSec() - last > params_.pcl_throttle_)
     {
-        ROS_INFO_THROTTLE(1.0, "inserting point cloud into rrtTree");
+        //ROS_INFO_THROTTLE(1.0, "inserting point cloud into rrtTree");
         ros::Time tic = ros::Time::now();
         octomap_generator_->insertPointCloud(cloud_msg, params_.worldFrameId_);
         // Publish octomap
@@ -401,7 +391,7 @@ void rrtNBV::RRTPlanner::insertCloudCallback(const sensor_msgs::PointCloud2::Con
             ROS_ERROR("Error serializing OctoMap");
 
         ros::Time toc = ros::Time::now();
-        ROS_INFO("PointCloud Insertion Took: %f", (toc - tic).toSec());
+        //ROS_INFO("PointCloud Insertion Took: %f", (toc - tic).toSec());
         last = ros::Time::now().toSec();
     }
 }
@@ -440,20 +430,18 @@ visualization_msgs::Marker rrtNBV::RRTPlanner::explorationAreaInit()
 bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request& req,
                                          semantic_exploration::GetPath::Response& res)
 {
+    timer.start("[NBVLoop]PlannerCallback");
     ROS_INFO("########### New Planning Iteration ###########");
-    ros::Time computationTime = ros::Time::now();
- //   timer.start("[NBVLoop]Evaluation");
 
     params_.explorationarea_.publish(area_marker_);
-    // Check that planner is ready to compute path.
-    //timer.start("[NBVLoop]PlannerReadyChecks");
-
+    
     if (!ros::ok())
     {
         ROS_INFO_THROTTLE(1, "Exploration finished. Not planning any further moves.");
         return true;
     }
 
+    // Check that planner is ready to compute path.
     if (!ready_)
     {
         ROS_ERROR_THROTTLE(1, "Planner not set up: Planner not ready!");
@@ -471,23 +459,23 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         ROS_ERROR_THROTTLE(1, "Planner not set up: Octomap is empty!");
         return true;
     }
-    //timer.stop("[NBVLoop]PlannerReadyChecks");
 
     res.path.clear();
     params_.marker_id = 0 ; 
     // Clear old tree and reinitialize.
     rrtTree->clear();
+    rrtTree->clearInspectionPath();
 
-    //timer.start("[NBVLoop]initializeTree");
+    timer.start("[NBVLoop]initializeTree");
     rrtTree->initialize();
-   // timer.stop("[NBVLoop]initializeTree");
+    timer.stop("[NBVLoop]initializeTree");
 
     ROS_INFO("Tree Initilization called");
 
     int loopCount = 0;
     int k = 1;
 
-   // timer.start("[NBVLoop]Loop");
+    timer.start("[NBVLoop]RRTLoop");
     while ((!rrtTree->gainFound() || rrtTree->getCounter() < params_.initIterations_) && ros::ok())
     {
         ROS_INFO_THROTTLE(0.1, "Counter:%d Cuttoff Iterations:%d GainFound:%d BestGain:%f",
@@ -502,55 +490,43 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
         }
         if (loopCount > 1000 * (rrtTree->getCounter() + 1))
         {
-            ROS_WARN("Exceeding maximum failed iterations, return to previous point!");
-           // timer.start("[NBVLoop]GetPathBackToPrevious");
+            ROS_WARN("Exceeding maximum failed iterations, return to previous point!");           
+            timer.start("[NBVLoop]GetPathBackToPrevious");
             res.path = rrtTree->getPathBackToPrevious(req.header.frame_id);
-           // timer.stop("[NBVLoop]GetPathBackToPrevious");
-
+            timer.stop("[NBVLoop]GetPathBackToPrevious");
             return true;
         }
-       // timer.start("[NBVLoop]Iterate");
+      
+        timer.start("[NBVLoop]Iterate");
         if (rrtTree->iterate(1))
         {
-            ROS_INFO("########## BEST GAIN ############## :%f", rrtTree->getBestGain());
+            
         }
-     //   timer.stop("[NBVLoop]Iterate");
+        timer.stop("[NBVLoop]Iterate");
 
         loopCount++;
         k++;
     }
-   // timer.stop("[NBVLoop]Loop");
-
+    ROS_INFO("Best Gain Final :%f", rrtTree->getBestGain());
+    timer.stop("[NBVLoop]RRTLoop");
 
     ROS_INFO("Done RRT");
 
     // Extract the best edge.
-   // timer.start("[NBVLoop]GetBestEdge");
     res.path = rrtTree->getBestEdge(req.header.frame_id);
-  //  timer.stop("[NBVLoop]GetBestEdge");
 
     //accumulativeGain += rrtTree->getBestGain();
     //bool ObjectFoundFlag = rrtTree->getObjectFlag();
-    std::cout << " ########## BEST GAIN ############## " << rrtTree->getBestGain() << std::endl<< std::flush;
-    std::cout << "SIZE OF THE PATH " << res.path.size() << std::endl << std::flush;
-   // timer.start("[NBVLoop]MemorizeBestBranch");
+    ROS_INFO("SIZE OF THE PATH %d ", res.path.size());
+    
     rrtTree->memorizeBestBranch();
-   // timer.stop("[NBVLoop]MemorizeBestBranch");
-
-    ROS_INFO("Path computation lasted %2.3fs", (ros::Time::now() - computationTime).toSec());
-    float evaluationTime = (ros::Time::now() - computationTime).toSec() ;
- //   timer.stop("[NBVLoop]Evaluation");
  
-  //  timer.start("[NBVLoop]DrawPath");
-    MaxGainPose(res.path[res.path.size() - 1], iteration_num);
-    selected_poses.push_back(res.path[0]);
-  //  timer.stop("[NBVLoop]DrawPath");
+    drawPath(res.path[res.path.size() - 1], iteration_num);
+    //selected_poses.push_back(res.path[0]);
 
     //sleep(15) ; 
-    //**************** logging results ************************************************************************** //
+  
     ros::Time tic_log = ros::Time::now();
-  //  timer.start("[NBVLoop]Log");
-
     double res_map = octomap_generator_->getResolution();
     Eigen::Vector3d vec;
     double x, y, z;
@@ -569,9 +545,8 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     int occupiedCellsNotLabeled = 0 ;
     int occupiedCellsLowConfidance  = 0 ;
     int occupiedCellsHighConfidance = 0 ;
-    ROS_INFO("1");
-
     
+    timer.start("[NBVLoop]InternalGainCalculation");
     for (x = params_.minX_; x <= params_.maxX_ - res_map; x += res_map)
     {
         for (y = params_.minY_; y <= params_.maxY_ - res_map; y += res_map)
@@ -617,10 +592,11 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                     break ;
                     case 4:
                     // ROS_INFO("4.4");
-                    occupiedCellsHighConfidance++ ;                     
-                    break ;
+                    occupiedCellsHighConfidance++;                     
+                    break;
                     default:
-                     ROS_INFO("4.5");
+                    //ROS_INFO("4.5");      
+                    break;    
                  }
 
 
@@ -649,7 +625,7 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                 }
                 if (node == VoxelStatus::kOccupied)
                 {
-                    ROS_ERROR ("LOGGING OCCUPIED");
+                    //ROS_ERROR ("LOGGING OCCUPIED");
                     rrt_gain += params_.igOccupied_;
                     occupied_cells_counter++;
 
@@ -680,16 +656,14 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                         }
                         else 
                         {
-                            ROS_WARN("FREE - UNKNOWN _ OCCUPIED NOT SEMANTICALLY LABELED ");
+                            ROS_WARN("FREE - UNKNOWN _ OCCUPIED NOT SEMANTICALLY LABELED: %f", voxelColor.r);
                         }
                     }
                 }
             }
         }
     }
-
-    ROS_INFO("4");
-
+    timer.stop("[NBVLoop]InternalGainCalculation");
     //    double theoretical_cells_value =
     //            ((params_.maxX_ - params_.minX_) * (params_.maxY_ - params_.minY_) *
     //             (params_.maxZ_ - params_.minZ_)) /
@@ -698,20 +672,18 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
     double volumetric_coverage =
             ((free_cells_counter + occupied_cells_counter) / all_cells_counter) * 100.0;
 
-
     if (iteration_num % logging_period == 0 ) 
     {
-        ROS_ERROR("%d" , iteration_num ) ; 
+        ROS_INFO("Logging Iteration: %d" , iteration_num ) ; 
         for (int k = 0 ; k < 150 ; k++ )
             objects_file_path_ << Objectarray[k] << "," ; 
         objects_file_path_ <<  "\n";
         std::fill(Objectarray.begin(), Objectarray.end(), 0);
     }
     
-    
     iteration_num++;
     ros::Time toc_log = ros::Time::now();
-    std::cout << "logging Filter took:" << toc_log.toSec() - tic_log.toSec() << std::endl << std::flush;
+    ROS_INFO("logging Filter took:%f", (toc_log.toSec() - tic_log.toSec()));
 
     file_path_ << iteration_num << ","
                << volumetric_coverage << ","
@@ -737,18 +709,13 @@ bool rrtNBV::RRTPlanner::plannerCallback(semantic_exploration::GetPath::Request&
                << occupiedCellsNotLabeled << ","
                << occupiedCellsLowConfidance << ","
                << occupiedCellsHighConfidance << "," 
-               << toc_log.toSec() - tic_log.toSec() << ","
-               << evaluationTime << "\n" ;
+               << toc_log.toSec() - tic_log.toSec() << "\n" ;
 
     //for (const auto &e : Objectarray) objects_file_path_ << e << ",";
     //objects_file_path_ <<  "\n";
-    ROS_INFO("SAVE DONE");
-    ros::Time toc_log_2 = ros::Time::now();
-    std::cout << "logging Filter took:" << toc_log_2.toSec() - tic_log.toSec() << std::endl
-              << std::flush;
-    //***********************************************************************************************************//
-  //  timer.stop("[NBVLoop]Log");
-  //  timer.dump();
+
+    timer.stop("[NBVLoop]PlannerCallback");
+    timer.dump();
     return true;
 }
 
@@ -1164,7 +1131,7 @@ bool rrtNBV::RRTPlanner::setParams()
     return ret;
 }
 
-void rrtNBV::RRTPlanner::MaxGainPose(geometry_msgs::Pose p, int id)
+void rrtNBV::RRTPlanner::drawPath(geometry_msgs::Pose p, int id)
 {
     line_strip.header.frame_id = "world";
     line_strip.header.stamp = ros::Time::now();
@@ -1182,7 +1149,8 @@ void rrtNBV::RRTPlanner::MaxGainPose(geometry_msgs::Pose p, int id)
     line_strip.color.a = 1;
     line_strip.color.g = 1;
     line_strip.lifetime = ros::Duration();
-    marker_pub_.publish(line_strip);
+    if(line_strip.points.size()>1)
+        marker_pub_.publish(line_strip);
     viewpoints2.poses.push_back(p);
     viewpoints2.header.frame_id = "world";
     viewpoints2.header.stamp = ros::Time::now();

@@ -52,6 +52,7 @@ class RrtTree : public TreeBase
     virtual void clear();
     virtual std::vector<geometry_msgs::Pose> getPathBackToPrevious(std::string targetFrame);
     virtual void memorizeBestBranch();
+    void clearInspectionPath();
 
     void publishNode(Node *node);
     void publishDebugNode(StateVec node , int Nodetype) ;
@@ -100,7 +101,7 @@ class RrtTree : public TreeBase
         UNOBSERVED_VOXEL,
         SEMANTIC_VISIBLE_VOXEL,
         SEMANTIC_OCCLUSION_AWARE ,
-	SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS
+	      SEMANTIC_OBJ_INTEREST_NUM_OF_VISITS
     };
 
   protected:

@@ -489,7 +489,6 @@ VoxelStatus OctomapGenerator<CLOUD, OCTREE>::getCellProbabilityPoint(const Eigen
 }
 
 
-
 template <>
 octomap::ColorOcTreeNode::Color OctomapGenerator<PCLColor, ColorOcTree>::getVoxelColor(const Eigen::Vector3d& point)
 {
@@ -556,7 +555,6 @@ octomap::ColorOcTreeNode::Color OctomapGenerator<PCLSemanticsBayesian, Semantics
 {
  // 
 }
-
 
 
 template <>

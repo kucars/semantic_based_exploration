@@ -161,7 +161,7 @@ void ExplorationPlanner::rotateOnSpot(float duration)
             yawCommand.position.y = this->currentPose.pose.position.y - j*0.2;
             yawCommand.position.z = lowerAltitude + j*altitudeSteps;
             yawCommand.snap.z     = yaw;
-            ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,yawCommand.position.x ,yawCommand.position.y, yawCommand.position.z);
+            //ROS_INFO_THROTTLE(0.5,"Pose Yaw sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,yawCommand.position.x ,yawCommand.position.y, yawCommand.position.z);
             rotationPublisher.publish(yawCommand);
             loopRate.sleep();
         }
@@ -184,7 +184,7 @@ void ExplorationPlanner::moveOnSpot(float duration)
             movrCommand.position.y = this->currentPose.pose.position.y;
             movrCommand.position.z = this->currentPose.pose.position.z;
             movrCommand.snap.z     = yaw;
-            ROS_INFO_THROTTLE(0.5,"Pose Yaw 2 sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
+            //ROS_INFO_THROTTLE(0.5,"Pose Yaw 2 sent:%f sleep time:%f x:%f y:%f z:%f", yaw, sleepTime,movrCommand.position.x ,movrCommand.position.y, movrCommand.position.z);
             rotationPublisher.publish(movrCommand);
             loopRate.sleep();
         }
@@ -250,7 +250,7 @@ void ExplorationPlanner::RunStateMachine()
     
     while(currentState.mode != "OFFBOARD" && currentState.system_status !=4)
     {
-        ROS_INFO_THROTTLE(0.1,"Mode:%s Status:%d",currentState.mode.c_str(), currentState.system_status);
+        //ROS_INFO_THROTTLE(0.1,"Mode:%s Status:%d",currentState.mode.c_str(), currentState.system_status);
         ros::spinOnce();
         loopRate.sleep();
     }
@@ -295,8 +295,7 @@ void ExplorationPlanner::RunStateMachine()
         ROS_INFO("Planner Call");
         ros::service::waitForService("rrt_planner", ros::Duration(1.0));
         if (ros::service::call("rrt_planner", planSrv))
-        {
-            
+        {            
             ROS_INFO("Planner Call Successfull");
             seqNum++;
             if (planSrv.response.path.size() == 0)

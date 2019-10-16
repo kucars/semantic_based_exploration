@@ -59,7 +59,7 @@ class RRTPlanner
     void setupLog();
     void getSemanticLabelledColors();
     rrtNBV::Params getParams();
-    void MaxGainPose(geometry_msgs::Pose p, int id);
+    void drawPath(geometry_msgs::Pose p, int id);
     //std::istream input_file ; 
     //std::ostream output_file ; 
 

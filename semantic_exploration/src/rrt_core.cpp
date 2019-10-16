@@ -42,10 +42,7 @@ rrtNBV::RrtTree::RrtTree(OctomapGeneratorBase *octomap_generator_)
     : rrtNBV::TreeBase::TreeBase(octomap_generator_)
 {
     srand(time(0)); 
-    //timer.start("[RrtTree]Setup");
     setup();
-    //timer.stop("[RrtTree]Setup");
-
 }
 
 void rrtNBV::RrtTree::setup()
@@ -292,6 +289,16 @@ void rrtNBV::RrtTree::setStateFromOdometryMsg(const nav_msgs::Odometry &pose)
     }
 }
 
+void rrtNBV::RrtTree::clearInspectionPath()
+{
+    visualization_msgs::Marker p;
+    p.header.stamp = ros::Time::now();
+    p.header.frame_id = params_.navigationFrame_;
+    p.type = visualization_msgs::Marker::ARROW;
+    p.action = visualization_msgs::Marker::DELETEALL;  
+    params_.inspectionPath_.publish(p);
+}
+
 bool rrtNBV::RrtTree::iterate(int iterations)
 {
     // In this function a new configuration is sampled and added to the tree.
@@ -489,7 +496,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         ROS_WARN("No option for function. Looking for debug_read_file. Default is ~/map.bt.");
     }
 
-
     if (cellStatus == VoxelStatus::kFree)  // || cellStatus == VoxelStatus::kUnknown)
     {
         if (debugParam)
@@ -532,9 +538,9 @@ bool rrtNBV::RrtTree::iterate(int iterations)
                 newParent->children_.push_back(newNode);
                 // Object found in one view
                 bool objectGainFound = false;
-                timer.start("[RrtTree]iterate_gain");
+                timer.start("[RrtTree]getGain");
                 newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);    
-                timer.stop("[RrtTree]iterate_gain");
+                timer.stop("[RrtTree]getGain");
                 
                 if (newNode->gain_ > bestGain_)
                 {
@@ -560,8 +566,6 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         else 
         {
-            //timer.start("[RrtTree]IterateViewPointEvaluationVariableDefinition");
-
             // Sample the new orientation
             //newState[3] = 2.0 * M_PI * (((double)rand()) / ((double)RAND_MAX));
             newState[3] = 2.0 * M_PI * (((double) rand()) / ((double) RAND_MAX) - 0.5) ;
@@ -580,18 +584,16 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             newParent->children_.push_back(newNode);
             // Object found in one view
             bool objectGainFound = false;
-           // timer.stop("[RrtTree]IterateViewPointEvaluationVariableDefinition");
 
-            timer.start("[RrtTree]iterate_gain");
+            timer.start("[RrtTree]GetGain");
             newNode->gain_ = newParent->gain_ + getGain(newNode->state_, objectGainFound);
-            timer.stop("[RrtTree]iterate_gain");
+            timer.stop("[RrtTree]GetGain");
 
             //ROS_INFO("newParent->gain_:%f", newParent->gain_);
             //ROS_INFO("Branch Gain IS:%f", newNode->gain_);
             //timer.start("[RrtTree]IterateInsertingpoint");
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
             // Display new node
-            ROS_ERROR("iterate NODE");
             publishNode(newNode);
 
             if (objectGainFound)
@@ -600,15 +602,14 @@ bool rrtNBV::RrtTree::iterate(int iterations)
                 oneViewObjectFound = true;
                 if (newNode->gain_ > bestObjectGain_)
                 {
-                    std::cout << " ITERATE, OBJECT FOUND " << std::endl << std::flush;
-                    std::cout << " %%%%%%%%%%%% " << std::endl;
+                    ROS_INFO("ITERATE, OBJECT FOUND");
                     bestObjectGain_ = newNode->gain_;
                     bestObjectNode_ = newNode;
                 }
             }
             else
             {
-                std::cout << " ITERATE- VOLUMETRIC GAIN ONLY  " << std::endl;
+                ROS_INFO("ITERATE- VOLUMETRIC GAIN ONLY");
                 // Update best IG and node if applicable
                 if (newNode->gain_ > bestGain_)
                 {
@@ -635,20 +636,14 @@ bool rrtNBV::RrtTree::iterate(int iterations)
         }
         //ROS_INFO("In Collision, not free!");
     }
-    timer.dump(); 
 
+    //timer.dump(); 
     return false;
 }
-
-
-
-
 
 void rrtNBV::RrtTree::initialize()
 {
     //timer.start("[RrtTree]initializeVariables");
-
-    ROS_INFO("INITIALIZATION");
     // This function is to initialize the tree, including insertion of remainder of previous best branch.
     g_ID_ = 0;
     // Remove last segment from segment list (multi agent only)
@@ -715,7 +710,7 @@ void rrtNBV::RrtTree::initialize()
     params_.rootNodeDebug.publish(poseMsg);
     //timer.stop("[RrtTree]initializeVariables");
 
-    timer.start("[RrtTree]initializBestBranchMemory_");
+    timer.start("[RrtTree]initializBestBranchMemory");
 
     // Insert all nodes of the remainder of the previous best branch, checking for collisions and
     // recomputing the gain.
@@ -767,7 +762,6 @@ void rrtNBV::RrtTree::initialize()
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
 
             // Display new node
-            ROS_ERROR("INITILAIZATION NODE");
             publishNode(newNode);
 
            if (objectGainFound)
@@ -776,16 +770,14 @@ void rrtNBV::RrtTree::initialize()
                 oneViewObjectFound = true;
                 if (newNode->gain_ > bestObjectGain_)
                 {
-                    std::cout << " INITIALAIZE, OBJECT FOUND " << std::endl << std::flush;
-                    std::cout << " ************ " << std::endl << std::flush;
-
+                    ROS_INFO(" INITIALAIZE, OBJECT FOUND ");
                     bestObjectGain_ = newNode->gain_;
                     bestObjectNode_ = newNode;
                 }
             }
             else
             {
-                std::cout << " INITIALAIZE - OBJECT NOT FOUND" << std::endl;
+                 ROS_INFO(" INITIALAIZE - OBJECT NOT FOUND");
                 // std::cout << "  " << std::endl;
                 // Update best IG and node if applicable
                 if (newNode->gain_ > bestGain_)
@@ -795,8 +787,6 @@ void rrtNBV::RrtTree::initialize()
                 }
             }
             counter_++;
-
-
             // Draw the gain number on the branch
             if (debugParam)
             {
@@ -804,13 +794,11 @@ void rrtNBV::RrtTree::initialize()
             }
         }
     }
-    timer.stop("[RrtTree]initializBestBranchMemory_");
-
+    timer.stop("[RrtTree]initializBestBranchMemory");
 }
 
 bool rrtNBV::RrtTree::getObjectFlag()
 {
-    ROS_INFO("*********************************************");
     std::cout << "oneViewObjectFound   " << oneViewObjectFound << std::endl << std::flush;
     return oneViewObjectFound;
 }
@@ -845,18 +833,10 @@ std::vector<geometry_msgs::Pose> rrtNBV::RrtTree::getBestEdge(std::string target
             ret_egde.orientation.z = q[2];
             ret_egde.orientation.w = q[3];
             ret.push_back(ret_egde);
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
 
-            ROS_INFO("ret %f %f %f %f %f %f %f", current->state_[0], current->state_[1],
-                    current->state_[2], q[0], q[1], q[2], q[3]);
-            ROS_INFO("ret size %d", ret.size());
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
-            ROS_INFO("**************************************");
+            ROS_INFO("Best Edge x:%f y:%f z:%f %f %f %f %f size:%f", current->state_[0], current->state_[1],
+                    current->state_[2], q[0], q[1], q[2], q[3],ret.size());
+
             //ret = samplePath(current->parent_->state_, current->state_, targetFrame);
             history_.push(current->parent_->state_);
             exact_root_ = current->state_;
@@ -972,18 +952,13 @@ geometry_msgs::Pose rrtNBV::RrtTree::getBestEdgeDeep(std::string targetFrame)
 
 double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
 {
-
     double gainValue = 0;
     double tic, toc;
     switch (utilityFunction)
     {
     case VOLUMETRIC:
         ROS_INFO("Volumetric");
-        tic = ros::Time::now().toSec();
-        timer.start("[RrtTree]gain_volumetric");
         gainValue = gain_volumetric(state, objectGainFound);
-        timer.stop("[RrtTree]gain_volumetric");
-        toc = ros::Time::now().toSec();
         ROS_INFO("Calculating Gain took:%f", toc - tic);
         break;
     case REAR_SIDE_VOXEL:
@@ -1021,10 +996,7 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
         break;
     case SEMANTIC_VISIBLE_VOXEL:
         ROS_INFO("Semantic Visible Voxels");
-        timer.start("[RrtTree]svv");
         gainValue = gain_svv(state, objectGainFound);
-        timer.stop("[RrtTree]svv");
-
         break;
     case SEMANTIC_OCCLUSION_AWARE:
         ROS_INFO("Semantic Occlusion aware Voxels");
@@ -1052,34 +1024,38 @@ double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
     int i = 0;
-    double tic, toc;
-    double fovCheckTotalTime = 0, cellProbTotalTime = 0, cellVisTotalTime = 0;
+    double minX = std::max(state[0] - params_.gainRange_, params_.minX_); 
+    double maxX = std::min(state[0] + params_.gainRange_, params_.maxX_);
+    double minY = std::max(state[1] - params_.gainRange_, params_.minY_); 
+    double maxY = std::min(state[1] + params_.gainRange_, params_.maxY_);
+    double minZ = std::max(state[2] - params_.gainRange_, params_.minZ_);
+    double maxZ = std::min(state[2] + params_.gainRange_, params_.maxZ_);
     // Iterate over all nodes within the allowed distance
-    timer.start("[RrtTree]ViewEvaluation");
-    for (vec[0] = std::max(state[0] - params_.gainRange_, params_.minX_);
-         vec[0] < std::min(state[0] + params_.gainRange_, params_.maxX_); vec[0] += disc)
+    for (vec[0] = minX; vec[0] < maxX; vec[0] += disc)
     {
-        for (vec[1] = std::max(state[1] - params_.gainRange_, params_.minY_);
-             vec[1] < std::min(state[1] + params_.gainRange_, params_.maxY_); vec[1] += disc)
+        for (vec[1] = minY; vec[1] < maxY; vec[1] += disc)
         {
-            for (vec[2] = std::max(state[2] - params_.gainRange_, params_.minZ_);
-                 vec[2] < std::min(state[2] + params_.gainRange_, params_.maxZ_); vec[2] += disc)
+            for (vec[2] = minZ; vec[2] < maxZ; vec[2] += disc)
             {
+                timer.start("[RrtTree]DistCheck");
                 Eigen::Vector3d dir = vec - origin;
                 // Skip if distance is too large
                 if (dir.transpose().dot(dir) > rangeSq)
                 {
+                    timer.stop("[RrtTree]DistCheck");
                     continue;
                 }
-                ROS_INFO_THROTTLE(1.0,
-                                  " Resolution is:%f vec[0]:%f vec[1]:%f vec[2]:%f gain Range:%f",
-                                  disc, vec[0], vec[1], vec[2], params_.gainRange_);
-                ROS_INFO_THROTTLE(1.0, "   MinX_:%f minY_:%f minZ_:%f maxX_:%f maxY_:%f maxZ_:%f",
-                                  params_.minX_, params_.minY_, params_.minZ_, params_.maxX_,
-                                  params_.maxY_, params_.maxZ_);
+                timer.stop("[RrtTree]DistCheck");
+                // ROS_INFO_THROTTLE(1.0,
+                //                   " Resolution is:%f vec[0]:%f vec[1]:%f vec[2]:%f gain Range:%f",
+                //                   disc, vec[0], vec[1], vec[2], params_.gainRange_);
+                // ROS_INFO_THROTTLE(1.0, "   MinX_:%f minY_:%f minZ_:%f maxX_:%f maxY_:%f maxZ_:%f",
+                //                   params_.minX_, params_.minY_, params_.minZ_, params_.maxX_,
+                //                   params_.maxY_, params_.maxZ_);
                 bool insideAFieldOfView = false;
-                tic = ros::Time::now().toSec();
                 // Check that voxel center is inside one of the fields of view.
+                timer.start("[RrtTree]InboundCheck");
+                ROS_INFO_THROTTLE(1.0,"Cambound Size:%d ",params_.camBoundNormals_.size());
                 for (typename std::vector<std::vector<Eigen::Vector3d>>::iterator itCBN =
                      params_.camBoundNormals_.begin();
                      itCBN != params_.camBoundNormals_.end(); itCBN++)
@@ -1104,77 +1080,52 @@ double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
                         break;
                     }
                 }
-                toc = ros::Time::now().toSec();
-                fovCheckTotalTime += (toc - tic);
+                timer.stop("[RrtTree]InboundCheck");
                 if (!insideAFieldOfView)
                 {
                     continue;
-                }
+                }               
 
                 // Check cell status and add to the gain considering the corresponding factor.
                 double probability;
-                tic = ros::Time::now().toSec();
+
                 timer.start("[RrtTree]getCellProbabilityPoint");
                 VoxelStatus node = manager_->getCellProbabilityPoint(vec, &probability);
                 timer.stop("[RrtTree]getCellProbabilityPoint");
-
-                toc = ros::Time::now().toSec();
-                cellProbTotalTime += (toc - tic);
-                tic = ros::Time::now().toSec();
+                
+                // TODO: Add probabilistic gain
+                timer.start("[RrtTree]getVisibility");
                 if (node == VoxelStatus::kUnknown)
                 {
                     // Rayshooting to evaluate inspectability of cell
-                    timer.start("[RrtTree]getVisibility1");
-
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         gain += params_.igUnmapped_;
-                        // TODO: Add probabilistic gain
-                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-                    timer.stop("[RrtTree]getVisibility1");
-
                 }
                 else if (node == VoxelStatus::kOccupied)
                 {
                     // Rayshooting to evaluate inspectability of cell
-                    timer.start("[RrtTree]getVisibility2");
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         gain += params_.igOccupied_;
-                        // TODO: Add probabilistic gain
-                        //    gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-                    timer.stop("[RrtTree]getVisibility2");
-
                 }
                 else
                 {
-                    timer.start("[RrtTree]getVisibility3");
                     // Rayshooting to evaluate inspectability of cell
                     if (VoxelStatus::kOccupied != this->manager_->getVisibility(origin, vec, false))
                     {
                         gain += params_.igFree_;
-                        // TODO: Add probabilistic gain
-                        // gain += params_.igProbabilistic_ * PROBABILISTIC_MODEL(probability);
                     }
-                    timer.stop("[RrtTree]getVisibility3");
-
                 }
-                toc = ros::Time::now().toSec();
-                cellVisTotalTime += (toc - tic);
+                timer.stop("[RrtTree]getVisibility");
             }
         }
     }
-    timer.stop("[RrtTree]ViewEvaluation");
-
     // Scale with volume
-    gain *= pow(disc, 3.0);
-    //* exp(-params_.degressiveCoeff_ * newNode->distance_);
+    gain *= pow(disc, 3.0);//* exp(-params_.degressiveCoeff_ * newNode->distance_);
     ROS_INFO("GAIN %f ", gain);
-    ROS_INFO_THROTTLE(1.0, "Getting Cell FOV Check took:%f", fovCheckTotalTime);
-    ROS_INFO_THROTTLE(1.0, "Getting Cell Probabilities took:%f", cellProbTotalTime);
-    ROS_INFO_THROTTLE(1.0, "Getting Cell Visibility took:%f", cellVisTotalTime);
     return gain;
 }
 
@@ -2201,9 +2152,7 @@ double rrtNBV::RrtTree::gain_occlusion_aware(StateVec state, bool &objectGainFou
 // Unobserved Voxel. Ref[1] "A comparison of a volumetric information gain metrics for active 3D object reconstruction"
 double rrtNBV::RrtTree::gain_unobserved_voxel(StateVec state, bool &objectGainFound)
 {
-    ROS_INFO("UNOBSERVED VOXEL "
-             "*************************************************************************************"
-             "*******");
+    ROS_INFO("UNOBSERVED VOXEL ");
     // gain variables
     double gain = 0.0;
     double gainUnknown = 0.0;
@@ -3276,6 +3225,7 @@ void rrtNBV::RrtTree::clear()
 
 void rrtNBV::RrtTree::publishNode(Node *node)
 {
+    //visualization_msgs::Marker::DELETEALL
     visualization_msgs::Marker p;
     p.header.stamp = ros::Time::now();
     p.header.seq = g_ID_;
@@ -3301,7 +3251,7 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     p.color.g = 167.0 / 255.0;;
     p.color.b = 0.0;  // blue
     p.color.a = 1.0;
-    p.lifetime = ros::Duration(50);
+    p.lifetime = ros::Duration(100);
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
 
@@ -3336,10 +3286,9 @@ void rrtNBV::RrtTree::publishNode(Node *node)
     p.color.g = 100.0 / 255.0;;
     p.color.b = 0.7;
     p.color.a = 1.0;
-    p.lifetime = ros::Duration(50);
+    p.lifetime = ros::Duration(100);
     p.frame_locked = false;
     params_.inspectionPath_.publish(p);
-
 
     if (params_.log_)
     {
