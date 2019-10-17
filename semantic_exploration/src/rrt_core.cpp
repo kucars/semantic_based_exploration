@@ -595,6 +595,7 @@ bool rrtNBV::RrtTree::iterate(int iterations)
             kd_insert3(kdTree_, newState.x(), newState.y(), newState.z(), newNode);
             // Display new node
             publishNode(newNode);
+            sleep(5);
 
             if (objectGainFound)
             {
@@ -1012,6 +1013,92 @@ double rrtNBV::RrtTree::getGain(StateVec state, bool &objectGainFound)
     return gainValue;
 }
 
+void rrtNBV::RrtTree::drawGainArea(StateVec state,double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+{
+    clearInspectionPath();
+    visualization_msgs::Marker p;
+    p.header.stamp = ros::Time::now();
+    p.header.seq = 0;
+    p.header.frame_id = params_.navigationFrame_;
+    p.id = 0;
+    p.ns = "gain_area";
+    p.type = visualization_msgs::Marker::CUBE;
+    p.action = visualization_msgs::Marker::ADD;
+    p.pose.position.x = 0.5 * (minX + maxX);
+    p.pose.position.y = 0.5 * (minY + maxY);
+    p.pose.position.z = 0.5 * (minZ + maxZ);
+    tf::Quaternion quat;
+    quat.setEuler(0.0, 0.0, state[3]);
+    p.pose.orientation.x = quat.x();
+    p.pose.orientation.y = quat.y();
+    p.pose.orientation.z = quat.z();
+    p.pose.orientation.w = quat.w();
+    p.scale.x = maxX - minX;
+    p.scale.y = maxY - minY;
+    p.scale.z = maxZ - minZ;
+    p.color.r = static_cast<float>(100.0 / 255.0);
+    p.color.g = static_cast<float>(50.0 / 255.0);
+    p.color.b = 0.0f;
+    p.color.a = 0.3f;
+    p.lifetime = ros::Duration();
+    p.frame_locked = false;
+    params_.inspectionPath_.publish(p);
+
+    visualization_msgs::Marker llp;
+    llp.header.stamp = ros::Time::now();
+    llp.header.seq = g_ID_;
+    llp.header.frame_id = params_.navigationFrame_;
+    llp.id = g_ID_;
+    g_ID_++;
+    llp.ns = "vp_point";
+    llp.type = visualization_msgs::Marker::ARROW;
+    llp.action = visualization_msgs::Marker::ADD;
+    llp.pose.position.x = minX;
+    llp.pose.position.y = minY;
+    llp.pose.position.z = minZ;
+    llp.pose.orientation.x = quat.x();
+    llp.pose.orientation.y = quat.y();
+    llp.pose.orientation.z = quat.z();
+    llp.pose.orientation.w = quat.w();
+    llp.scale.x = 0.2;
+    llp.scale.y = 0.1;
+    llp.scale.z = 0.1;
+    llp.color.r = 255.0;
+    llp.color.g = 0.0;
+    llp.color.b = 0.0;
+    llp.color.a = 1.0;
+    llp.lifetime = ros::Duration(100);
+    llp.frame_locked = false;
+    params_.inspectionPath_.publish(llp);  
+
+    visualization_msgs::Marker trp;
+    trp.header.stamp = ros::Time::now();
+    trp.header.seq = g_ID_;
+    trp.header.frame_id = params_.navigationFrame_;
+    trp.id = g_ID_;
+    g_ID_++;
+    trp.ns = "vp_point";
+    trp.type = visualization_msgs::Marker::ARROW;
+    trp.action = visualization_msgs::Marker::ADD;
+    trp.pose.position.x = maxX;
+    trp.pose.position.y = maxY;
+    trp.pose.position.z = maxZ;
+    trp.pose.orientation.x = quat.x();
+    trp.pose.orientation.y = quat.y();
+    trp.pose.orientation.z = quat.z();
+    trp.pose.orientation.w = quat.w();
+    trp.scale.x = 0.2;
+    trp.scale.y = 0.1;
+    trp.scale.z = 0.1;
+    trp.color.r = 255.0;
+    trp.color.g = 0.0;
+    trp.color.b = 0.0;
+    trp.color.a = 1.0;
+    trp.lifetime = ros::Duration(100);
+    trp.frame_locked = false;
+    params_.inspectionPath_.publish(trp); 
+}
+
 // volumetric information using rrt package
 double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
 {
@@ -1024,12 +1111,35 @@ double rrtNBV::RrtTree::gain_volumetric(StateVec state, bool &objectGainFound)
     Eigen::Vector3d vec;
     double rangeSq = pow(params_.gainRange_, 2.0);
     int i = 0;
-    double minX = std::max(state[0] - params_.gainRange_, params_.minX_); 
-    double maxX = std::min(state[0] + params_.gainRange_, params_.maxX_);
-    double minY = std::max(state[1] - params_.gainRange_, params_.minY_); 
-    double maxY = std::min(state[1] + params_.gainRange_, params_.maxY_);
+    double x = -params_.gainRange_;
+    double y = 0;
+
+    double tllx = state[0] + x*cos(state[3]) - y*sin(state[3]);
+    double tlly = state[1] + x*sin(state[3]) + y*cos(state[3]);
+
+    x = params_.gainRange_;
+    y = params_.gainRange_;
+
+    double ttrx = state[0] + x*cos(state[3]) - y*sin(state[3]);
+    double ttry = state[1] + x*sin(state[3]) + y*cos(state[3]);
+
+
+    double minX = tllx; 
+    double maxX = ttrx;
+    double minY = tlly; 
+    double maxY = ttry;
+
+/*
+    double minX = std::max(tllx, params_.minX_); 
+    double maxX = std::min(ttrx, params_.maxX_);
+    double minY = std::max(tlly, params_.minY_); 
+    double maxY = std::min(ttry, params_.maxY_);
+*/
     double minZ = std::max(state[2] - params_.gainRange_, params_.minZ_);
     double maxZ = std::min(state[2] + params_.gainRange_, params_.maxZ_);
+
+    drawGainArea(state, minX, minY, minZ, maxX, maxY, maxZ);
+
     // Iterate over all nodes within the allowed distance
     for (vec[0] = minX; vec[0] < maxX; vec[0] += disc)
     {

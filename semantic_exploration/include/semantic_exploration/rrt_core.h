@@ -60,6 +60,7 @@ class RrtTree : public TreeBase
     void publishDebugStatus(StateVec node , int status) ;
 
     double getGain(StateVec state, bool &objectGainFound);
+    void drawGainArea(StateVec state,double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
     double gain_volumetric(StateVec state,
                            bool &objectGainFound);            // Volumetric Infromation Ref [2] RRT
     double gain_rsvs(StateVec state, bool &objectGainFound);  // Rear side voxel - Ref[1]
