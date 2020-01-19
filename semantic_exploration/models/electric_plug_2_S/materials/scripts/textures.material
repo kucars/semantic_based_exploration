@@ -1,0 +1,15 @@
+material Electric/Plug2S
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture s2.png
+	scale 1 1
+      }
+    }
+  }
+}
+

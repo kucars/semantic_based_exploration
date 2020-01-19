@@ -1,0 +1,15 @@
+material Electric/Plug3M
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture 3m.png
+	scale 1 1
+      }
+    }
+  }
+}
+

@@ -72,10 +72,10 @@ debug_write_file: "/home/reem/catkin_ws/map1.ot"
 debug_read_file: "/home/reem/catkin_ws/map.bt"
 
 # Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -7.0 #-10.0  
-bbx/maxX: 2.8 #10.0
-bbx/minY: -1.8 #-10.0
-bbx/maxY: 6.5 #6.6 #10.0
+bbx/minX: -10.0 #-7.0 #-10.0  
+bbx/maxX: 0.0 #2.8 #10.0
+bbx/minY: -10.0 #-1.8 #-10.0
+bbx/maxY: -2.0 #6.5 #6.6 #10.0
 bbx/minZ: -0.1
 bbx/maxZ: 2.5 #3.0
 bbx/softBounds: false

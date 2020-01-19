@@ -1,0 +1,15 @@
+material Electric/Plug1N
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture n1.png
+	scale 1 1
+      }
+    }
+  }
+}
+
