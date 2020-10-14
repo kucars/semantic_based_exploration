@@ -7,8 +7,8 @@
 #include <semantic_exploration/GetDroneState.h>
 #include <semantic_exploration/rrt_planner.h>
 #include <semantic_exploration/rrt_tree.h>
-#include <semantic_cloud/GetSemanticColoredLabels.h>
-#include <semantic_cloud/SemanticColoredLabels.h>
+#include <semantic_hazard_cloud/GetSemanticColoredLabels.h>
+#include <semantic_hazard_cloud/SemanticColoredLabels.h>
 
 #include <std_srvs/Empty.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
@@ -185,13 +185,13 @@ rrtNBV::RRTPlanner::~RRTPlanner()
 
 void rrtNBV::RRTPlanner::getSemanticLabelledColors()
 {
-    semantic_cloud::GetSemanticColoredLabels getSemanticColoredLabels;
+    semantic_hazard_cloud::GetSemanticColoredLabels getSemanticColoredLabels;
     ROS_INFO("Getting Semantic Colored Labels");
 
     ros::service::waitForService("get_semantic_colored_labels",ros::Duration(5.0));
     if(ros::service::call("get_semantic_colored_labels", getSemanticColoredLabels))
     {
-        semantic_cloud::SemanticColoredLabels res = getSemanticColoredLabels.response.semantic_colored_labels;
+        semantic_hazard_cloud::SemanticColoredLabels res = getSemanticColoredLabels.response.semantic_colored_labels;
         int j = 0 ; 
         for(auto i = res.semantic_colored_labels.begin(); i != res.semantic_colored_labels.end(); i++ )
         {
