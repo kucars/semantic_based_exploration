@@ -120,7 +120,11 @@ ExplorationPlanner::ExplorationPlanner(const ros::NodeHandle &nh, const ros::Nod
             nh_.advertise<geometry_msgs::PoseStamped>("semantic_exploration_viewpoint", 10);
     
     //TODO: make this a parameter and make it global
-    bool use_gazebo_ground_truth_ = true;
+    bool use_gazebo_ground_truth_ = false;
+    if(!ros::param::get("/system/localization/use_gazebo_ground_truth", use_gazebo_ground_truth_)){
+        ROS_WARN("Could not get param  /system/localization/use_gazebo_ground_truth . Setting default to true");
+        use_gazebo_ground_truth_ = true;
+    }
 
     // Either use perfect positioning from gazebo, or get the px4 estimator position through mavros
     if (use_gazebo_ground_truth_)
