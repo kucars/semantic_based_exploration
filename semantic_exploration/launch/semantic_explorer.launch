@@ -1,67 +1,71 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="screen" default="screen"/>
     <arg name="subscript" default="" />
     <arg name="enable_logging" default="false" />
-    <arg name="enable_ground_truth" default="true" />
-    <arg name="param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
+    <!-- Whether to use perfect gazebo position of PX4 LPE/EKF2 Position  -->
+    <arg name="use_gazebo_ground_truth" value="true"/>
+    <arg name="explorer_param_file" default="$(find semantic_exploration)/config/semantic_exploration.yaml" />
 
-    <arg name="x" default="0.0"/> <!-- 9 , 5 , 0.12    (0,1)(-4,5) (-6, 0)--> <!--7,4 for the large env -->
-    <arg name="y" default="0.0"/>
+    <!-- Position of drone in Gazebo wrold coordinates-->
+    <arg name="x" default="-4.0"/>
+    <arg name="y" default="-7.0"/>
     <arg name="z" default="0.25"/>
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>
     <arg name="Y" default="1.57079632679"/>
 
-    <!-- Whether to use perfect gazebo position of PX4 LPE/EKF2 Position  -->
-    <arg name="use_gazebo_ground_truth" default="true"/>
+    
 
-    <!-- Ros transformation -->
+    <!-- Ros transformation between Gazebo world frame and PX4 local_origin frame (when Gazebo ground truth position is used)-->
     <node pkg="tf" type="static_transform_publisher" name="tf_local_origin"
-    args="$(arg x) $(arg y) $(arg z) 0 0 0 world local_origin 100"/>
+    args="$(arg x) $(arg y) $(arg z) 0 0 0 world local_origin 100" if="$(arg use_gazebo_ground_truth)"/>
+    
+    <!-- Ros transformation between Gazebo world frame and PX4 local_origin frame (when PX4 local position is used)-->
+    <node pkg="tf" type="static_transform_publisher" name="tf_local_origin"
+    args="0 0 $(arg z) 0 0 0 world local_origin 100" unless="$(arg use_gazebo_ground_truth)"/>
 
+    <!-- Ros transformation between Gazebo-based Odom frame and camera_link frame (when Gazebo ground truth position is used)-->
     <node pkg="tf" type="static_transform_publisher" name="tf_camera"
-    args="0.1 0 0.1 -1.57 0 -1.57 odom camera_link 100"/>
+    args="0.1 0 0.1 -1.57 0 -1.57 odom camera_link 100" if="$(arg use_gazebo_ground_truth)"/>
+
+    <!-- Ros transformation between PX4 FCU frame and camera_link frame (when PX4 local position is used)-->
+    <node pkg="tf" type="static_transform_publisher" name="tf_camera"
+    args="0.1 0 0.1 -1.57 0 -1.57 fcu camera_link 100" unless="$(arg use_gazebo_ground_truth)"/>
 
     <!-- vehicle model and world -->
-    <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris_depth_camera"/>
-    <!--arg name="world" default="$(find semantic_exploration)/worlds/test_semantic_color.world"/-->
-    <!--arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects.world"/-->
-    <arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects_small.world"/>
-    <!--arg name="world" default="$(find semantic_exploration)/worlds/texture_world_with_objects_small_unique_obj.world"/-->
-    <!--arg name="world" default="$(find semantic_exploration)/worlds/worlds/office_earthquake.world"/-->
-    <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/iris"/>
+    <arg name="sdf" default="$(find semantic_exploration)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+    <arg name="world" default="$(find semantic_exploration)/worlds/test_world.world"/>
 
     <param name="use_sim_time" value="true" />
 
-    <arg name="headless" default="true"/>
+    <!-- MAVROS configs -->
     <arg name="ns" default="/"/>
-    <arg name="build" default="posix_sitl_default"/>
     <arg name="gcs_url" default="" />   <!-- GCS link is provided by SITL -->
     <arg name="tgt_system" default="1" />
     <arg name="tgt_component" default="1" />
+    <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+    <arg name="respawn_mavros" default="false"/>
 
     <!-- gazebo configs -->
+    <arg name="headless" default="true"/>
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="false"/>
     <arg name="respawn_gazebo" default="false"/>
+    
 
-    <!-- MAVROS configs -->
-    <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
-    <arg name="respawn_mavros" default="false"/>
-
-    <!-- PX4 configs -->
+    <!-- PX4 SITL configs -->
+    <arg name="est" default="ekf2"/>
     <arg name="interactive" default="true"/>
     <arg name="ID" default="0"/>
-
     <env name="PX4_SIM_MODEL" value="$(arg vehicle)" />
     <env name="PX4_ESTIMATOR" value="$(arg est)" />
-    <!-- PX4 SITL -->
     <arg unless="$(arg interactive)" name="px4_command_arg1" value="-d"/>
     <arg     if="$(arg interactive)" name="px4_command_arg1" value=""/>
-    <node name="sitl" pkg="px4" type="px4" output="screen" args="$(find px4) $(arg rcS) $(arg px4_command_arg1)" required="true"/>
+    <!-- PX4 SITL -->
+    <node name="sitl" pkg="px4" type="px4" output="screen"
+        args="$(find px4)/ROMFS/px4fmu_common -s etc/init.d-posix/rcS $(arg px4_command_arg1)" required="true"/>
 
     <!-- Launch MavROS -->
     <group ns="$(arg ns)">
@@ -82,18 +86,18 @@
         <arg name="gui" value="$(arg gui)"/>
         <arg name="paused" value="false"/>
         <arg name="world_name" value="$(arg world)" />
+        <arg name="verbose" value=" false" />
     </include>
 
-    <!-- Spawn vehicle model -->
-    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen"
-        args="-sdf -database $(arg vehicle) -model iris -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)">
-    </node>
+    <!-- Spawn vehicle Gazebo model -->
+    <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
 
-    <!--arg name="pcl_topic" default="/camera/depth/points" /-->
+    <!-- Semantic pointcloud topic -->
     <arg name="pcl_topic" default="/semantic_pcl/semantic_pcl"/>
     <arg name="stl_file_path" default="" />
 
-    <rosparam command="load" file="$(arg param_file)" />
+    <!-- RRT planner -->
+    <rosparam command="load" file="$(arg explorer_param_file)" />
     <node pkg="semantic_exploration" name="rrt_planner" type="rrt_planner" output="screen">
         <param name="stl_file_path" type="string" value="$(arg stl_file_path)" />
         <remap from="pointcloud_throttled" to="$(arg pcl_topic)"/>
@@ -101,63 +105,61 @@
         <remap from="semantic_exploration" to="/semantic_exploration"/>
     </node>
 
+    <!-- Semantic pointcloud -->
     <rosparam file="$(find semantic_exploration)/config/semantic_cloud.yaml" command="load"/>
-    <node pkg="semantic_cloud" type="semantic_labelling.py" name="semantic_cloud" output="screen" />
-
-    <!--node pkg="semantic_exploration" name="drone_commander" type="drone_commander"/-->
-
-    <!--node pkg="orb_slam2" type="rgbd" name="rgbd" output="screen" args="$(find orb_slam2)../../../Vocabulary/ORBvoc.txt $(find semantic_exploration)/config/orb_slam.yaml"/>
-    <node pkg="topic_tools" type="relay" name="depth_registered_relay" args="/camera/depth/image_raw /camera/depth_registered/image_raw" /-->
+    <node pkg="semantic_hazard_cloud" type="semantic_labelling.py" name="semantic_cloud" output="screen">
+        <param name="gen_pcl" value="True" />
+    </node>
     
+
+    <!-- RVIZ-->
+    <group if="$(arg use_gazebo_ground_truth)">
+        <!-- Send transformation between the gazebo ground truth and world -->
+        <node pkg="semantic_exploration" name="send_transform" type="send_transform.py" output="screen"/>
+        <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic_simulation.rviz"/>
+    </group>
+
+    <group unless="$(arg use_gazebo_ground_truth)">
+        <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic.rviz"/>
+    </group>
+
+    <!-- Exploration node -->
+    <node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/>
+
+
+    <!-- Geometric controller -->    
     <arg name="command_input" default="2" />
-    <arg name="gazebo_simulation" default="true" />
-    <arg name="enable_gazebo_state" default="true" />
-    <arg name="mav_name" default="iris"/>
-    
-    <!--group ns="$(arg ns)"-->
+    <arg name="gazebo_simulation" default="true" /> <!-- True: will enable automatic arming and OFFBOARD mode -->
+    <arg name="enable_gazebo_state" value="$(arg use_gazebo_ground_truth)" /> <!-- True vs. PX4 position estimate -->
+    <node pkg="geometric_controller" type="geometric_controller_node" name="geometric_controller">
+        <remap from="command/bodyrate_command" to="/mavros/setpoint_raw/attitude"/>
+        <param name="mavname" type="string" value="$(arg vehicle)" />
+        <param name="ctrl_mode" value="$(arg command_input)" />
+        <param name="enable_sim" value="$(arg gazebo_simulation)" />
+        <param name="enable_gazebo_state" value="$(arg enable_gazebo_state)"/>
+        <param name="max_acc" value="3.0"/>
+        <param name="attctrl_constant" value="0.3"/>
+        <param name="normalizedthrust_constant" value="0.06"/>
+        <param name="Kp_x" value="8.0"/>
+        <param name="Kp_y" value="8.0"/>
+        <param name="Kp_z" value="32.0"/>
+        <param name="Kv_x" value="3.0"/>
+        <param name="Kv_y" value="3.0"/>
+        <param name="Kv_z" value="10.0"/>
+        <param name="frame_id" type="string" value="local_origin" />
+        <!-- FOR SIM -->
+        <param name="vel_topic" value="/mavros/local_position/velocity_local"/>
+    </node>
 
-        <group if="$(arg use_gazebo_ground_truth)">
-            <!-- Send transformation between the gazebo ground truth and world -->
-            <node pkg="semantic_exploration" name="send_transform" type="send_transform.py" output="$(arg screen)"/>
-            <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic_simulation.rviz"/>
-        </group>
+    <node name="waypoint_navigator_node" pkg="waypoint_navigator" type="waypoint_navigator_node"  respawn="true" clear_params="true" output="screen">
+        <rosparam file="$(find waypoint_navigator)/paths/trajectory_simple_enu.yaml"/>
+        <param name="mav_name" type="string" value="$(arg vehicle)" />
+        <param name="frame_id" type="string" value="local_origin" />
+        <param name="enable_gazebo_state" value="$(arg enable_gazebo_state)"/>
+        <remap from="odometry" to="mavros/local_position/odom" unless="$(arg use_gazebo_ground_truth)"/>
+    </node>
 
-        <group unless="$(arg use_gazebo_ground_truth)">
-            <node pkg="rviz" type="rviz" name="rviz" args="-d $(find semantic_exploration)/rviz/semantic.rviz"/>
-        </group>
+    <node name="trajectory_sampler" pkg="mav_trajectory_generation_ros" type="trajectory_sampler_node" output="screen" />
 
-        <node pkg="semantic_exploration" name="exploration_planner_node" type="exploration_planner_node" output="screen"/>
-
-        <node pkg="geometric_controller" type="geometric_controller_node" name="geometric_controller">
-            <param name="mav_name" type="string" value="$(arg mav_name)" />
-            <param name="ctrl_mode" value="$(arg command_input)" />
-            <param name="enable_sim" value="$(arg gazebo_simulation)" />
-            <param name="enable_gazebo_state" value="$(arg enable_gazebo_state)"/>
-            <param name="max_acc" value="3.0"/>
-            <param name="attctrl_constant" value="0.3"/>
-            <param name="normalizedthrust_constant" value="0.06"/>
-            <param name="Kp_x" value="8.0"/>
-            <param name="Kp_y" value="8.0"/>
-            <param name="Kp_z" value="32.0"/>
-            <param name="Kv_x" value="3.0"/>
-            <param name="Kv_y" value="3.0"/>
-            <param name="Kv_z" value="10.0"/>
-            <param name="yaw_heading" value="0"/>
-            <param name="frame_id" type="string" value="local_origin" />
-            <!-- FOR SIM -->
-            <param name="vel_topic" value="/mavros/local_position/velocity_local"/>
-        </node>
-
-        <node name="waypoint_navigator_node" pkg="waypoint_navigator" type="waypoint_navigator_node"  respawn="true" clear_params="true" output="screen">
-            <rosparam file="$(find waypoint_navigator)/paths/trajectory_simple_enu.yaml"/>
-            <param name="mav_name" type="string" value="$(arg mav_name)" />
-            <param name="frame_id" type="string" value="local_origin" />
-            <param name="enable_gazebo_state" value="$(arg enable_gazebo_state)"/>
-            <remap from="odometry" to="mavros/local_position/odom" />
-        </node>
-
-        <node name="trajectory_sampler" pkg="mav_trajectory_generation_ros" type="trajectory_sampler_node" output="screen" />
-
-  <!--/group-->
 
 </launch>
