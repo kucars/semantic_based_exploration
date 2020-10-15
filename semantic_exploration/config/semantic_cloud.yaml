@@ -1,4 +1,7 @@
 # Camera intrinsic matrix parameters (OpenCV)
+
+home_directory: "/home/arrow"
+
 camera:
   #fx: 544.771755
   #fy: 546.966312
@@ -19,13 +22,21 @@ semantic_pcl:
   color_image_topic: "/camera/rgb/image_raw"
   #depth_image_topic: "/camera/depth_registered/image_raw"
   depth_image_topic: "/camera/depth/image_raw"
-  # point_type: 0 = color; 1 = SEMANTICS_MAX; 2 = SEMANTICS_BAYESIAN
-  point_type: 1
   frame_id: "camera_link"
-  dataset: "ade20k" # ade20k
-  model_path: "/home/aaal/catkin_ws/src/semantic_cloud/models_trained/pspnet_50_ade20k.pth"
-  #model_path: "/home/reem/Desktop/semantic_pre_trained_models/pspnet_50_ade20k.pth"
-  throttle_rate: 1 # 1/val in hz 
-  #dataset: "sunrgbd" # sunrgbd
-  #model_path: "/home/tataha/Downloads/semantic_trained_model/pspnet_sunrgbd_best_model180625_5k.pth"
+  dataset: "kucarsRisk" 
+  model_path: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/models_trained/path_to_checkpoints_model.h5"
+  model_json_path: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/models_trained/path_to_checkpoints_config.json"
+  checkpoints_path: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/models_trained/"
+  throttle_rate: 0.5 # 1/val in hz 
   real_sense: false
+
+model_params:
+  test_image_path_input: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/test_images/frame0020.jpg"
+  test_image_path_output: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/test_images/outFrame0020.png"
+  test_image_path_output_folder: "/home/arrow/catkin_ws/src/semantic_hazard_cloud/test_images_folder/"
+  model_input_height: 480
+  model_input_width: 640
+  model_output_height: 240
+  model_output_width: 320
+  model_n_classes: 7
+  model_checkpoints_path:  "/home/arrow/catkin_ws/src/semantic_hazard_cloud/models_trained/path_to_checkpoints"

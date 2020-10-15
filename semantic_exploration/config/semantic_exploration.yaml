@@ -2,12 +2,12 @@
 # Octomap Generator
 #####################
 octomap:
-    pointcloud_topic: "/semantic_pcl/semantic_pcl"
+    pointcloud_topic: "/semantic_pcl/semantic_pcl" 
     #pointcloud_topic: "/camera/depth/points"
     #tree_type: COLOR_OCTREE 0 SEMANTICS_OCTREE_MAX 1 SEMANTICS_OCTREE_BAYESIAN 2
     tree_type: 1
     world_frame_id: "world"
-    resolution: 0.15
+    resolution: 0.15 #0.15
     max_range: 5.0
     raycast_range: 3.0
     clamping_thres_min: 0.12
@@ -15,8 +15,8 @@ octomap:
     occupancy_thres: 0.5
     prob_hit: 0.7
     prob_miss: 0.4
-    #save_path : "/home/reem/catkin_ws/map.bt"
-    save_path : "/home/aaal/map.bt"
+    save_path : "/home/arrow/catkin_ws/src/semantic_based_exploration/map.bt"
+    #save_path : "~/map.bt"
 
 #####################
 # System Related Parameters
@@ -27,9 +27,9 @@ system/dyaw_max: 0.5
 system/camera/pitch: [0.0] #sensor_pitch: 0.0
 system/camera/horizontal: [60.0] #sensor_hor_fov: 60
 system/camera/vertical: [45.0] #sensor_ver_fov: 45
-system/bbx/x: 0.25 #0.1 
-system/bbx/y: 0.25 #0.1
-system/bbx/z: 0.25 #0.1
+system/bbx/x: 0.3 #0.1 
+system/bbx/y: 0.3 #0.1
+system/bbx/z: 0.3 #0.1
 system/bbx/overshoot: 0.5
 system/localization/use_gazebo_ground_truth: true
 
@@ -57,8 +57,8 @@ nbvp/dt: 0.1
 # Exploration Loop: exploration_planner_node.cpp
 exploration/log/on: true
 exploration/dt: 2.0
-exploration/num_iterations: 120
-exploration/drone_arrival_duration: 3
+exploration/num_iterations: 500
+exploration/drone_arrival_duration: 5
 
 
 # Logging Parameters
@@ -68,24 +68,47 @@ nbvp/debug: false
 
 debug_save_state: false  
 debug_load_state: false
-#debug_write_file: "/home/reem/catkin_ws/map1.ot"
-#debug_read_file: "/home/reem/catkin_ws/map.bt"
-debug_write_file: "/home/aaal/catkin_ws/map1.ot"
-debug_read_file: "/home/aaal/catkin_ws/map.bt"
+debug_write_file: "/home/arrow/catkin_ws/src/semantic_based_exploration/map1.ot"
+debug_read_file: "/home/arrow/catkin_ws/src/semantic_based_exploration/map.bt"
 
-# Exploration Area for the manual Generated Area (CAD)
-bbx/minX: -7.0 #-10.0  
-bbx/maxX: 2.8 #10.0
-bbx/minY: -1.8 #-10.0
-bbx/maxY: 6.5 #6.6 #10.0
+# Exploration Area given PX4-based positioning 
+# bbx/minX: -6 #-10 # -7.0 #-10.0  
+# bbx/maxX: 4.5 #0 #2.8 #10.0
+# bbx/minY: -3.5 #-10 #-1.8 #-10.0
+# bbx/maxY: 6 #-2 #6.5 #6.6 #10.0
+# bbx/minZ: -0.1
+# bbx/maxZ: 2.5 #3.0
+# bbx/softBounds: false
+
+# Exploration Area given ground truth positioning from Gazebo 
+bbx/minX: -10
+bbx/maxX: 0
+bbx/minY: -10
+bbx/maxY: -2
 bbx/minZ: -0.1
-bbx/maxZ: 2.5 #3.0
+bbx/maxZ: 2.5
 bbx/softBounds: false
 
 ############
 ## Octomap Manager settings
 ############
 tf_frame: "world"
+robot_frame: "base_point_cloud"
+resolution: 0.15
+mesh_resolution: 1.0
+visualize_max_z: 5.0
+sensor_max_range: 8.0
+map_publish_frequency: 0.2
+probability_hit: 0.7
+probability_miss: 0.4
+threshold_min: 0.12
+threshold_max: 0.97
+threshold_occupancy: 0.7
+treat_unknown_as_occupied: false
+latch_topics: false
+max_free_space: 0
+min_height_free_space: 0
+change_detection_enabled: false
 objects_of_interest: ["person","desk","cabinet","sofa","vase","stove","bed","chair","table"]
 #objects_of_interest: ["person"]
 
@@ -97,10 +120,8 @@ num_of_visits_threshold: 3
 /beta_gain: 0.7
 
 /orientation_flag: false
-#/nbv_serialization_file: "/home/reem/catkin_ws/nbv_serialization.dat"
-#/orientation_debugging_file: "/home/reem/catkin_ws/orientationDebugging.txt"
-/nbv_serialization_file: "/home/aaal/catkin_ws/nbv_serialization.dat"
-/orientation_debugging_file: "/home/aaal/catkin_ws/orientationDebugging.txt"
+/nbv_serialization_file: "/home/arrow/catkin_ws/src/semantic_based_exploration/nbv_serialization.dat"
+/orientation_debugging_file: "/home/arrow/catkin_ws/src/semantic_based_exploration/orientationDebugging.txt"
 /number_of_orientation_intervals: 6.0
 
 # Planning Methods
@@ -120,4 +141,5 @@ num_of_visits_threshold: 3
 /utility/method: 0
 /output/file/name: "0.csv"
 /output/objects/file/name: "0Objects.csv"
+/output/risk/objects/file/name: "risk.csv"
 /logging_iteration: 1
