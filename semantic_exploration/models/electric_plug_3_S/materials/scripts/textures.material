@@ -1,0 +1,15 @@
+material Electric/Plug3S
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture s3.png
+	scale 1 1
+      }
+    }
+  }
+}
+

@@ -1,0 +1,15 @@
+material Gas/Gas2N
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture 2g.png
+	scale 1 1
+      }
+    }
+  }
+}
+

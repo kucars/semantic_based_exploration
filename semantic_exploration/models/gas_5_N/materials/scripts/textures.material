@@ -1,0 +1,15 @@
+material Gas/Gas5N
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture 5g.png
+	scale 1 1
+      }
+    }
+  }
+}
+

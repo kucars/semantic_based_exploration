@@ -1,0 +1,15 @@
+material Electric/Plug4S
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture s4.png
+	scale 1 1
+      }
+    }
+  }
+}
+

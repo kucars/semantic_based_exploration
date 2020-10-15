@@ -1,0 +1,15 @@
+material Fire/Fire4
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture f4.png
+	scale 3 1
+      }
+    }
+  }
+}
+

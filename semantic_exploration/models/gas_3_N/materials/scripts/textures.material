@@ -1,0 +1,15 @@
+material Gas/Gas3N
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture 3g.png
+	scale 1 1
+      }
+    }
+  }
+}
+

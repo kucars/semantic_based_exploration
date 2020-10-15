@@ -1,0 +1,15 @@
+material fire/fire1
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture 5f.png
+	scale 1 1
+      }
+    }
+  }
+}
+
