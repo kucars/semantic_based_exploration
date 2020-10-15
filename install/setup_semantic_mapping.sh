@@ -1,6 +1,10 @@
 #!/bin/bash
+# Created by Mohamed Abdelkader, Oct 14th, 2020
 
-read -p "Enter user password please: " -s pass
+pass="arrow"
+if [ "$#" -ne 1 ]; then
+    read -p "Enter user password please: " -s pass
+fi
 
 CATKIN_WS=${HOME}/catkin_ws
 CATKIN_SRC=${HOME}/catkin_ws/src
