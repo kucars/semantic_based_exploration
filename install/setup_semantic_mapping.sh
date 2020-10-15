@@ -5,6 +5,13 @@ read -p "Enter user password please: " -s pass
 CATKIN_WS=${HOME}/catkin_ws
 CATKIN_SRC=${HOME}/catkin_ws/src
 
+# Install some packages from binaries
+echo $pass | sudo -S apt-get install -y ros-$ROS_DISTRO-tf-conversions ros-$ROS_DISTRO-octomap ros-$ROS_DISTRO-octomap-ros ros-$ROS_DISTRO-rviz-visual-tools
+# Required for minkindr
+echo $pass | sudo -S apt-get install -y ros-$ROS_DISTRO-tf-conversions
+# Useful pkgs
+echo $pass | sudo -S apt-get install -y ros-$ROS_DISTRO-rqt-tf-tree ros-$ROS_DISTRO-rqt-graph
+
 if [ ! -d "$CATKIN_WS"]; then
 	echo "Creating $CATKIN_SRC ... "
 	mkdir -p $CATKIN_SRC
@@ -171,9 +178,6 @@ else
     git pull
     cd ../ 
 fi
-# Required for minkindr
-echo $pass | sudo -S apt-get install -y ros-$ROS_DISTRO-tf-conversions
-
 
 #Adding mavros_controllers
 if [ ! -d "$CATKIN_SRC/geometric_controller" ]; then
@@ -224,20 +228,19 @@ else
     git pull
 fi
 
-echo $pass | sudo -S apt-get install -y ros-$ROS_DISTRO-tf-conversions ros-$ROS_DISTRO-octomap ros-$ROS_DISTRO-octomap-ros ros-$ROS_DISTRO-rviz-visual-tools
 
 #Adding semantic_based_exploration
-if [ ! -d "$CATKIN_SRC/semantic_based_exploration" ]; then
-    echo "Cloning the semantic_based_exploration repo ..."
-    cd $CATKIN_SRC
-    git clone https://github.com/kucars/semantic_based_exploration.git
-    cd semantic_based_exploration
-    git checkout pre_release
-else
-    echo "semantic_based_exploration already exists. Just pulling ..."
-    cd $CATKIN_SRC/semantic_based_exploration
-    git pull
-fi
+# if [ ! -d "$CATKIN_SRC/semantic_based_exploration" ]; then
+#     echo "Cloning the semantic_based_exploration repo ..."
+#     cd $CATKIN_SRC
+#     git clone https://github.com/kucars/semantic_based_exploration.git
+#     cd semantic_based_exploration
+#     git checkout pre_release
+# else
+#     echo "semantic_based_exploration already exists. Just pulling ..."
+#     cd $CATKIN_SRC/semantic_based_exploration
+#     git pull
+# fi
 
 # Build
 cd $CATKIN_WS
@@ -245,3 +248,26 @@ catkin build minkindr
 catkin build minkindr_ros
 catkin build waypoint_navigator
 catkin build
+
+# Copy PX4 SITL startup script of the iris_depth_camera model to Frimware folder (if it exists)
+if [ -d "$HOME/Firmware/ROMFS/px4fmu_common/init.d-posix" ]; then
+    echo "Found PX4 startup scripts folder ..."
+    echo "Copying 10017_iris_depth_camera ..."
+    cp $CATKIN_SRC/semantic_based_exploration/semantic_exploration/config/10017_iris_depth_camera $HOME/Firmware/ROMFS/px4fmu_common/init.d-posix
+    echo "---- Done ----"
+else
+    echo " Did NOT find PX4 startup scripts folder. Check if PX4 Frimware folder is setup properly."
+    echo "Skipping copying iris_depth_camera PX4 startup file."
+fi
+
+echo "Updating .bashrc ..."
+# Add 'source ~/catkin_ws/devel/setup.bash' in .bashrc
+# First delete it if it exists
+sed -i '/source ~\/catkin_ws\/devel\/setup.bash/d' $HOME/.bashrc
+# Add it after 'source /opt/ros/melodic/setup.bash'
+sed -i 's+source /opt/ros/melodic/setup.bash+source /opt/ros/melodic/setup.bash\nsource ~/catkin_ws/devel/setup.bash+g' $HOME/.bashrc
+# Add models to Gazebo path
+sed -i '/GAZEBO_MODEL_PATH/d' $HOME/.bashrc
+echo "export GAZEBO_MODEL_PATH=\$GAZEBO_MODEL_PATH:$HOME/catkin_ws/src/semantic_based_exploration/semantic_exploration/models" >> $HOME/.bashrc
+
+echo "Done updating .bashrc ..."
