@@ -5,10 +5,14 @@
   <description>The semantic_exploration package</description>
 
   <maintainer email="tarek@tarektaha.com">Tarek Taha</maintainer>
+  <maintainer email="reemashour1@gmail.com">Reem Ashour</maintainer>
+  <maintainer email="mohamedashraf123@gmail.com">Mohamed Abdelkader</maintainer>
 
   <license>BDS</license>
 
   <author>Tarek Taha</author>
+  <author>Reem Ashour</author>
+  <author>Mohamed Abdelkader</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   
