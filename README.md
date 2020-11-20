@@ -11,7 +11,7 @@ This setup is tested with:
 We prepared a docker image which includes all the neccessary installation steps. This is the fastest way to run and test this package.
 
 ## Docker image installation
-First, you need to install docker. You can use the [setup_docker.sh](https://github.com/mzahana/containers/blob/master/scripts/setup_docker.sh) script for that.
+First, you need to install docker. You can use the [setup_docker.sh](https://github.com/kucars/semantic_based_exploration/blob/pre_release/setup_docker.sh) script for that.
 ```sh
 # Make it executable
 chmod +x setup_docker.sh 
@@ -21,7 +21,7 @@ chmod +x setup_docker.sh
 
 **NOTE** Make sure that you have the latest Nvidia drivers installed on your machine. You can check if it's installed properly using `nvidia-smi` command
 
-Next, run the [semantic_mapping_docker.sh](https://github.com/mzahana/containers/blob/master/scripts/semantic_mapping_docker.sh) script.
+Next, run the [semantic_mapping_docker.sh](https://github.com/kucars/semantic_based_exploration/blob/pre_release/semantic_mapping_docker.sh) script.
 ```sh
 # Make it executable
 chmod +x semantic_mapping_docker.sh 
