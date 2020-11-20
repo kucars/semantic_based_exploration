@@ -1,14 +1,14 @@
 # Semantic Based Exploration
-The repository aims to provide an exploration algorithm and relevant packages to enable a semantic-aware autonomous exploration task for robots in indoor environments.  
+This repository aims to provide an exploration algorithm and relevant packages to enable a semantic-aware autonomous exploration task for robots in indoor environments.  
 
 # Installation 
 This setup is tested with:
 * Ubuntu 18
 * ROS Melodic
 * CUDA 10.1
-* PX4 v10.1
+* PX4 v1.10.1
 
-We prepared a docker image which includes all the neccessary installation steps. This is the fastest way to run and test this package.
+We provided a docker image which includes all the neccessary installation steps. This is the fastest way to run and test this package.
 
 ## Docker image installation
 First, you need to install docker. You can use the [setup_docker.sh](https://github.com/kucars/semantic_based_exploration/blob/pre_release/setup_docker.sh) script for that.
@@ -44,7 +44,7 @@ roslaunch semantic_exploration semantic_explorer.launch
 
 ## Manual installation
 This invloves several steps including the installation of 
-* PX4 10.1
+* PX4 1.10.1
 * [semantic_hazard_cloud](https://github.com/kucars/semantic_hazard_cloud) and its dependencies
 * Other dependencies, see the installation script in this package (https://github.com/kucars/semantic_based_exploration/blob/pre_release/install/setup_semantic_mapping.sh)
 
