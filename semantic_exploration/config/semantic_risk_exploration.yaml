@@ -80,13 +80,14 @@ debug_read_file: "/home/arrow/catkin_ws/src/semantic_based_exploration/map.bt"
 # bbx/maxZ: 2.5 #3.0
 # bbx/softBounds: false
 
-# Exploration Area given ground truth positioning from Gazebo, for semantic_epxploration (not Risk)
-bbx/minX: -7
-bbx/maxX: 2.8
-bbx/minY: -1.8
-bbx/maxY: 6.5
+
+# Exploration Area given ground truth positioning from Gazebo, for Risk-based semantic mapping
+bbx/minX: -10
+bbx/maxX: 0
+bbx/minY: -10
+bbx/maxY: -2
 bbx/minZ: -0.1
-bbx/maxZ: 3.0
+bbx/maxZ: 2.5
 bbx/softBounds: false
 
 ############
