@@ -1,5 +1,5 @@
 # Semantic Based Exploration
-This repository aims to provide an exploration algorithm and relevant packages to enable a semantic-aware autonomous exploration task for robots in indoor environments.  
+This repository aims to provide a simulation environment of UAV system for autonomous exploration with different semantic mapping algoritgms.
 
 # Installation 
 This setup is tested with:
@@ -8,7 +8,7 @@ This setup is tested with:
 * CUDA 10.1
 * PX4 v1.10.1
 
-We provided a docker image which includes all the neccessary installation steps. This is the fastest way to run and test this package.
+We provided a docker image which includes all the neccessary packages already installed. This is the fastest way to run and test this package.
 
 ## Docker image installation
 First, you need to install docker. You can use the [setup_docker.sh](https://github.com/kucars/semantic_based_exploration/blob/pre_release/setup_docker.sh) script for that.
@@ -17,6 +17,7 @@ First, you need to install docker. You can use the [setup_docker.sh](https://git
 chmod +x setup_docker.sh 
 # Run
 ./setup_docker.sh
+# logout and login to apply changes
 ```
 
 **NOTE** Make sure that you have the latest Nvidia drivers installed on your machine. You can check if it's installed properly using `nvidia-smi` command
@@ -37,9 +38,18 @@ arrow@ffcd644bbfd7:~$
 
 When you run the `semantic_mapping_docker.sh` for the first time, it will build the `catkin_ws` automatically for you in order to be ready for running the packages.
 
-You can then run the exploration and semantic mapping setup by running the following from the terminal of the container.
+You can then run the exploration and semantic mapping setup by running the following commands from the terminal of the container.
+
+### Semantic mapping
+* First make sure that the neural network model `pspnet_50_ade20k.pth` is available in the `~/catkin_ws/src/semantic_cloud/models_trained/` folder
+
 ```sh
 roslaunch semantic_exploration semantic_explorer.launch
+```
+
+### Risk-based semantic mapping
+```sh
+roslaunch semantic_exploration semantic_risk_explorer.launch
 ```
 
 ## Manual installation

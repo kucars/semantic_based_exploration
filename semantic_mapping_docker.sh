@@ -9,7 +9,7 @@
 #
 # Authors: Tarek Taha, Mohammed Abdelkader
  
-DOCKER_REPO="mzahana/ubuntu18-cuda10.1-semantic-mapping:latest"
+DOCKER_REPO="mzahana/semantic-mapping:latest"
 CONTAINER_NAME="semantic_mapping"
 WORKSPACE_DIR=~/${CONTAINER_NAME}_shared_volume
 CMD=""
