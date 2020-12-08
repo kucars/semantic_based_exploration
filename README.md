@@ -59,4 +59,21 @@ This invloves several steps including the installation of
 * Other dependencies, see the installation script in this package (https://github.com/kucars/semantic_based_exploration/blob/pre_release/install/setup_semantic_mapping.sh)
 
 # Citation
+If you find this code of semantic mapping useful, please cite this in your work.
+
+```
+@article{ashour2020exploration,
+  title={Exploration for Object Mapping Guided by Environmental Semantics using UAVs},
+  author={Ashour, Reem and Taha, Tarek and Dias, Jorge Manuel Miranda and Seneviratne, Lakmal and Almoosa, Nawaf},
+  journal={Remote Sensing},
+  volume={12},
+  number={5},
+  pages={891},
+  year={2020},
+  publisher={Multidisciplinary Digital Publishing Institute}
+}
+```
+
+If you find this code of semantic hazard mapping useful, please cite this in your work.
+
 [TODO]
